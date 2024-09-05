@@ -3,6 +3,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from datetime import datetime
 import os
+import matplotlib
 
 # Path to data files
 STOK_BARANG_FILE = "stok_barang.csv"
