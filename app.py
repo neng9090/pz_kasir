@@ -1,429 +1,527 @@
 import streamlit as st
+from streamlit_option_menu import option_menu
 import pandas as pd
-import matplotlib.pyplot as plt
-from datetime import datetime
 import os
-import matplotlib
+from datetime import datetime
+import matplotlib.pyplot as plt
+import os
+import time
+from io import StringIO
 
-# Path to data files
-STOK_BARANG_FILE = "stok_barang.csv"
-PENJUALAN_FILE = "penjualan.csv"
-SUPPLIER_FILE = "supplier.csv"
-PENGELUARAN_FILE = "laporan_pengeluaran.csv"
+# Define file paths
+STOK_BARANG_FILE = 'stok_barang.csv'
+PENJUALAN_FILE = 'penjualan.csv'
+SUPPLIER_FILE = 'supplier.csv'
+CSV_FILE_PATH = 'piutang_konsumen.csv'
+OWNER_FILE = 'owner.csv'  # Add the owner file path
 
-# CSS styles for a professional look
-st.markdown("""
-    <style>
-    .header-image {
-        width: 100%;
-        margin-bottom: 20px;
-    }
-    .sidebar .sidebar-content {
-        background-color: #f8f9fa;
-        padding-top: 20px;
-    }
-    .sidebar .sidebar-content h2 {
-        font-family: 'Arial', sans-serif;
-        color: #333;
-        margin-bottom: 20px;
-    }
-    .sidebar .sidebar-content .radio {
-        margin-top: 10px;
-    }
-    .main-content {
-        padding: 20px;
-        background-color: #ffffff;
-        border-radius: 8px;
-        box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
-    }
-    .stButton > button {
-        background-color: #28a745;
-        color: white;
-        border-radius: 8px;
-        padding: 10px 20px;
-    }
-    </style>
-""", unsafe_allow_html=True)
-
-# Display the header image
-image_path = "/mnt/data/A_professional_dashboard_design_for_a_cashier_appl.png"
-if os.path.exists(image_path):
-    st.image(image_path, use_column_width=True, class_="header-image")
-else:
-    st.error("Gambar tidak ditemukan!")
-
-# Load data from CSV files
-def load_data():
-    if os.path.exists(STOK_BARANG_FILE):
-        st.session_state.stok_barang = pd.read_csv(STOK_BARANG_FILE, parse_dates=["Waktu Input"])
-    else:
+# Initialize session state data if not already present
+def initialize_session_state():
+    if 'stok_barang' not in st.session_state:
         st.session_state.stok_barang = pd.DataFrame(columns=[
-            "ID", "Nama Barang", "Merk", "Ukuran/Kemasan", "Harga", "Jumlah", "Persentase Keuntungan", "Waktu Input"
+            "ID", "Nama Barang", "Merk", "Ukuran/Kemasan", "Harga", "Stok", "Persentase Keuntungan", "Waktu Input"
         ])
-
-    if os.path.exists(PENJUALAN_FILE):
-        st.session_state.penjualan = pd.read_csv(PENJUALAN_FILE, parse_dates=["Waktu"])
-    else:
+    if 'penjualan' not in st.session_state:
         st.session_state.penjualan = pd.DataFrame(columns=[
             "ID", "Nama Pelanggan", "Nomor Telepon", "Alamat", "Nama Barang", "Ukuran/Kemasan", "Merk", "Jumlah", "Total Harga", "Keuntungan", "Waktu"
         ])
-
-    if os.path.exists(SUPPLIER_FILE):
-        st.session_state.supplier = pd.read_csv(SUPPLIER_FILE, parse_dates=["Waktu"])
-    else:
+    if 'supplier' not in st.session_state:
         st.session_state.supplier = pd.DataFrame(columns=[
             "ID", "Nama Barang", "Merk", "Ukuran/Kemasan", "Jumlah Barang", "Nama Supplier", "Tagihan", "Waktu"
         ])
+    if 'owner' not in st.session_state:
+        st.session_state.owner = pd.DataFrame(columns=[
+            "ID", "Username", "Password"  # Adjust columns as needed
+        ])
+
+
+# Load data from CSV files if they exist
+def load_data():
+    if os.path.exists(STOK_BARANG_FILE):
+        st.session_state.stok_barang = pd.read_csv(STOK_BARANG_FILE)
+        # Convert 'Waktu Input' column to datetime after loading
+        if 'Waktu Input' in st.session_state.stok_barang.columns:
+            st.session_state.stok_barang['Waktu Input'] = pd.to_datetime(st.session_state.stok_barang['Waktu Input'])
+    
+    if os.path.exists(PENJUALAN_FILE):
+        st.session_state.penjualan = pd.read_csv(PENJUALAN_FILE)
+        # Convert 'Waktu' column to datetime after loading
+        if 'Waktu' in st.session_state.penjualan.columns:
+            st.session_state.penjualan['Waktu'] = pd.to_datetime(st.session_state.penjualan['Waktu'])
+    
+    if os.path.exists(SUPPLIER_FILE):
+        st.session_state.supplier = pd.read_csv(SUPPLIER_FILE)
+        # Convert 'Waktu' column to datetime after loading
+        if 'Waktu' in st.session_state.supplier.columns:
+            st.session_state.supplier['Waktu'] = pd.to_datetime(st.session_state.supplier['Waktu'])
+
 
 # Save data to CSV files
 def save_data():
     st.session_state.stok_barang.to_csv(STOK_BARANG_FILE, index=False)
     st.session_state.penjualan.to_csv(PENJUALAN_FILE, index=False)
     st.session_state.supplier.to_csv(SUPPLIER_FILE, index=False)
+    st.session_state.owner.to_csv(OWNER_FILE, index=False)  # Save owner data
+    st.session_state.stok_barang.to_csv("stok_barang.csv", index=False)
+    st.session_state.penjualan.to_csv("penjualan.csv", index=False)
+    st.session_state.supplier.to_csv("supplier.csv", index=False)
+    st.session_state.piutang_konsumen.to_csv("piutang_konsumen.csv", index=False)
+    st.session_state.pengeluaran.to_csv("pengeluaran.csv", index=False)
+    st.session_state.historis_analisis_keuangan.to_csv("historis_analisis_keuangan.csv", index=False)
+    st.session_state.historis_keuntungan_bersih.to_csv("historis_keuntungan_bersih.csv", index=False)
 
-# Initialize data
-if 'stok_barang' not in st.session_state:
-    load_data()
+def save_to_excel():
+    with pd.ExcelWriter("data_laporan.xlsx") as writer:
+        st.session_state.stok_barang.to_excel(writer, sheet_name="Stock Barang", index=False)
+        st.session_state.penjualan.to_excel(writer, sheet_name="Penjualan", index=False)
+        st.session_state.supplier.to_excel(writer, sheet_name="Supplier", index=False)
+        st.session_state.piutang_konsumen.to_excel(writer, sheet_name="Piutang Konsumen", index=False)
+        st.session_state.pengeluaran.to_excel(writer, sheet_name="Pengeluaran", index=False)
+        st.session_state.historis_analisis_keuangan.to_excel(writer, sheet_name="Historis Analisis Keuangan", index=False)
+        st.session_state.historis_keuntungan_bersih.to_excel(writer, sheet_name="Historis Keuntungan Bersih", index=False)
 
-# Sidebar menu
-menu = st.sidebar.radio("Pilih Menu", ["Stock Barang", "Penjualan", "Supplier", "Owner"])
+# Function to save data to file (implement as needed)
+def save_data():
+    st.session_state.stok_barang.to_csv('stok_barang.csv', index=False)  # Example file path
 
-# Main content area
-st.markdown('<div class="main-content">', unsafe_allow_html=True)
 
-# Fungsi untuk menyimpan data secara otomatis
-def save_data(df=None, filename='data_stock_barang.csv'):
-    if df is not None:
-        df.to_csv(filename, index=False)
-        st.success(f"Data berhasil disimpan sebagai {filename}")
-    else:
-        st.info("Tidak ada data untuk disimpan.")
-
-# Fungsi untuk halaman stok barang
+# Function for Stock Barang page
 def halaman_stock_barang():
-    st.header("Stock Barang")
+    st.markdown('<h1 style="text-align: center;">Stock Barang</h1>', unsafe_allow_html=True)
     
-    # Cek apakah data stok barang sudah ada di session state
-    if 'stok_barang' not in st.session_state:
-        st.session_state.stok_barang = pd.DataFrame(columns=[
-            "ID", "Nama Barang", "Merk", "Ukuran/Kemasan", 
-            "Harga", "Jumlah", "Persentase Keuntungan", "Waktu Input"
-        ])
-
-    # Form input barang baru
-    with st.form("input_barang"):
-        nama_barang = st.text_input("Nama Barang")
-        merk = st.text_input("Merk")
-        ukuran = st.text_input("Ukuran/Kemasan")
-        harga = st.number_input("Harga", min_value=0)
-        jumlah = st.number_input("Jumlah", min_value=0)
-        submit = st.form_submit_button("Tambah Barang")
+    # Form input barang baru dan edit barang
+    st.markdown('<h2 style="text-align: center;">Tambah/Edit Barang</h2>', unsafe_allow_html=True)
+    
+    # Pilih barang yang akan diedit atau pilih "Tambah Baru"
+    selected_action = st.selectbox("Pilih Aksi", ["Tambah Barang", "Edit Barang"], key='action_select')
+    
+    if selected_action == "Edit Barang":
+        # Pilih ID Barang untuk Diedit
+        selected_id = st.selectbox("Pilih ID Barang untuk Diedit", st.session_state.stok_barang["ID"].tolist() + ["Tambah Baru"], key='id_select')
         
+        if selected_id != "Tambah Baru":
+            barang_dipilih = st.session_state.stok_barang[st.session_state.stok_barang["ID"] == selected_id]
+            default_values = {
+                "Nama Barang": barang_dipilih["Nama Barang"].values[0],
+                "Merk": barang_dipilih["Merk"].values[0],
+                "Ukuran/Kemasan": barang_dipilih["Ukuran/Kemasan"].values[0],
+                "Harga": barang_dipilih["Harga"].values[0],
+                "Stok": barang_dipilih["Stok"].values[0],
+                "Kode Warna": barang_dipilih["Kode Warna"].values[0] if "Kode Warna" in barang_dipilih.columns else ""
+            }
+        else:
+            default_values = {
+                "Nama Barang": "",
+                "Merk": "",
+                "Ukuran/Kemasan": "",
+                "Harga": 0,
+                "Stok": 0,
+                "Kode Warna": ""
+            }
+
+    else:
+        # Untuk tambah barang baru, set default values kosong
+        selected_id = "Tambah Baru"
+        default_values = {
+            "Nama Barang": "",
+            "Merk": "",
+            "Ukuran/Kemasan": "",
+            "Harga": 0,
+            "Stok": 0,
+            "Kode Warna": ""
+        }
+
+    with st.form("input_barang"):
+        nama_barang = st.text_input("Nama Barang", value=default_values["Nama Barang"])
+        merk = st.text_input("Merk", value=default_values["Merk"])
+        ukuran = st.text_input("Ukuran/Kemasan", value=default_values["Ukuran/Kemasan"])
+        harga = st.number_input("Harga", min_value=0, value=int(default_values["Harga"]))
+        stok = st.number_input("Stok Barang", min_value=0, value=int(default_values["Stok"]))
+        kode_warna = st.text_input("Kode Warna/Base", value=default_values["Kode Warna"], placeholder="Opsional")
+        
+        # Calculate the selling price as 15% more than the base price
+        selling_price = harga * 1.15
+        
+        submit = st.form_submit_button("Simpan Barang")
+
         if submit:
-            # Ambil data stok barang
-            stok_barang = st.session_state.stok_barang
-            
-            # Cari apakah kombinasi Nama Barang, Merk, dan Ukuran/Kemasan sudah ada
-            existing_item = stok_barang[
-                (stok_barang['Nama Barang'] == nama_barang) & 
-                (stok_barang['Merk'] == merk) & 
-                (stok_barang['Ukuran/Kemasan'] == ukuran)
+            # Check if an item with the same attributes exists
+            existing_item = st.session_state.stok_barang[
+                (st.session_state.stok_barang["Nama Barang"] == nama_barang) &
+                (st.session_state.stok_barang["Merk"] == merk) &
+                (st.session_state.stok_barang["Ukuran/Kemasan"] == ukuran) &
+                (st.session_state.stok_barang["Kode Warna"] == kode_warna)
             ]
-            
+
             if not existing_item.empty:
-                # Jika barang sudah ada, update jumlah
-                idx = existing_item.index[0]
-                st.session_state.stok_barang.at[idx, 'Jumlah'] += jumlah
-                st.success(f"Jumlah barang '{nama_barang}' berhasil ditambahkan!")
+                # Update existing item
+                existing_id = existing_item["ID"].values[0]
+                st.session_state.stok_barang.loc[
+                    st.session_state.stok_barang["ID"] == existing_id,
+                    ["Stok", "Harga Jual"]
+                ] = [existing_item["Stok"].values[0] + stok, selling_price]
+                st.success("Stok barang berhasil diperbarui!")
             else:
-                # Jika barang belum ada, tambahkan data baru
-                new_id = stok_barang["ID"].max() + 1 if not stok_barang.empty else 1
+                # Add new item
+                new_id = st.session_state.stok_barang["ID"].max() + 1 if not st.session_state.stok_barang.empty else 1
                 new_data = pd.DataFrame({
                     "ID": [new_id],
                     "Nama Barang": [nama_barang],
                     "Merk": [merk],
                     "Ukuran/Kemasan": [ukuran],
                     "Harga": [harga],
-                    "Jumlah": [jumlah],
-                    "Persentase Keuntungan": [20],  # Nilai default (tidak ditampilkan di form)
-                    "Waktu Input": [datetime.now()]  # Menambahkan waktu input barang
+                    "Stok": [stok],
+                    "Kode Warna": [kode_warna],
+                    "Harga Jual": [selling_price],
+                    "Waktu Input": [datetime.now()]
                 })
                 st.session_state.stok_barang = pd.concat([st.session_state.stok_barang, new_data], ignore_index=True)
-                st.success("Barang baru berhasil ditambahkan!")
-            
-            save_data(st.session_state.stok_barang)  # Save data after adding new item
+                st.success("Barang berhasil ditambahkan!")
+
+            save_data()  # Save data after adding or updating item
 
     # Tabel stok barang
-    st.subheader("Daftar Stok Barang")
+    st.markdown('<h2 style="text-align: center;">Daftar Stok Barang</h2>', unsafe_allow_html=True)
     df_stok_barang = st.session_state.stok_barang.copy()
     
-    # Tampilkan kolom "Jumlah" dan hilangkan kolom lainnya jika diperlukan
-    if "Jumlah" in df_stok_barang.columns:
-        # Menghilangkan kolom "Persentase Keuntungan" jika ada
-        if "Persentase Keuntungan" in df_stok_barang.columns:
-            df_stok_barang = df_stok_barang.drop(columns=["Persentase Keuntungan"])
-        
-        # Menampilkan kolom yang relevan
-        st.dataframe(df_stok_barang)
-    else:
-        st.info("Tidak ada data stok barang yang tersedia.")
-
-
-# Fungsi untuk halaman Penjualan
-def halaman_penjualan():
-    st.header("Penjualan")
+    # Hapus kolom "Harga" dari tabel jika ada
+    if "Harga" in df_stok_barang.columns:
+        df_stok_barang = df_stok_barang.drop(columns=["Harga"])
     
-    with st.form("input_penjualan"):
-        nama_pelanggan = st.text_input("Nama Pelanggan")
-        nomor_telpon = st.text_input("Nomor Telepon")
-        alamat = st.text_area("Alamat")
-        nama_barang = st.selectbox("Pilih Barang", st.session_state.stok_barang["Nama Barang"])
-        ukuran = st.selectbox("Ukuran/Kemasan", st.session_state.stok_barang["Ukuran/Kemasan"])
-        merk = st.selectbox("Merk", st.session_state.stok_barang["Merk"])
-        jumlah = st.number_input("Jumlah", min_value=1)
-        submit = st.form_submit_button("Simpan Penjualan")
-        
-        if submit:
-            harga_barang = st.session_state.stok_barang[
-                (st.session_state.stok_barang["Nama Barang"] == nama_barang) &
-                (st.session_state.stok_barang["Ukuran/Kemasan"] == ukuran)
-            ]["Harga"].values[0]
-            persentase_keuntungan = st.session_state.stok_barang[
-                (st.session_state.stok_barang["Nama Barang"] == nama_barang) &
-                (st.session_state.stok_barang["Ukuran/Kemasan"] == ukuran)
-            ]["Persentase Keuntungan"].values[0]
-            total_harga = harga_barang * jumlah
-            keuntungan = total_harga * (persentase_keuntungan / 100)
-            waktu = datetime.now().strftime("%Y-%m-%d %H:%M:%S")  # Mendapatkan waktu saat ini
-            
-            new_penjualan = pd.DataFrame({
-                "ID": [st.session_state.penjualan["ID"].max() + 1 if not st.session_state.penjualan.empty else 1],
-                "Nama Pelanggan": [nama_pelanggan],
-                "Nomor Telepon": [nomor_telpon],
-                "Alamat": [alamat],
-                "Nama Barang": [nama_barang],
-                "Ukuran/Kemasan": [ukuran],
-                "Merk": [merk],
-                "Jumlah": [jumlah],
-                "Total Harga": [total_harga],
-                "Keuntungan": [keuntungan],  # Menyimpan keuntungan
-                "Waktu": [waktu]  # Menyimpan waktu penjualan
-            })
-            st.session_state.penjualan = pd.concat([st.session_state.penjualan, new_penjualan], ignore_index=True)
-            
-            # Update stok barang
-            st.session_state.stok_barang.loc[
-                (st.session_state.stok_barang["Nama Barang"] == nama_barang) &
-                (st.session_state.stok_barang["Ukuran/Kemasan"] == ukuran),
-                "Jumlah"
-            ] -= jumlah
-            
-            st.success(f"Penjualan untuk {nama_pelanggan} berhasil disimpan!")
-            save_data()  # Save data after sale
-
-
-    # Tabel stok barang terupdate
-    st.subheader("Stok Barang Terupdate")
-    df_stok_barang = st.session_state.stok_barang.copy()
-    if "Persentase Keuntungan" in df_stok_barang.columns:
-        df_stok_barang = df_stok_barang.drop(columns=["Persentase Keuntungan"])  # Menghapus kolom Persentase Keuntungan jika ada
+    # Pencarian nama barang atau merk
+    search_text = st.text_input("Cari Nama Barang atau Merk", key='search_text')
+    if search_text:
+        df_stok_barang = df_stok_barang[
+            (df_stok_barang["Nama Barang"].str.contains(search_text, case=False, na=False)) |
+            (df_stok_barang["Merk"].str.contains(search_text, case=False, na=False))
+        ]
+    
     st.dataframe(df_stok_barang)
 
-    # Tombol pencarian stok barang
+# Function for Penjualan page
+def halaman_penjualan():
+    st.header("Penjualan")
+
+    # Initialize session state variables if they don't exist
+    if 'penjualan' not in st.session_state:
+        st.session_state.penjualan = pd.DataFrame(columns=[
+            "ID", "Nama Pelanggan", "Nomor Telepon", "Alamat", 
+            "Nama Barang", "Ukuran/Kemasan", "Merk", "Kode Warna", 
+            "Jumlah", "Total Harga", "Keuntungan", "Waktu"
+        ])
+
+    if 'stok_barang' not in st.session_state:
+        st.session_state.stok_barang = pd.DataFrame(columns=[
+            "Nama Barang", "Ukuran/Kemasan", "Merk", "Harga", "Harga Jual", "Persentase Keuntungan", "Stok", "Kode Warna"
+        ])
+
+    # Formulir untuk menambah/memperbarui penjualan
+    st.header("Penjualan")
+
+    st.subheader("Tambah/Edit Penjualan")
+
+    if not st.session_state.penjualan.empty:
+        id_penjualan = st.selectbox("Pilih ID Penjualan untuk Diedit", st.session_state.penjualan["ID"].tolist() + ["Tambah Baru"])
+
+        if id_penjualan != "Tambah Baru":
+            penjualan_edit = st.session_state.penjualan[st.session_state.penjualan["ID"] == id_penjualan].iloc[0]
+            default_values = {
+                "Nama Pelanggan": penjualan_edit["Nama Pelanggan"],
+                "Nomor Telepon": penjualan_edit["Nomor Telepon"],
+                "Alamat": penjualan_edit["Alamat"],
+                "Nama Barang": penjualan_edit["Nama Barang"],
+                "Ukuran/Kemasan": penjualan_edit["Ukuran/Kemasan"],
+                "Merk": penjualan_edit["Merk"],
+                "Kode Warna": penjualan_edit["Kode Warna"] if "Kode Warna" in penjualan_edit.index else "",
+                "Jumlah": penjualan_edit["Jumlah"]
+            }
+        else:
+            default_values = {
+                "Nama Pelanggan": "",
+                "Nomor Telepon": "",
+                "Alamat": "",
+                "Nama Barang": st.session_state.stok_barang["Nama Barang"].tolist()[0] if not st.session_state.stok_barang.empty else "",
+                "Ukuran/Kemasan": st.session_state.stok_barang["Ukuran/Kemasan"].tolist()[0] if not st.session_state.stok_barang.empty else "",
+                "Merk": st.session_state.stok_barang["Merk"].tolist()[0] if not st.session_state.stok_barang.empty else "",
+                "Kode Warna": "",
+                "Jumlah": 1
+            }
+    else:
+        id_penjualan = "Tambah Baru"
+        default_values = {
+            "Nama Pelanggan": "",
+            "Nomor Telepon": "",
+            "Alamat": "",
+            "Nama Barang": st.session_state.stok_barang["Nama Barang"].tolist()[0] if not st.session_state.stok_barang.empty else "",
+            "Ukuran/Kemasan": st.session_state.stok_barang["Ukuran/Kemasan"].tolist()[0] if not st.session_state.stok_barang.empty else "",
+            "Merk": st.session_state.stok_barang["Merk"].tolist()[0] if not st.session_state.stok_barang.empty else "",
+            "Kode Warna": "",
+            "Jumlah": 1
+        }
+
+    with st.form("input_penjualan"):
+        nama_pelanggan = st.text_input("Nama Pelanggan", value=default_values["Nama Pelanggan"])
+        nomor_telpon = st.text_input("Nomor Telepon", value=default_values["Nomor Telepon"])
+        alamat = st.text_area("Alamat", value=default_values["Alamat"])
+        nama_barang_options = st.session_state.stok_barang["Nama Barang"].tolist()
+        nama_barang = st.selectbox("Pilih Barang", nama_barang_options, index=nama_barang_options.index(default_values["Nama Barang"]) if default_values["Nama Barang"] in nama_barang_options else 0)
+
+        ukuran_options = st.session_state.stok_barang[st.session_state.stok_barang["Nama Barang"] == nama_barang]["Ukuran/Kemasan"].tolist()
+        ukuran = st.selectbox("Ukuran/Kemasan", ukuran_options, index=ukuran_options.index(default_values["Ukuran/Kemasan"]) if default_values["Ukuran/Kemasan"] in ukuran_options else 0)
+
+        merk_options = st.session_state.stok_barang[
+            (st.session_state.stok_barang["Nama Barang"] == nama_barang) &
+            (st.session_state.stok_barang["Ukuran/Kemasan"] == ukuran)
+        ]["Merk"].tolist()
+        merk = st.selectbox("Merk", merk_options, index=merk_options.index(default_values["Merk"]) if default_values["Merk"] in merk_options else 0)
+
+        kode_warna = st.text_input("Kode Warna", value=default_values["Kode Warna"], placeholder="Opsional")
+        jumlah = st.number_input("Jumlah Orderan", min_value=1, value=int(default_values["Jumlah"]))
+
+        submit = st.form_submit_button("Simpan Penjualan")
+
+        if submit:
+            stok_barang_filter = st.session_state.stok_barang[
+                (st.session_state.stok_barang["Nama Barang"] == nama_barang) &
+                (st.session_state.stok_barang["Ukuran/Kemasan"] == ukuran) &
+                (st.session_state.stok_barang["Merk"] == merk)
+            ]
+
+            if not stok_barang_filter.empty:
+                harga_jual = stok_barang_filter["Harga Jual"].values[0]  # Use Harga Jual
+                persentase_keuntungan = stok_barang_filter["Persentase Keuntungan"].values[0]
+                total_harga = harga_jual * jumlah
+                keuntungan = total_harga * (persentase_keuntungan / 100)
+                waktu = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+                new_penjualan = pd.DataFrame({
+                    "ID": [st.session_state.penjualan["ID"].max() + 1 if not st.session_state.penjualan.empty else 1],
+                    "Nama Pelanggan": [nama_pelanggan],
+                    "Nomor Telepon": [nomor_telpon],
+                    "Alamat": [alamat],
+                    "Nama Barang": [nama_barang],
+                    "Ukuran/Kemasan": [ukuran],
+                    "Merk": [merk],
+                    "Kode Warna": [kode_warna if "Kode Warna" in st.session_state.stok_barang.columns else ""],
+                    "Jumlah": [jumlah],
+                    "Total Harga": [total_harga],
+                    "Keuntungan": [keuntungan],
+                    "Waktu": [waktu]
+                })
+
+                if id_penjualan == "Tambah Baru":
+                    st.session_state.penjualan = pd.concat([st.session_state.penjualan, new_penjualan], ignore_index=True)
+                else:
+                    st.session_state.penjualan.loc[st.session_state.penjualan["ID"] == id_penjualan, 
+                        ["Nama Pelanggan", "Nomor Telepon", "Alamat", "Nama Barang", "Ukuran/Kemasan", "Merk", "Kode Warna", "Jumlah", "Total Harga", "Keuntungan", "Waktu"]] = \
+                        [nama_pelanggan, nomor_telpon, alamat, nama_barang, ukuran, merk, kode_warna, jumlah, total_harga, keuntungan, waktu]
+
+                st.session_state.stok_barang.loc[
+                    (st.session_state.stok_barang["Nama Barang"] == nama_barang) &
+                    (st.session_state.stok_barang["Ukuran/Kemasan"] == ukuran) &
+                    (st.session_state.stok_barang["Merk"] == merk),
+                    "Stok"
+                ] -= jumlah
+
+                st.success(f"Penjualan untuk {nama_pelanggan} berhasil disimpan!")
+                # save_data() # Uncomment this line if you have a function to save data
+            else:
+                st.error("Kombinasi Nama Barang, Ukuran/Kemasan, dan Merk tidak ditemukan di stok.")
+
+    # Fitur pencarian
     search_barang = st.text_input("Cari Barang")
     if search_barang:
         hasil_pencarian = st.session_state.stok_barang[st.session_state.stok_barang["Nama Barang"].str.contains(search_barang, case=False)]
         st.write("Hasil Pencarian:")
-        if "Persentase Keuntungan" in hasil_pencarian.columns:
-            hasil_pencarian = hasil_pencarian.drop(columns=["Persentase Keuntungan"])  # Menghapus kolom Persentase Keuntungan jika ada
-        st.dataframe(hasil_pencarian)
+        if not hasil_pencarian.empty:
+            st.dataframe(hasil_pencarian, use_container_width=True, hide_index=False)
 
-    # Tombol untuk mendownload laporan penjualan
-    if st.button("Download Laporan Penjualan (CSV)"):
-        csv = st.session_state.penjualan.to_csv(index=False)
-        st.download_button(label="Download CSV", data=csv, file_name="laporan_penjualan.csv", mime="text/csv")
+    st.subheader("Stok Barang Terupdate")
+    df_stok_barang = st.session_state.stok_barang.copy()
+    if "Persentase Keuntungan" in df_stok_barang.columns:
+        df_stok_barang = df_stok_barang.drop(columns=["Persentase Keuntungan"])
+    if "Harga" in df_stok_barang.columns:
+        df_stok_barang = df_stok_barang.drop(columns=["Harga"])  # Hapus kolom Harga dari tabel
+    st.dataframe(df_stok_barang, use_container_width=True, hide_index=False)
 
-    # Tombol untuk print struk
-    if st.button("Print Struk Terakhir"):
-        from io import StringIO
-        struk = StringIO()
-        struk.write("=== STRUK PENJUALAN ===\n")
-        for idx, row in st.session_state.penjualan.tail(1).iterrows():
-            struk.write(f"Nama Pelanggan: {row['Nama Pelanggan']}\n")
-            struk.write(f"Nomor Telepon: {row['Nomor Telepon']}\n")
-            struk.write(f"Alamat: {row['Alamat']}\n")
-            struk.write(f"Nama Barang: {row['Nama Barang']}\n")
-            struk.write(f"Ukuran/Kemasan: {row['Ukuran/Kemasan']}\n")
-            struk.write(f"Merk: {row['Merk']}\n")
-            struk.write(f"Jumlah: {row['Jumlah']}\n")
-            struk.write(f"Total Harga: {row['Total Harga']}\n")
-            struk.write(f"Waktu: {row['Waktu']}\n")
-        struk.write("=========================\n")
+    st.subheader("Data Penjualan")
+    if not st.session_state.penjualan.empty:
+        st.session_state.penjualan["Nomor Telepon"] = st.session_state.penjualan["Nomor Telepon"].astype(str)
+        if "Keuntungan" in st.session_state.penjualan.columns:
+            st.session_state.penjualan = st.session_state.penjualan.drop(columns=["Keuntungan"])  # Hapus kolom Keuntungan dari tabel
+        st.dataframe(st.session_state.penjualan, use_container_width=True, hide_index=False)
+
+    st.subheader("Cari Data Penjualan")
+    search_nama_pelanggan = st.text_input("Cari Nama Pelanggan")
+    search_nomor_telpon = st.text_input("Cari Nomor Telepon")
+
+    # Dropdown untuk memilih ID penjualan
+    if not st.session_state.penjualan.empty:
+        id_pilihan = st.selectbox("Pilih ID Penjualan untuk Detail", st.session_state.penjualan["ID"].tolist())
+        if id_pilihan:
+            penjualan_detail = st.session_state.penjualan[st.session_state.penjualan["ID"] == id_pilihan]
+            st.write("Detail Penjualan:")
+            st.dataframe(penjualan_detail, use_container_width=True, hide_index=False)
+
+    # Dropdown untuk memilih ID penjualan untuk Download Struk
+    if not st.session_state.penjualan.empty:
+        id_penjualan = st.selectbox("Pilih ID Penjualan untuk Download Struk", st.session_state.penjualan["ID"].unique())
         
-        # Tulis ke file dan simpan untuk print
-        with open('struk_pembelian.txt', 'w') as f:
-            f.write(struk.getvalue())
-        
-        st.success("Struk berhasil dicetak!")
-    
-    import io
+        if st.button("Download Struk Penjualan"):
+            selected_sale = st.session_state.penjualan[st.session_state.penjualan["ID"] == id_penjualan].iloc[0]
+            struk = StringIO()
+            struk.write("Struk Penjualan\n")
+            struk.write("=" * 30 + "\n")
+            struk.write(f"Nama Pelanggan  : {selected_sale['Nama Pelanggan']}\n")
+            struk.write(f"Alamat          : {selected_sale['Alamat']}\n")
+            struk.write(f"Nomor Telepon   : {selected_sale['Nomor Telepon']}\n")
+            struk.write(f"Nama Barang     : {selected_sale['Nama Barang']}\n")
+            struk.write(f"Ukuran/Kemasan  : {selected_sale['Ukuran/Kemasan']}\n")
+            struk.write(f"Merk            : {selected_sale['Merk']}\n")
+            if "Kode Warna" in selected_sale.index:
+                struk.write(f"Kode Warna      : {selected_sale['Kode Warna']}\n")
+            struk.write(f"Jumlah          : {selected_sale['Jumlah']}\n")
+            struk.write(f"Total Harga     : {selected_sale['Total Harga']}\n")
+            struk.write(f"Waktu           : {selected_sale['Waktu']}\n")
+            struk.write("=" * 30 + "\n")
+            struk.write("Terima Kasih!\n")
 
-    # Tombol untuk mendownload struk pembelian
-    if st.button("Download Struk Terakhir (TXT)"):
-        struk = io.StringIO()
-        struk.write("=== STRUK PENJUALAN ===\n")
-        for idx, row in st.session_state.penjualan.tail(1).iterrows():
-            struk.write(f"Nama Pelanggan: {row['Nama Pelanggan']}\n")
-            struk.write(f"Nomor Telepon: {row['Nomor Telepon']}\n")
-            struk.write(f"Alamat: {row['Alamat']}\n")
-            struk.write(f"Nama Barang: {row['Nama Barang']}\n")
-            struk.write(f"Ukuran/Kemasan: {row['Ukuran/Kemasan']}\n")
-            struk.write(f"Merk: {row['Merk']}\n")
-            struk.write(f"Jumlah: {row['Jumlah']}\n")
-            struk.write(f"Total Harga: {row['Total Harga']}\n")
-            struk.write(f"Waktu: {row['Waktu']}\n")
-        struk.write("=========================\n")
-        
-        # Menggunakan tombol download dari Streamlit
-        st.download_button(
-            label="Download TXT",
-            data=struk.getvalue(),
-            file_name="struk_pembelian.txt",
-            mime="text/plain"
-        )
+            # Menyediakan file untuk di-download
+            struk_file = 'struk_penjualan.txt'
+            struk_data = struk.getvalue()
+            
+            st.download_button(
+                label="Download Struk Penjualan",
+                data=struk_data,
+                file_name=struk_file,
+                mime="text/plain"
+            )
 
-import pandas as pd
-import streamlit as st
-from datetime import datetime
 
-# Fungsi untuk menyimpan data secara otomatis
-def save_data(df=None, filename='data_supplier.csv'):
-    if df is not None:
-        df.to_csv(filename, index=False)
-        st.success(f"Data berhasil disimpan sebagai {filename}")
-    else:
-        st.info("Tidak ada data untuk disimpan.")
-
-# Fungsi untuk menggabungkan jumlah barang jika ada duplikat
-def merge_supplier_data(df):
-    return df.groupby(["ID", "Nama Barang", "Merk", "Ukuran/Kemasan", "Nama Supplier", "Tagihan", "Waktu"], as_index=False).agg({
-        "Jumlah Barang": "sum"
-    })
-
-# Fungsi untuk halaman supplier
+# Fungsi untuk halaman Supplier
 def halaman_supplier():
     st.header("Data Supplier")
 
-    # Cek apakah data supplier sudah ada di session state
-    if 'supplier' not in st.session_state:
-        st.session_state.supplier = pd.DataFrame(columns=[
-            "ID", "Nama Barang", "Merk", "Ukuran/Kemasan", 
-            "Jumlah Barang", "Nama Supplier", "Tagihan", "Waktu"
-        ])
+    # Memilih ID Supplier untuk diedit atau menambah baru
+    supplier_ids = st.session_state.supplier["ID"].tolist()
+    supplier_ids.insert(0, "Tambah Baru")  # Opsi untuk menambah data baru
+    selected_supplier_id = st.selectbox("Pilih ID Supplier untuk Diedit atau Tambah Baru", supplier_ids)
 
-    # Form untuk menambahkan data supplier baru
-    with st.form("input_supplier"):
-        nama_barang = st.text_input("Nama Barang")
-        merk = st.text_input("Merk")
-        ukuran = st.text_input("Ukuran/Kemasan")
-        jumlah_barang = st.number_input("Jumlah Barang", min_value=0)
-        nama_supplier = st.text_input("Nama Supplier")
-        tagihan = st.number_input("Tagihan", min_value=0)
-        submit = st.form_submit_button("Tambah Data Supplier")
+    # Jika 'Tambah Baru' dipilih, buat default nilai kosong
+    if selected_supplier_id == "Tambah Baru":
+        selected_supplier = None
+        default_values = {
+            "Nama Barang": "",
+            "Merk": "",
+            "Ukuran/Kemasan": "",
+            "Jumlah Barang": 0,
+            "Nama Supplier": "",
+            "Tagihan": 0,
+            "Jatuh Tempo": datetime.today()
+        }
+    else:
+        # Ambil data dari supplier berdasarkan ID yang dipilih
+        selected_supplier = st.session_state.supplier[st.session_state.supplier["ID"] == selected_supplier_id].iloc[0]
+        default_values = {
+            "Nama Barang": selected_supplier["Nama Barang"],
+            "Merk": selected_supplier["Merk"],
+            "Ukuran/Kemasan": selected_supplier["Ukuran/Kemasan"],
+            "Jumlah Barang": selected_supplier["Jumlah Barang"],
+            "Nama Supplier": selected_supplier["Nama Supplier"],
+            "Tagihan": selected_supplier["Tagihan"],
+            "Jatuh Tempo": selected_supplier["Jatuh Tempo"]
+        }
+
+    # Form input data supplier baru atau edit data supplier
+    with st.form("supplier_form"):
+        nama_barang = st.text_input("Nama Barang", value=default_values["Nama Barang"])
+        merk = st.text_input("Merk", value=default_values["Merk"])
+        ukuran = st.text_input("Ukuran/Kemasan", value=default_values["Ukuran/Kemasan"])
+        jumlah_barang = st.number_input("Jumlah Barang", min_value=0, value=int(default_values["Jumlah Barang"]))
+        nama_supplier = st.text_input("Nama Supplier", value=default_values["Nama Supplier"])
+        tagihan = st.number_input("Tagihan", min_value=0, value=int(default_values["Tagihan"]))
+        jatuh_tempo = st.date_input("Tanggal Jatuh Tempo", value=default_values["Jatuh Tempo"])
+        submit = st.form_submit_button("Simpan Data Supplier")
         
         if submit:
-            new_id = st.session_state.supplier["ID"].max() + 1 if not st.session_state.supplier.empty else 1
-            new_data = pd.DataFrame({
-                "ID": [new_id],
-                "Nama Barang": [nama_barang],
-                "Merk": [merk],
-                "Ukuran/Kemasan": [ukuran],
-                "Jumlah Barang": [jumlah_barang],
-                "Nama Supplier": [nama_supplier],
-                "Tagihan": [tagihan],
-                "Waktu": [datetime.now()]  # Menambahkan waktu input data supplier
-            })
-            st.session_state.supplier = pd.concat([st.session_state.supplier, new_data], ignore_index=True)
-            st.session_state.supplier = merge_supplier_data(st.session_state.supplier)  # Merge data to handle duplicates
-            st.success("Data supplier berhasil ditambahkan!")
-            save_data(st.session_state.supplier)  # Save data after adding supplier data
+            if selected_supplier is None:
+                # Tambah data baru
+                new_id = st.session_state.supplier["ID"].max() + 1 if not st.session_state.supplier.empty else 1
+                new_data = pd.DataFrame({
+                    "ID": [new_id],
+                    "Nama Barang": [nama_barang],
+                    "Merk": [merk],
+                    "Ukuran/Kemasan": [ukuran],
+                    "Jumlah Barang": [jumlah_barang],
+                    "Nama Supplier": [nama_supplier],
+                    "Tagihan": [tagihan],
+                    "Waktu": [datetime.now()],
+                    "Jatuh Tempo": [jatuh_tempo]
+                })
+                st.session_state.supplier = pd.concat([st.session_state.supplier, new_data], ignore_index=True)
+                st.success("Data supplier baru berhasil ditambahkan!")
+            else:
+                # Update data supplier
+                st.session_state.supplier.loc[st.session_state.supplier["ID"] == selected_supplier_id, 
+                    ["Nama Barang", "Merk", "Ukuran/Kemasan", "Jumlah Barang", "Nama Supplier", "Tagihan", "Jatuh Tempo"]] = \
+                    [nama_barang, merk, ukuran, jumlah_barang, nama_supplier, tagihan, jatuh_tempo]
+                st.success(f"Data supplier ID {selected_supplier_id} berhasil diupdate!")
+            
+            save_data()  # Simpan data setelah menambah atau mengedit supplier
 
-    # Menampilkan tabel data supplier
-    st.subheader("Tabel Data Supplier")
-    supplier_data = st.session_state.supplier.copy()
-
-    # Edit dan hapus data
-    if not supplier_data.empty:
-        # Pilih ID untuk edit atau hapus
-        selected_id = st.selectbox("Pilih ID Supplier", supplier_data["ID"])
-        selected_data = supplier_data[supplier_data["ID"] == selected_id]
-
-        if not selected_data.empty:
-            with st.expander("Edit Data Supplier"):
-                with st.form("edit_supplier"):
-                    new_nama_barang = st.text_input("Nama Barang", value=selected_data["Nama Barang"].values[0])
-                    new_merk = st.text_input("Merk", value=selected_data["Merk"].values[0])
-                    new_ukuran = st.text_input("Ukuran/Kemasan", value=selected_data["Ukuran/Kemasan"].values[0])
-                    new_jumlah_barang = st.number_input("Jumlah Barang", value=selected_data["Jumlah Barang"].values[0])
-                    new_nama_supplier = st.text_input("Nama Supplier", value=selected_data["Nama Supplier"].values[0])
-                    new_tagihan = st.number_input("Tagihan", value=selected_data["Tagihan"].values[0])
-                    submit_edit = st.form_submit_button("Simpan Perubahan")
-                    
-                    if submit_edit:
-                        st.session_state.supplier.loc[
-                            st.session_state.supplier["ID"] == selected_id, 
-                            ["Nama Barang", "Merk", "Ukuran/Kemasan", "Jumlah Barang", "Nama Supplier", "Tagihan"]
-                        ] = [new_nama_barang, new_merk, new_ukuran, new_jumlah_barang, new_nama_supplier, new_tagihan]
-                        st.session_state.supplier = merge_supplier_data(st.session_state.supplier)  # Merge data to handle duplicates
-                        st.success("Data supplier berhasil diperbarui!")
-                        save_data(st.session_state.supplier)  # Save data after editing supplier data
-
-            with st.expander("Hapus Data Supplier"):
-                if st.button("Hapus Data Supplier"):
-                    st.session_state.supplier = st.session_state.supplier[st.session_state.supplier["ID"] != selected_id]
-                    st.success("Data supplier berhasil dihapus!")
-                    save_data(st.session_state.supplier)  # Save data after deleting supplier data
-
-    # Menampilkan tabel data supplier
-    st.subheader("Daftar Data Supplier")
-    st.dataframe(st.session_state.supplier)
+    # Pencarian berdasarkan Nama Barang atau Merk
+    search_input = st.text_input("Cari Nama Barang atau Merk")
+    
+    if search_input:
+        filtered_supplier = st.session_state.supplier[
+            (st.session_state.supplier["Nama Barang"].str.contains(search_input, case=False)) |
+            (st.session_state.supplier["Merk"].str.contains(search_input, case=False))
+        ]
+        st.write("Hasil Pencarian:")
+        st.dataframe(filtered_supplier)
+    else:
+        # Tabel data supplier tanpa filter
+        st.subheader("Daftar Data Supplier")
+        st.dataframe(st.session_state.supplier)
 
 
-# Initialize session state if not already
-if 'stok_barang' not in st.session_state:
-    st.session_state.stok_barang = pd.DataFrame(columns=["ID", "Nama Barang", "Merk", "Ukuran/Kemasan", "Harga", "Jumlah", "Persentase Keuntungan"])
 
-if 'penjualan' not in st.session_state:
-    st.session_state.penjualan = pd.DataFrame(columns=["ID", "Nama Pelanggan", "Nama Barang", "Jumlah", "Total Harga", "Keuntungan", "Waktu"])
+# Fungsi untuk menyimpan semua data ke file Excel
+def save_to_excel():
+    with pd.ExcelWriter('data_laporan.xlsx', engine='openpyxl') as writer:
+        # Simpan stok barang
+        st.session_state.stok_barang.to_excel(writer, sheet_name='Stok Barang', index=False)
+        
+        # Simpan penjualan
+        st.session_state.penjualan.to_excel(writer, sheet_name='Penjualan', index=False)
+        
+        # Simpan supplier
+        st.session_state.supplier.to_excel(writer, sheet_name='Supplier', index=False)
+        
+        # Simpan pengeluaran
+        st.session_state.pengeluaran.to_excel(writer, sheet_name='Pengeluaran', index=False)
+        
+        # Simpan piutang konsumen
+        if "piutang_konsumen" in st.session_state:
+            st.session_state.piutang_konsumen.to_excel(writer, sheet_name='Piutang Konsumen', index=False)
 
-if 'supplier' not in st.session_state:
-    st.session_state.supplier = pd.DataFrame(columns=["ID", "Nama Barang", "Merk", "Ukuran/Kemasan", "Jumlah", "Nama Supplier", "Tagihan", "Waktu"])
+        # Simpan histori analisis keuangan
+        if "historis_analisis_keuangan" in st.session_state:
+            st.session_state.historis_analisis_keuangan.to_excel(writer, sheet_name='Histori Analisis Keuangan', index=False)
+        
+        # Simpan keuntungan bersih
+        total_penjualan = st.session_state.penjualan["Total Harga"].sum()
+        total_pengeluaran = st.session_state.pengeluaran["Jumlah Pengeluaran"].sum()
+        total_keuntungan_bersih = total_penjualan - total_pengeluaran
+        df_keuntungan_bersih = pd.DataFrame({
+            "Total Penjualan": [total_penjualan],
+            "Total Pengeluaran": [total_pengeluaran],
+            "Keuntungan Bersih": [total_keuntungan_bersih]
+        })
+        df_keuntungan_bersih.to_excel(writer, sheet_name='Keuntungan Bersih', index=False)
 
-if 'laporan_pengeluaran' not in st.session_state:
-    st.session_state.laporan_pengeluaran = pd.DataFrame(columns=["Gaji Karyawan", "Biaya Operasional", "Biaya Lainnya", "Total Pengeluaran", "Bulan"])
 
-import pandas as pd
-import streamlit as st
-from datetime import datetime
-import matplotlib.pyplot as plt
-
-# Fungsi untuk menyimpan data secara otomatis
-def save_data():
-    # Implementasikan penyimpanan data jika diperlukan
-    pass
-
-def auto_save():
-    if 'data_saved' not in st.session_state:
-        st.session_state.data_saved = {
-            'stok_barang': pd.DataFrame(),
-            'supplier': pd.DataFrame(),
-            'Total Pengeluaran': pd.DataFrame(),
-            'penjualan': pd.DataFrame()
-        }
-    st.session_state.data_saved['stok_barang'] = st.session_state.stok_barang
-    st.session_state.data_saved['supplier'] = st.session_state.supplier
-    st.session_state.data_saved['penjualan'] = st.session_state.penjualan
-
+# Fungsi untuk halaman Owner dengan pengaman password
 def halaman_owner():
     st.header("Halaman Owner - Analisa Keuangan")
 
@@ -436,360 +534,495 @@ def halaman_owner():
             password = st.text_input("Masukkan Password", type="password")
             submit = st.form_submit_button("Login")
             
-            if submit and password == "password123":  # Ganti dengan password yang Anda inginkan
+            if submit and password == "Jayaselalu123":  # Ganti dengan password yang Anda inginkan
                 st.session_state.authenticated = True
                 st.success("Login berhasil!")
             elif submit:
                 st.error("Password salah!")
         return
 
-    # Tabel stok barang dengan fitur edit dan hapus
-    st.subheader("Stok Barang")
-    df_stok_barang = st.session_state.stok_barang.drop(columns=["Stok"], errors='ignore')  # Menghilangkan kolom "Stok" jika ada
-    st.dataframe(df_stok_barang)
+
+    # Form input barang baru dan edit barang
+    st.header("Stock Barang")
     
-    if not st.session_state.stok_barang.empty:
-        selected_row = st.selectbox("Pilih ID Barang untuk Diedit", st.session_state.stok_barang["ID"])
-
-        with st.form("edit_barang"):
-            barang_dipilih = st.session_state.stok_barang[st.session_state.stok_barang["ID"] == selected_row]
-            nama_barang = st.text_input("Nama Barang", value=barang_dipilih["Nama Barang"].values[0])
-            merk = st.text_input("Merk", value=barang_dipilih["Merk"].values[0])
-            ukuran = st.text_input("Ukuran/Kemasan", value=barang_dipilih["Ukuran/Kemasan"].values[0])
-            harga = st.number_input("Harga", min_value=0, value=int(barang_dipilih["Harga"].values[0]))
-            jumlah = st.number_input("Jumlah", min_value=0, value=int(barang_dipilih["Jumlah"].values[0]))
-            persentase_keuntungan = st.number_input("Persentase Keuntungan (%)", min_value=0, max_value=100, value=int(barang_dipilih["Persentase Keuntungan"].values[0]))
-            submit = st.form_submit_button("Update Barang")
-            
-            if submit:
-                st.session_state.stok_barang.loc[st.session_state.stok_barang["ID"] == selected_row, ["Nama Barang", "Merk", "Ukuran/Kemasan", "Harga", "Jumlah", "Persentase Keuntungan"]] = [nama_barang, merk, ukuran, harga, jumlah, persentase_keuntungan]
-                st.success("Barang berhasil diupdate!")
-                save_data()  # Save data after updating item
+    # Tambahkan opsi untuk "Tambah Baru" di selectbox
+    barang_ids = st.session_state.stok_barang["ID"].tolist()
+    barang_ids.insert(0, "Tambah Baru")  # Opsi untuk menambah barang baru
+    selected_row = st.selectbox("Pilih ID Barang untuk Diedit atau Tambah Baru", barang_ids)
+    
+    if selected_row == "Tambah Baru":
+        barang_dipilih = None
+        default_values = {
+            "Nama Barang": "",
+            "Merk": "",
+            "Ukuran/Kemasan": "",
+            "Harga": 0,
+            "Stok": 0,
+            "Persentase Keuntungan": 0,
+            "Kode Warna": ""
+        }
+    else:
+        barang_dipilih = st.session_state.stok_barang[st.session_state.stok_barang["ID"] == selected_row]
+        default_values = {
+            "Nama Barang": barang_dipilih["Nama Barang"].values[0],
+            "Merk": barang_dipilih["Merk"].values[0],
+            "Ukuran/Kemasan": barang_dipilih["Ukuran/Kemasan"].values[0],
+            "Harga": barang_dipilih["Harga"].values[0] if pd.notna(barang_dipilih["Harga"].values[0]) else 0,
+            "Stok": barang_dipilih["Stok"].values[0] if pd.notna(barang_dipilih["Stok"].values[0]) else 0,
+            "Persentase Keuntungan": barang_dipilih["Persentase Keuntungan"].values[0] if pd.notna(barang_dipilih["Persentase Keuntungan"].values[0]) else 0,
+            "Kode Warna": barang_dipilih["Kode Warna"].values[0] if "Kode Warna" in barang_dipilih.columns else ""
+        }
+    
+    with st.form("edit_barang"):
+        nama_barang = st.text_input("Nama Barang", value=default_values["Nama Barang"])
+        merk = st.text_input("Merk", value=default_values["Merk"])
+        ukuran = st.text_input("Ukuran/Kemasan", value=default_values["Ukuran/Kemasan"])
         
-        # Tombol untuk hapus barang
-        if st.button("Hapus Barang"):
-            confirm = st.radio("Apakah Anda yakin ingin menghapus barang ini?", ["Ya", "Tidak"])
-            if confirm == "Ya":
-                st.session_state.stok_barang = st.session_state.stok_barang[st.session_state.stok_barang["ID"] != selected_row]
-                st.success("Barang berhasil dihapus!")
-                save_data()  # Save data after deleting item
-
-    # Tabel Laporan Penjualan dengan fitur edit dan hapus
-    st.subheader("Laporan Penjualan")
-    st.dataframe(st.session_state.penjualan)
-
-    if not st.session_state.penjualan.empty:
-        selected_penjualan_row = st.selectbox("Pilih ID Penjualan untuk Diedit", st.session_state.penjualan["ID"])
-
-        with st.form("edit_penjualan"):
-            penjualan_dipilih = st.session_state.penjualan[st.session_state.penjualan["ID"] == selected_penjualan_row]
-            nama_pelanggan = st.text_input("Nama Pelanggan", value=penjualan_dipilih["Nama Pelanggan"].values[0])
-            nama_barang = st.text_input("Nama Barang", value=penjualan_dipilih["Nama Barang"].values[0])
-            jumlah = st.number_input("Jumlah", min_value=1, value=int(penjualan_dipilih["Jumlah"].values[0]))
-            total_harga = st.number_input("Total Harga", min_value=0, value=int(penjualan_dipilih["Total Harga"].values[0]))
-            keuntungan = st.number_input("Keuntungan", min_value=0, value=int(penjualan_dipilih["Keuntungan"].values[0]))
-            submit_penjualan = st.form_submit_button("Update Penjualan")
-            
-            if submit_penjualan:
-                if nama_pelanggan and nama_barang:  # Validasi input
-                    st.session_state.penjualan.loc[st.session_state.penjualan["ID"] == selected_penjualan_row, 
-                                                   ["Nama Pelanggan", "Nama Barang", "Jumlah", "Total Harga", "Keuntungan"]] = [nama_pelanggan, nama_barang, jumlah, total_harga, keuntungan]
-                    st.success("Penjualan berhasil diupdate!")
-                    save_data()  # Save data after updating item
-                else:
-                    st.error("Mohon lengkapi semua field!")
-
-        # Tombol untuk hapus penjualan dengan konfirmasi
-        if st.button("Hapus Penjualan"):
-            confirm = st.radio("Apakah Anda yakin ingin menghapus data penjualan ini?", ["Ya", "Tidak"])
-            if confirm == "Ya":
-                st.session_state.penjualan = st.session_state.penjualan[st.session_state.penjualan["ID"] != selected_penjualan_row]
-                st.success("Penjualan berhasil dihapus!")
-                save_data()  # Save data after deleting item
-        else:
-            st.info("Tidak ada data penjualan untuk diedit atau dihapus.")
-
-    # Fungsi untuk menyimpan data
-    def save_data(df=None, filename='data_supplier.csv'):
-        if df is not None:
-            if df.empty and os.path.exists(filename):
-                os.remove(filename)  # Hapus file jika DataFrame kosong
-            else:
-                df.to_csv(filename, index=False)
-            st.success(f"Data berhasil disimpan sebagai {filename}")
-        else:
-            st.info("Tidak ada data untuk disimpan.")
-
-    # Fungsi untuk halaman supplier
-    def halaman_supplier():
-        st.header("Data Supplier")
+        harga = st.number_input("Harga", min_value=0, value=int(default_values["Harga"]))
+        stok = st.number_input("Stok Barang", min_value=0, value=int(default_values["Stok"]))
+        persentase_keuntungan = st.number_input("Persentase Keuntungan (%)", min_value=0, max_value=100, value=int(default_values["Persentase Keuntungan"]))
+        kode_warna = st.text_input("Kode Warna/Base", value=default_values["Kode Warna"], placeholder="Opsional")
         
-        # Cek apakah data supplier sudah ada di session state
-        if 'supplier' not in st.session_state:
-            if os.path.exists('data_supplier.csv'):
-                st.session_state.supplier = pd.read_csv('data_supplier.csv')
-            else:
-                st.session_state.supplier = pd.DataFrame(columns=[
-                    "ID", "Nama Barang", "Merk", "Ukuran/Kemasan", 
-                    "Jumlah Barang", "Nama Supplier", "Tagihan", "Waktu"
-                ])
+        # Calculate the selling price as base price plus profit percentage
+        selling_price = harga * (1 + (persentase_keuntungan / 100))
         
-        # Form untuk menambahkan data supplier baru
-        with st.form("input_supplier"):
-            nama_barang = st.text_input("Nama Barang")
-            merk = st.text_input("Merk")
-            ukuran = st.text_input("Ukuran/Kemasan")
-            jumlah_barang = st.number_input("Jumlah Barang", min_value=0)
-            nama_supplier = st.text_input("Nama Supplier")
-            tagihan = st.number_input("Tagihan", min_value=0)
-            submit = st.form_submit_button("Tambah Data Supplier")
-            
-            if submit:
-                new_id = st.session_state.supplier["ID"].max() + 1 if not st.session_state.supplier.empty else 1
+        submit = st.form_submit_button("Simpan Barang")
+    
+        if submit:
+            if barang_dipilih is None:
+                # Tambah barang baru
+                new_id = st.session_state.stok_barang["ID"].max() + 1 if not st.session_state.stok_barang.empty else 1
                 new_data = pd.DataFrame({
                     "ID": [new_id],
                     "Nama Barang": [nama_barang],
                     "Merk": [merk],
                     "Ukuran/Kemasan": [ukuran],
-                    "Jumlah Barang": [jumlah_barang],
-                    "Nama Supplier": [nama_supplier],
-                    "Tagihan": [tagihan],
-                    "Waktu": [datetime.now()]  # Menambahkan waktu input data supplier
+                    "Harga": [harga],
+                    "Stok": [stok],
+                    "Persentase Keuntungan": [persentase_keuntungan],
+                    "Kode Warna": [kode_warna],
+                    "Harga Jual": [selling_price],
+                    "Waktu Input": [datetime.now()]
                 })
-                st.session_state.supplier = pd.concat([st.session_state.supplier, new_data], ignore_index=True)
-                st.success("Data supplier berhasil ditambahkan!")
-                save_data(st.session_state.supplier)  # Save data after adding supplier data
-
-        # Button to clear all supplier data
-        if st.button("Hapus Semua Data Supplier"):
-            if st.session_state.supplier.empty:
-                st.info("Tidak ada data supplier untuk dihapus.")
+                st.session_state.stok_barang = pd.concat([st.session_state.stok_barang, new_data], ignore_index=True)
+                st.success("Barang baru berhasil ditambahkan!")
             else:
-                confirm = st.radio("Apakah Anda yakin ingin menghapus semua data supplier?", ["Ya", "Tidak"])
-                if confirm == "Ya":
-                    st.session_state.supplier = pd.DataFrame(columns=[
-                        "ID", "Nama Barang", "Merk", "Ukuran/Kemasan", 
-                        "Jumlah Barang", "Nama Supplier", "Tagihan", "Waktu"
-                    ])
-                    save_data(st.session_state.supplier)  # Save after clearing data
-                    st.success("Semua data supplier telah dihapus.")
+                # Update barang yang ada
+                st.session_state.stok_barang.loc[st.session_state.stok_barang["ID"] == selected_row, 
+                    ["Nama Barang", "Merk", "Ukuran/Kemasan", "Harga", "Stok", "Persentase Keuntungan", "Kode Warna", "Harga Jual"]] = \
+                    [nama_barang, merk, ukuran, harga, stok, persentase_keuntungan, kode_warna, selling_price]
+                st.success(f"Barang ID {selected_row} berhasil diupdate!")
+            
+            save_data()  # Simpan data setelah menambah atau mengedit barang
+    
+    # Tabel stok barang
+    st.subheader("Daftar Stok Barang")
+    df_stok_barang = st.session_state.stok_barang.copy()
+    
+    # Hapus kolom "Persentase Keuntungan" dan "Harga" dari tabel jika ada
+    if "Persentase Keuntungan" in df_stok_barang.columns:
+        df_stok_barang = df_stok_barang.drop(columns=["Persentase Keuntungan"])
+    
+    if "Harga" in df_stok_barang.columns:
+        df_stok_barang = df_stok_barang.drop(columns=["Harga"])
+    
+    # Pencarian nama barang atau merk
+    search_text = st.text_input("Cari Nama Barang atau Merk", key='search_text')
+    if search_text:
+        df_stok_barang = df_stok_barang[
+            (df_stok_barang["Nama Barang"].str.contains(search_text, case=False, na=False)) |
+            (df_stok_barang["Merk"].str.contains(search_text, case=False, na=False))
+        ]
+    
+    st.dataframe(df_stok_barang)
+    
+    # Tombol untuk hapus barang (jika ID bukan 'Tambah Baru')
+    if selected_row != "Tambah Baru" and st.button("Hapus Barang"):
+        st.session_state.stok_barang = st.session_state.stok_barang[st.session_state.stok_barang["ID"] != selected_row]
+        st.success(f"Barang ID {selected_row} berhasil dihapus!")
+        save_data()  # Simpan data setelah menghapus barang
         
-        # Edit Supplier Data
-        st.subheader("Edit Data Supplier")
-        if not st.session_state.supplier.empty:
-            supplier_id = st.selectbox("Pilih ID Supplier untuk Diedit", st.session_state.supplier["ID"])
-            
-            supplier_data = st.session_state.supplier[st.session_state.supplier["ID"] == supplier_id]
-            
-            if not supplier_data.empty:
-                with st.form("edit_supplier"):
-                    nama_barang = st.text_input("Nama Barang", value=supplier_data["Nama Barang"].values[0])
-                    merk = st.text_input("Merk", value=supplier_data["Merk"].values[0])
-                    ukuran = st.text_input("Ukuran/Kemasan", value=supplier_data["Ukuran/Kemasan"].values[0])
-                    jumlah_barang = st.number_input("Jumlah Barang", value=supplier_data["Jumlah Barang"].values[0])
-                    nama_supplier = st.text_input("Nama Supplier", value=supplier_data["Nama Supplier"].values[0])
-                    tagihan = st.number_input("Tagihan", value=supplier_data["Tagihan"].values[0])
-                    submit_edit = st.form_submit_button("Simpan Perubahan")
-                    
-                    if submit_edit:
-                        st.session_state.supplier.loc[
-                            st.session_state.supplier["ID"] == supplier_id, ["Nama Barang", "Merk", "Ukuran/Kemasan", "Jumlah Barang", "Nama Supplier", "Tagihan"]
-                        ] = [nama_barang, merk, ukuran, jumlah_barang, nama_supplier, tagihan]
-                        st.success("Data supplier berhasil diperbarui!")
-                        save_data(st.session_state.supplier)  # Save data after editing supplier data
+    # Check if 'penjualan' DataFrame exists and has required columns
+    if 'penjualan' not in st.session_state:
+        st.error("Data penjualan tidak ditemukan.")
+    else:
+        # Analisa keuangan dengan grafik pemasaran
+        st.subheader("Analisa Keuangan")
+    
+        # Perhitungan total penjualan
+        if "Total Harga" in st.session_state.penjualan.columns:
+            total_penjualan = st.session_state.penjualan["Total Harga"].sum()
+            st.write(f"Total Penjualan: Rp {total_penjualan:,.0f}")
         else:
-            st.warning("Tidak ada data supplier untuk diedit.")
+            st.error("Kolom 'Total Harga' tidak ditemukan dalam data penjualan.")
         
-        # Tabel data supplier
-        st.subheader("Daftar Data Supplier")
-        # Menghilangkan kolom "Jumlah Barang" dari tampilan
-        df_to_display = st.session_state.supplier.drop(columns=["Jumlah Barang"], errors='ignore')
-        st.dataframe(df_to_display)
-
-    # Analisa keuangan
-    st.subheader("Analisa Keuangan")
+        # Grafik total penjualan per barang dan merk
+        if not st.session_state.penjualan.empty and "Nama Barang" in st.session_state.penjualan.columns and "Merk" in st.session_state.penjualan.columns:
+            st.subheader("Grafik Penjualan Per Barang dan Merk")
+    
+            # Group by "Nama Barang" and "Merk" and sum the "Total Harga"
+            sales_per_item_and_brand = st.session_state.penjualan.groupby(["Nama Barang", "Merk"])["Total Harga"].sum().reset_index()
+    
+            # Create a bar plot
+            plt.figure(figsize=(14, 8))
+            for key, grp in sales_per_item_and_brand.groupby(['Nama Barang']):
+                plt.bar(grp['Merk'] + ' (' + grp['Nama Barang'] + ')', grp['Total Harga'], label=key)
+    
+            # Customize the plot
+            plt.title("Total Penjualan per Barang dan Merk", fontsize=16)
+            plt.xlabel("Barang dan Merk", fontsize=14)
+            plt.ylabel("Total Penjualan (Rp)", fontsize=14)
+            plt.xticks(rotation=45, ha="right", fontsize=12)
+            plt.legend(title='Nama Barang', bbox_to_anchor=(1.05, 1), loc='upper left')
+    
+            # Display the plot in Streamlit
+            st.pyplot(plt)
+        else:
+            st.write("Data penjualan kosong atau kolom 'Nama Barang' atau 'Merk' tidak ditemukan.")
+    
+    # Perhitungan tagihan supplier bulanan
+    current_month = datetime.now().strftime("%Y-%m")
+    st.session_state.supplier['Waktu'] = pd.to_datetime(st.session_state.supplier['Waktu'])
+    monthly_supplier_bills = st.session_state.supplier[st.session_state.supplier["Waktu"].dt.strftime("%Y-%m") == current_month]["Tagihan"].sum()
+    st.write(f"Total Tagihan Supplier Bulan Ini: Rp {monthly_supplier_bills}")
+    
+    # Menghitung total penjualan
     total_penjualan = st.session_state.penjualan["Total Harga"].sum()
-    st.write(f"Total Penjualan: Rp {total_penjualan}")
-    
-    total_keuntungan = st.session_state.penjualan["Keuntungan"].sum()
-    st.write(f"Total Keuntungan: Rp {total_keuntungan}")
 
-    # Input pengeluaran bulanan
-    st.subheader("Pengeluaran Per Bulan")
-    with st.form("pengeluaran_bulanan"):
-        gaji_karyawan = st.number_input("Gaji Karyawan", min_value=0, value=0)
-        biaya_operasional = st.number_input("Biaya Operasional", min_value=0, value=0)
-        biaya_lainnya = st.number_input("Biaya Lainnya", min_value=0, value=0)
-        submit = st.form_submit_button("Simpan Pengeluaran")
+    # Menghitung total tagihan supplier
+    if not st.session_state.supplier.empty:
+        monthly_supplier_bills = st.session_state.supplier["Tagihan"].sum()
+    else:
+        monthly_supplier_bills = 0
+
+    # Menghitung selisih antara total penjualan dan tagihan supplier
+    selisih = total_penjualan - monthly_supplier_bills
+
+    # Menampilkan hasil perbandingan
+    st.write(f"Total Penjualan: Rp {total_penjualan:,.0f}")
+    st.write(f"Total Tagihan Supplier: Rp {monthly_supplier_bills:,.0f}")
+    st.write(f"Selisih antara Total Penjualan dan Tagihan Supplier: Rp {selisih:,.0f}")
+
+    # Membuat DataFrame untuk analisis keuangan
+    analisis_keuangan_df = pd.DataFrame({
+        "Tanggal": [datetime.now().strftime("%Y-%m-%d")],
+        "Total Penjualan": [total_penjualan],
+        "Total Tagihan Supplier": [monthly_supplier_bills],
+        "Selisih": [selisih]
+    })
+
+    # Menampilkan tabel analisis keuangan
+    st.subheader("Tabel Analisis Keuangan")
+    st.dataframe(analisis_keuangan_df)
+
+    # Menyimpan histori analisis keuangan ke file CSV
+    if "historis_analisis_keuangan" not in st.session_state:
+        st.session_state.historis_analisis_keuangan = pd.DataFrame(columns=["Tanggal", "Total Penjualan", "Total Tagihan Supplier", "Selisih"])
+
+    st.session_state.historis_analisis_keuangan = pd.concat([st.session_state.historis_analisis_keuangan, analisis_keuangan_df], ignore_index=True)
+
+    # Menampilkan tabel data supplier dengan pencarian
+    st.subheader("Data Supplier")
+    
+    search_input = st.text_input("Cari Nama Barang atau Merk")
+    
+    if search_input:
+        filtered_supplier = st.session_state.supplier[
+            (st.session_state.supplier["Nama Barang"].str.contains(search_input, case=False)) |
+            (st.session_state.supplier["Merk"].str.contains(search_input, case=False))
+        ]
+        st.write("Hasil Pencarian:")
+        st.dataframe(filtered_supplier)
+    else:
+        st.dataframe(st.session_state.supplier)
         
-        if submit:
-            total_pengeluaran = gaji_karyawan + biaya_operasional + biaya_lainnya
-            st.write(f"Total Pengeluaran Bulanan: Rp {total_pengeluaran}")
-
-            # Simpan data pengeluaran ke dalam session state
-            new_pengeluaran = pd.DataFrame({
-                "Gaji Karyawan": [gaji_karyawan],
-                "Biaya Operasional": [biaya_operasional],
-                "Biaya Lainnya": [biaya_lainnya],
-                "Total Pengeluaran": [total_pengeluaran],
-                "Bulan": [datetime.now().strftime("%Y-%m")]
-            })
-
-            if "laporan_pengeluaran" in st.session_state:
-                st.session_state.laporan_pengeluaran = pd.concat([st.session_state.laporan_pengeluaran, new_pengeluaran], ignore_index=True)
-            else:
-                st.session_state.laporan_pengeluaran = new_pengeluaran
-            save_data()  # Fungsi untuk menyimpan data
-
-    # Menampilkan Total Pengeluaran
-    if "laporan_pengeluaran" in st.session_state:
-        total_pengeluaran_all = st.session_state.laporan_pengeluaran["Total Pengeluaran"].sum()
-    else:
-        total_pengeluaran_all = 0
-    st.write(f"Total Pengeluaran: Rp {total_pengeluaran_all}")
-    save_data() 
-
-    # Hitung total keuntungan
-    if "penjualan" in st.session_state:
-        total_keuntungan = st.session_state.penjualan["Keuntungan"].sum()
-    else:
-        total_keuntungan = 0
-    st.write(f"Total Keuntungan: Rp {total_keuntungan}")
-
-    # Perhitungan keuntungan bersih
-    keuntungan_bersih = total_keuntungan - total_pengeluaran_all
-    st.write(f"Keuntungan Bersih: Rp {keuntungan_bersih}")
-
+    # Initialize session state variables if they don't exist
+    if 'historis_analisis_keuangan' not in st.session_state:
+        st.session_state.historis_analisis_keuangan = pd.DataFrame(columns=[
+            "Waktu", "Keuntungan Bersih", "Bulan"
+        ])
     
+    if 'penjualan' not in st.session_state:
+        st.session_state.penjualan = pd.DataFrame(columns=[
+            "ID", "Nama Pelanggan", "Nomor Telepon", "Alamat", "Nama Barang",
+            "Ukuran/Kemasan", "Merk", "Kode Warna", "Jumlah", "Total Harga",
+            "Keuntungan", "Waktu"
+        ])
+    
+    if 'pengeluaran' not in st.session_state:
+        st.session_state.pengeluaran = pd.DataFrame(columns=[
+            "Jenis Pengeluaran", "Jumlah Pengeluaran", "Keterangan", "Waktu"
+        ])
+    
+    if 'historis_keuntungan_bersih' not in st.session_state:
+        st.session_state.historis_keuntungan_bersih = pd.DataFrame(columns=[
+            "Waktu", "Keuntungan Bersih", "Bulan"
+        ])
+    
+        # Initialize the session state if not already initialized
+        if 'historis_analisa_pendapatan' not in st.session_state:
+            st.session_state.historis_analisa_pendapatan = pd.DataFrame(columns=['Bulan', 'Total Penjualan', 'Total Tagihan Supplier', 'Keuntungan Bersih'])
+        
+        # Current date and month
+        current_month = datetime.now().strftime("%Y-%m")
+        
+        # Calculate `total_penjualan`, `total_tagihan_supplier`, and `keuntungan_bersih`
+        total_penjualan = total_keuntungan  # or use your existing logic for total penjualan
+        total_tagihan_supplier = ...  # your logic to calculate total tagihan supplier
+        keuntungan_bersih = total_penjualan - total_tagihan_supplier
+        
+        # Check if there's already data for the current month
+        if not st.session_state.historis_analisa_pendapatan.empty:
+            latest_record = st.session_state.historis_analisa_pendapatan.iloc[-1]  # Get the latest record
+            latest_month = latest_record['Bulan']
+            
+            # Update the record if it's the same month, otherwise create a new one
+            if latest_month == current_month:
+                st.session_state.historis_analisa_pendapatan.iloc[-1] = {
+                    'Bulan': current_month,
+                    'Total Penjualan': total_penjualan,
+                    'Total Tagihan Supplier': total_tagihan_supplier,
+                    'Keuntungan Bersih': keuntungan_bersih
+                }
+            else:
+                # Add a new record for a different month
+                st.session_state.historis_analisa_pendapatan = st.session_state.historis_analisa_pendapatan.append({
+                    'Bulan': current_month,
+                    'Total Penjualan': total_penjualan,
+                    'Total Tagihan Supplier': total_tagihan_supplier,
+                    'Keuntungan Bersih': keuntungan_bersih
+                }, ignore_index=True)
+        else:
+            # First-time entry
+            st.session_state.historis_analisa_pendapatan = st.session_state.historis_analisa_pendapatan.append({
+                'Bulan': current_month,
+                'Total Penjualan': total_penjualan,
+                'Total Tagihan Supplier': total_tagihan_supplier,
+                'Keuntungan Bersih': keuntungan_bersih
+            }, ignore_index=True)
+        
+        # Display the financial analysis history (last updated entry only)
+        st.subheader("Histori Analisa Pendapatan")
+        st.dataframe(st.session_state.historis_analisa_pendapatan)
+    
+    
+    # Menambahkan tabel pengeluaran dan fitur edit
+    st.subheader("Pengeluaran")
+    
+    # Menampilkan tabel pengeluaran
+    st.dataframe(st.session_state.pengeluaran)
+    
+    # Form untuk menambah pengeluaran
+    with st.form("tambah_pengeluaran"):
+        st.write("Tambah Pengeluaran Baru")
+        jenis_pengeluaran = st.selectbox("Jenis Pengeluaran", ["Biaya Gaji", "Biaya Operasional", "Biaya Lainnya"])
+        jumlah_pengeluaran = st.number_input("Jumlah Pengeluaran (Rp)", min_value=0)
+        keterangan_pengeluaran = st.text_input("Keterangan Pengeluaran")
+        submit_pengeluaran = st.form_submit_button("Tambah Pengeluaran")
+        
+        if submit_pengeluaran:
+            new_data = pd.DataFrame({
+                "Jenis Pengeluaran": [jenis_pengeluaran],
+                "Jumlah Pengeluaran": [jumlah_pengeluaran],
+                "Keterangan": [keterangan_pengeluaran],
+                "Waktu": [datetime.now()]
+            })
+            st.session_state.pengeluaran = pd.concat([st.session_state.pengeluaran, new_data], ignore_index=True)
+            st.success("Pengeluaran berhasil ditambahkan!")
+            save_data()  # Simpan data setelah penambahan pengeluaran
+    
+    # Tabel historis pengeluaran
+    st.subheader("Historis Pengeluaran")
+    st.dataframe(st.session_state.pengeluaran)
+    
+    # Analisa Keuangan - Total Keuntungan Bersih
+    st.subheader("Analisa Keuangan - Total Keuntungan Bersih")
 
-    # Grafik Penjualan Bulanan
-    st.subheader("Grafik Penjualan")
-    if "penjualan" in st.session_state and not st.session_state.penjualan.empty:
-        sales_data = st.session_state.penjualan.groupby(st.session_state.penjualan["Waktu"].dt.to_period("M")).agg({"Total Harga": "sum"}).reset_index()
-        sales_data["Waktu"] = sales_data["Waktu"].astype(str)
+    # Ensure that the required columns are present in stok_barang
+    if 'Harga Jual' in st.session_state.stok_barang.columns and 'Harga' in st.session_state.stok_barang.columns:
+        # Merge penjualan with stok_barang to get 'Harga' and 'Harga Jual'
+        merged_df = st.session_state.penjualan.merge(
+            st.session_state.stok_barang[['Nama Barang', 'Harga', 'Harga Jual']], 
+            on='Nama Barang', 
+            how='left'
+        )
+        
+        # Calculate 'Total Harga' and 'Keuntungan'
+        merged_df["Total Harga"] = merged_df["Jumlah"] * merged_df["Harga Jual"]
+        merged_df["Keuntungan"] = merged_df["Total Harga"] - (merged_df["Jumlah"] * merged_df["Harga"])
 
-        fig, ax = plt.subplots()
-        ax.bar(sales_data["Waktu"], sales_data["Total Harga"], color='skyblue')
-        ax.set_xlabel("Bulan")
-        ax.set_ylabel("Total Penjualan")
-        ax.set_title("Grafik Penjualan Bulanan")
-        st.pyplot(fig)
+        # Check if the 'Keuntungan' column exists before referencing it
+        if "Keuntungan" in merged_df.columns:
+            # Calculate total profit (sum of 'Keuntungan')
+            total_keuntungan = merged_df["Keuntungan"].sum()
+        else:
+            st.write("Kolom 'Keuntungan' tidak ditemukan setelah penggabungan.")
+            total_keuntungan = 0  # Set to zero if 'Keuntungan' is missing
+        
+        # Calculate total expenses
+        total_pengeluaran = st.session_state.pengeluaran["Jumlah Pengeluaran"].sum() if "Jumlah Pengeluaran" in st.session_state.pengeluaran.columns else 0
+
+        # Display total profit and expenses
+        st.write(f"Total Keuntungan (Harga Jual): Rp {total_keuntungan:,.0f}")
+        st.write(f"Total Pengeluaran: Rp {total_pengeluaran:,.0f}")
+
+        # Update data historis keuntungan bersih
+        current_month = datetime.now().strftime("%Y-%m")
+
+        # Ensure 'Bulan' exists in the historical dataframe
+        if 'Bulan' in st.session_state.historis_keuntungan_bersih.columns:
+            st.session_state.historis_keuntungan_bersih = st.session_state.historis_keuntungan_bersih[
+                st.session_state.historis_keuntungan_bersih["Bulan"] != current_month
+            ]
+
+        # Add the new data for the current month
+        new_historis = pd.DataFrame({
+            "Waktu": [datetime.now()],
+            "Keuntungan Bersih": [total_keuntungan - total_pengeluaran],
+            "Bulan": [current_month]
+        })
+        st.session_state.historis_keuntungan_bersih = pd.concat([st.session_state.historis_keuntungan_bersih, new_historis], ignore_index=True)
+
+        # Tabel historis keuntungan bersih
+        st.subheader("Historis Keuntungan Bersih")
+        st.dataframe(st.session_state.historis_keuntungan_bersih)
+
     else:
-        st.info("Belum ada data penjualan untuk ditampilkan.")
+        st.write("Kolom 'Harga Jual' atau 'Harga' tidak ditemukan di data stok.")
 
-    # Grafik Keuntungan Harian
-    st.subheader("Grafik Keuntungan Harian")
-    if "penjualan" in st.session_state and not st.session_state.penjualan.empty:
-        # Kelompokkan data berdasarkan hari
-        profit_data = st.session_state.penjualan.groupby(st.session_state.penjualan["Waktu"].dt.to_period("D")).agg({"Keuntungan": "sum"}).reset_index()
-        profit_data["Waktu"] = profit_data["Waktu"].astype(str)
+    # Tabel ringkasan keuangan
+    st.subheader("Ringkasan Keuangan")
+    current_date = datetime.now()
 
-        # Plotting the graph
-        fig, ax = plt.subplots()
-        ax.plot(profit_data["Waktu"], profit_data["Keuntungan"], marker='o', color='lightgreen')
-        ax.set_xlabel("Tanggal")
-        ax.set_ylabel("Total Keuntungan")
-        ax.set_title("Grafik Keuntungan Harian")
-        plt.xticks(rotation=45)
-        st.pyplot(fig)
-    else:
-        st.info("Belum ada data keuntungan untuk ditampilkan.")
+    # Format the values with commas and without decimals
+    summary_data = {
+        "Keterangan": ["Total Keuntungan", "Total Pengeluaran", "Total Keuntungan Bersih"],
+        "Jumlah (Rp)": [
+            f"{total_keuntungan:,.0f}",  # Format with thousand separator and no decimals
+            f"{total_pengeluaran:,.0f}",  # Format with thousand separator and no decimals
+            f"{(total_keuntungan - total_pengeluaran):,.0f}"  # Format with thousand separator and no decimals
+        ],
+        "Waktu": [current_date.strftime("%d-%m-%Y %H:%M:%S")] * 3,
+        "Bulan": [current_date.strftime("%Y-%m")] * 3
+    }
 
-    # Grafik pemasaran berdasarkan keuntungan per produk
-    st.subheader("Grafik Pemasaran")
-    keuntungan_per_barang = st.session_state.penjualan.groupby("Nama Barang")["Keuntungan"].sum().reset_index()
+    # Convert the summary data to a DataFrame
+    data_ringkasan = pd.DataFrame(summary_data)
 
-    # Plotting the graph
-    fig, ax = plt.subplots()
-    ax.bar(keuntungan_per_barang["Nama Barang"], keuntungan_per_barang["Keuntungan"], color='skyblue')
-    ax.set_xlabel("Nama Barang")
-    ax.set_ylabel("Keuntungan (Rp)")
-    ax.set_title("Keuntungan per Produk")
-    st.pyplot(fig)
+    # Display the table
+    st.table(data_ringkasan)
 
-    st.header("Audit Stok Barang")
+    # Sales Report
+    st.subheader("Laporan Penjualan")
 
-    # Cek apakah data sudah tersedia
-    required_data = ['stok_barang', 'penjualan', 'supplier']
-    if not all(hasattr(st.session_state, key) for key in required_data):
-        st.warning("Data Stok Barang, Penjualan, atau Supplier belum tersedia.")
-        st.stop()
+    # Display merged DataFrame
+    st.dataframe(merged_df)
 
-    # Ambil data dari session state
-    stok_barang = st.session_state.stok_barang
-    penjualan = st.session_state.penjualan
-    supplier = st.session_state.supplier
+    # Initialize `total_keuntungan` to zero to avoid UnboundLocalError
+    total_keuntungan = 0
 
-    # Periksa apakah data supplier ada
-    if supplier.empty:
-        st.warning("Data supplier tidak tersedia.")
-        st.stop()
 
-    # Gabungkan data stok barang
-    audit_df = stok_barang[['ID', 'Nama Barang', 'Merk', 'Ukuran/Kemasan', 'Jumlah']].copy()
+    # Button to download all data to an Excel file
+    if st.button("Download Semua Data (Excel)"):
+        save_to_excel()
+        with open("data_laporan.xlsx", "rb") as file:
+            st.download_button(
+                label="Download Excel",
+                data=file,
+                file_name="data_laporan.xlsx",
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            )
 
-    # Menggabungkan dengan data penjualan
-    penjualan_sum = penjualan.groupby(['Nama Barang', 'Ukuran/Kemasan'], as_index=False)['Jumlah'].sum()
-    audit_df = pd.merge(audit_df, penjualan_sum, on=['Nama Barang', 'Ukuran/Kemasan'], how='left')
-    audit_df.rename(columns={'Jumlah_x': 'Jumlah Stok', 'Jumlah_y': 'Jumlah Penjualan'}, inplace=True)
-    audit_df['Jumlah Penjualan'].fillna(0, inplace=True)
+# Define pages and their content
+def page_admin():
+    st.header("Halaman Admin")
+    # Call the function to manage stock barang here
 
-    # Menggabungkan dengan data supplier
-    supplier_sum = supplier.groupby(['Nama Barang', 'Ukuran/Kemasan'], as_index=False)['Jumlah Barang'].sum()
-    audit_df = pd.merge(audit_df, supplier_sum, on=['Nama Barang', 'Ukuran/Kemasan'], how='left')
-    audit_df.rename(columns={'Jumlah Barang': 'Jumlah Barang'}, inplace=True)
-    audit_df['Jumlah Barang'].fillna(0, inplace=True)
+def page_penjualan():
+    st.header("Penjualan")
+    st.write("Halaman Penjualan")
 
-    # Menambahkan kolom keterangan
-    audit_df['Keterangan'] = audit_df.apply(
-        lambda row: 'Aman' if (row['Jumlah Stok'] - row['Jumlah Penjualan']) == row['Jumlah Barang'] else 'Data Tidak Sesuai', axis=1
+def page_supplier():
+    st.header("Halaman Supplier")
+    st.write("Data Supplier")
+
+def page_owner():
+    st.header("Halaman Owner")
+    st.write("Konten untuk halaman Owner")
+
+# Custom CSS for navigation box and menu items
+st.markdown("""
+    <style>
+    /* Style for the navigation container */
+    .css-1d391kg {
+        background-color: #8967B3; /* Background color of the navigation box */
+        padding: 10px; /* Padding around the menu */
+        border-radius: 10px; /* Rounded corners for the menu */
+        box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1); /* Light shadow for a subtle 3D effect */
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+    .css-1d391kg .css-1g7kjm0 {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+    .css-1d391kg .css-1l7zdkv {
+        margin: 0;
+        padding: 0;
+        border: none;
+        background: none;
+    }
+    /* Style for the menu items */
+    .css-1d391kg .css-1l7zdkv .css-1t8dhd0 {
+        font-size: 16px;
+        text-align: center;
+        color: #333;
+        padding: 10px;
+        border-radius: 5px;
+        background-color: #f8f9fa; /* Background color of the menu item */
+        transition: background-color 0.3s, color 0.3s;
+    }
+    .css-1d391kg .css-1l7zdkv .css-1t8dhd0:hover {
+        background-color: #007bff; /* Hover background color */
+        color: white; /* Hover text color */
+    }
+    .css-1d391kg .css-1l7zdkv .css-1t8dhd0.css-1i6g40i {
+        background-color: #007bff; /* Active menu item background */
+        color: white; /* Active menu item text color */
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
+# Create a sidebar with navigation options
+with st.sidebar:
+    # Add a logo at the top of the sidebar
+    st.image("kasiraja.png", width=150)  # Replace with your local path or use a URL
+
+    # Create the navigation menu
+    selected_page = option_menu(
+        menu_title="Toko Sakti Utama",
+        options=["Stock Barang", "Penjualan", "Supplier", "Owner"],
+        icons=["box", "receipt", "truck", "person"],
+        menu_icon="cast",
+        default_index=0
     )
 
-    # Tampilkan audit_df untuk debugging
-    st.write(audit_df)
-
-    # Notifikasi status stok
-    st.subheader("Notifikasi Status Stok")
-    if not audit_df.empty:
-        for idx, row in audit_df.iterrows():
-            if (row['Jumlah Stok'] - row['Jumlah Penjualan']) == row['Jumlah Barang']:
-                st.success(f"Stok untuk '{row['Nama Barang']}' aman.")
-            else:
-                st.warning(f"Stok untuk '{row['Nama Barang']}' harus di-audit. Stok tidak sesuai dengan jumlah barang.")
-    else:
-        st.warning("Audit Data Kosong.")
-
-# Auto-save functionality to prevent data loss
-    save_data()
-
-    # Fungsi untuk menyimpan data secara otomatis
-    def auto_save():
-        if 'data_saved' not in st.session_state:
-            st.session_state.data_saved = {
-                'stok_barang': pd.DataFrame(),
-                'supplier': pd.DataFrame(),
-                'Total Pengeluaran': pd.DataFrame(),
-                'penjualan': pd.DataFrame()
-            }
-        st.session_state.data_saved['stok_barang'] = st.session_state.stok_barang
-        st.session_state.data_saved['supplier'] = st.session_state.supplier
-        st.session_state.data_saved['penjualan'] = st.session_state.penjualan
-
-# Menampilkan halaman berdasarkan menu yang dipilih
-if menu == "Stock Barang":
+# Page routing
+if selected_page == "Stock Barang":
+    initialize_session_state()
+    load_data()
     halaman_stock_barang()
-elif menu == "Penjualan":
-    halaman_penjualan()
-elif menu == "Supplier":
+elif selected_page == "Penjualan":
+    initialize_session_state()
+    load_data()
+    halaman_penjualan()  # Ensure this is called correctly
+elif selected_page == "Supplier":
+    initialize_session_state()
+    load_data()
     halaman_supplier()
-elif menu == "Owner":
+elif selected_page == "Owner":
+    initialize_session_state()
+    load_data()
     halaman_owner()
-# Button to exit
-if st.button("Keluar"):
-    st.write("Silakan tutup tab atau jendela aplikasi untuk keluar.")
-
-st.markdown('</div>', unsafe_allow_html=True)
-
-# Save data when the app is closed or the menu is changed
-save_data()
-
