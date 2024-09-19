@@ -30,69 +30,56 @@ def initialize_session_state():
         st.session_state.logged_in_user = None
     if 'user_access' not in st.session_state:
         st.session_state.user_access = None
-    # Initialize other session states if necessary
-    # ...
 
-# Load user data
 def load_user_data():
     if os.path.exists(USER_DATA_FILE):
         st.session_state.user_data = pd.read_csv(USER_DATA_FILE)
     else:
         st.session_state.user_data = pd.DataFrame(columns=["Username", "Password", "Role"])
 
-# Save user data
-def save_user_data():
-    if 'user_data' in st.session_state:
-        st.session_state.user_data.to_csv(USER_DATA_FILE, index=False)
+def save_data():
+    # This function could be used to save session data if needed
+    pass
 
-# Function to handle user login
+def register(username, password, role='user'):
+    # Load existing user data
+    if os.path.exists(USER_DATA_FILE):
+        user_data = pd.read_csv(USER_DATA_FILE)
+    else:
+        user_data = pd.DataFrame(columns=["Username", "Password", "Role"])
+    
+    # Check if the username already exists
+    if username in user_data['Username'].values:
+        st.error("Username sudah ada. Silakan pilih username lain.")
+        return False
+    
+    # Append new user data
+    new_user = pd.DataFrame({
+        "Username": [username],
+        "Password": [password],
+        "Role": [role]
+    })
+    user_data = pd.concat([user_data, new_user], ignore_index=True)
+    user_data.to_csv(USER_DATA_FILE, index=False)
+    st.success("Akun berhasil dibuat!")
+    return True
+
+
 def login(username, password):
+    if 'user_data' not in st.session_state:
+        st.error("Data pengguna tidak ditemukan.")
+        return
+
     user_data = st.session_state.user_data
-    user = user_data[(user_data['username'] == Mira) & (user_data['password'] == password123)]
+    user = user_data[(user_data['Username'] == username) & (user_data['Password'] == password)]
     if not user.empty:
         st.session_state.logged_in_user = username
-        st.session_state.user_access = user.iloc[0]['Role']
-        load_data()  # Load user-specific data after login
+        st.session_state.user_access = user['Role'].values[0]
+        st.success(f"Selamat datang, {username}!")
+        return True
     else:
-        st.error("Username atau password salah!")
-
-# Load data based on the logged-in user
-def load_data():
-    if st.session_state.logged_in_user:
-        file_paths = get_user_file_paths(st.session_state.logged_in_user)
-        for key, file_path in file_paths.items():
-            if os.path.exists(file_path):
-                df = pd.read_csv(file_path)
-                # Convert 'Waktu' column to datetime after loading if it exists
-                if 'Waktu' in df.columns:
-                    df['Waktu'] = pd.to_datetime(df['Waktu'])
-                # Store data in session state
-                setattr(st.session_state, key.lower(), df)
-
-# Save data for the logged-in user
-def save_data():
-    if st.session_state.logged_in_user:
-        file_paths = get_user_file_paths(st.session_state.logged_in_user)
-        for key, file_path in file_paths.items():
-            if hasattr(st.session_state, key.lower()):
-                df = getattr(st.session_state, key.lower())
-                df.to_csv(file_path, index=False)
-
-# Main app logic
-def main():
-    initialize_session_state()
-    load_user_data()
-
-    # Display login form if user is not logged in
-    if st.session_state.logged_in_user is None:
-        st.title("Login")
-        with st.form("login_form"):
-            username = st.text_input("Username")
-            password = st.text_input("Password", type="password")
-            submitted = st.form_submit_button("Login")
-            if submitted:
-                login(username, password)
-        return
+        st.error("Username atau password salah.")
+        return False
 
     # Sidebar navigation only after login
     if st.session_state.logged_in_user:
