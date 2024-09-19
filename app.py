@@ -48,7 +48,7 @@ def save_user_data():
 # Function to handle user login
 def login(username, password):
     user_data = st.session_state.user_data
-    user = user_data[(user_data['Mira'] == username) & (user_data['123'] == password)]
+    user = user_data[(user_data['username'] == Mira) & (user_data['password'] == password123)]
     if not user.empty:
         st.session_state.logged_in_user = username
         st.session_state.user_access = user.iloc[0]['Role']
