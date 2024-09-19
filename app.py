@@ -288,29 +288,38 @@ def update_historical_data(username):
             st.session_state.historical_data.to_csv(file_path, index=False)
             st.success("Data keuangan berhasil diperbarui.")
 
-# Application entry point
+# Improved login section
+def login():
+    st.sidebar.title("Login")
+    username = st.sidebar.text_input("Username")
+    password = st.sidebar.text_input("Password", type="password")
+
+    if st.sidebar.button("Login"):
+        if username == "" or password == "":
+            st.sidebar.error("Username and Password cannot be empty.")
+            return
+        
+        user_data = st.session_state.user_data[st.session_state.user_data['Username'] == username]
+        
+        if user_data.empty:
+            st.sidebar.error("Username not found.")
+        else:
+            if user_data['Password'].values[0] == password:
+                st.session_state.logged_in_user = username
+                st.session_state.user_role = user_data['Role'].values[0]
+                st.sidebar.success("Login successful!")
+                st.experimental_rerun()  # Refresh the page to reflect changes
+            else:
+                st.sidebar.error("Incorrect password.")
+
+# Main application entry point
 def main():
     initialize_session_state()
     load_user_data()
 
-    # Login form
+    # Check if user is logged in
     if st.session_state.logged_in_user is None:
-        st.sidebar.title("Login")
-        username = st.sidebar.text_input("Username")
-        password = st.sidebar.text_input("Password", type="password")
-
-        if st.sidebar.button("Login"):
-            if username in st.session_state.user_data['Username'].values:
-                user_data = st.session_state.user_data[st.session_state.user_data['Username'] == username]
-                if user_data['Password'].values[0] == password:
-                    st.session_state.logged_in_user = username
-                    st.session_state.user_role = user_data['Role'].values[0]
-                    st.sidebar.success("Login successful!")
-                    st.experimental_rerun()  # Refresh the page to reflect changes
-                else:
-                    st.sidebar.error("Incorrect password.")
-            else:
-                st.sidebar.error("Username not found.")
+        login()
     else:
         with st.sidebar:
             choice = option_menu(
@@ -320,6 +329,7 @@ def main():
                 default_index=0
             )
 
+        # Load selected module
         if choice == "Manajemen Stok Barang":
             manage_stok_barang(st.session_state.logged_in_user)
         elif choice == "Manajemen Penjualan":
