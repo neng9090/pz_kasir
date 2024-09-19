@@ -9,6 +9,10 @@ import time
 from io import StringIO
 
 
+import streamlit as st
+import pandas as pd
+import os
+
 # Define file paths for user data
 USER_DATA_FILE = 'user_data.csv'
 
@@ -152,6 +156,19 @@ def load_data(username):
     except Exception as e:
         st.error(f"Error loading {user_files['HISTORIS_KEUNTUNGAN_FILE']}: {e}")
 
+# Initialize and load data
+initialize_session_state()
+load_user_data()
+initialize_users()
+
+# Example login form
+st.title("Login")
+username = st.text_input("Username")
+password = st.text_input("Password", type="password")
+if st.button("Login"):
+    if login(username, password):
+        load_data(username)
+
 # Function to save DataFrame to CSV
 def save_to_csv(data, file_path):
     try:
@@ -159,13 +176,6 @@ def save_to_csv(data, file_path):
         st.success(f"Data saved successfully to {file_path}")
     except Exception as e:
         st.error(f"Error saving data to {file_path}: {e}")
-
-# Function to load or initialize CSV file
-def load_or_initialize_csv(file_path, columns):
-    if os.path.exists(file_path):
-        return pd.read_csv(file_path)
-    else:
-        return pd.DataFrame(columns=columns)
 
 # Function to handle STOK_BARANG_FILE
 def manage_stok_barang(username, data=None):
@@ -201,7 +211,7 @@ def manage_supplier(username, data=None):
 # Function to handle PIUTANG_KONSUMEN_FILE
 def manage_piutang_konsumen(username, data=None):
     file_path = get_user_file_paths(username)['PIUTANG_KONSUMEN_FILE']
-    columns = ["Nama Konsumen", "Kelas", "Jumlah Piutang", "Waktu"]
+    columns = ["Nama Konsumen", "Jumlah Piutang", "Tanggal"]
 
     if data is not None:
         save_to_csv(data, file_path)
@@ -211,7 +221,7 @@ def manage_piutang_konsumen(username, data=None):
 # Function to handle PENGELUARAN_FILE
 def manage_pengeluaran(username, data=None):
     file_path = get_user_file_paths(username)['PENGELUARAN_FILE']
-    columns = ["Nama Penerima Dana", "Keterangan", "Total Biaya", "Waktu"]
+    columns = ["Nama Penerima Dana", "Keterangan", "Total Biaya", "Tanggal"]
 
     if data is not None:
         save_to_csv(data, file_path)
@@ -219,9 +229,9 @@ def manage_pengeluaran(username, data=None):
         return load_or_initialize_csv(file_path, columns)
 
 # Function to handle HISTORIS_KEUANGAN_FILE
-def manage_historis_keuangan(username, data=None):
+def manage_historis_analisis_keuangan(username, data=None):
     file_path = get_user_file_paths(username)['HISTORIS_KEUANGAN_FILE']
-    columns = ["Tanggal", "Total Pendapatan", "Total Pengeluaran", "Keuntungan Bersih"]
+    columns = ["Bulan", "Total Pendapatan", "Total Pengeluaran", "Saldo"]
 
     if data is not None:
         save_to_csv(data, file_path)
@@ -229,11 +239,43 @@ def manage_historis_keuangan(username, data=None):
         return load_or_initialize_csv(file_path, columns)
 
 # Function to handle HISTORIS_KEUNTUNGAN_FILE
-def manage_historis_keuntungan(username, data=None):
+def manage_historis_keuntungan_bersih(username, data=None):
     file_path = get_user_file_paths(username)['HISTORIS_KEUNTUNGAN_FILE']
-    columns = ["Tanggal", "Keuntungan Bersih"]
+    columns = ["Bulan", "Total Keuntungan"]
 
     if data is not None:
         save_to_csv(data, file_path)
     else:
         return load_or_initialize_csv(file_path, columns)
+
+# Example usage of functions
+if st.session_state.logged_in_user:
+    st.title("Data Management")
+    
+    st.subheader("Stock Barang")
+    stok_barang = manage_stok_barang(st.session_state.logged_in_user)
+    st.dataframe(stok_barang)
+    
+    st.subheader("Penjualan")
+    penjualan = manage_penjualan(st.session_state.logged_in_user)
+    st.dataframe(penjualan)
+
+    st.subheader("Supplier")
+    supplier = manage_supplier(st.session_state.logged_in_user)
+    st.dataframe(supplier)
+
+    st.subheader("Piutang Konsumen")
+    piutang_konsumen = manage_piutang_konsumen(st.session_state.logged_in_user)
+    st.dataframe(piutang_konsumen)
+
+    st.subheader("Pengeluaran")
+    pengeluaran = manage_pengeluaran(st.session_state.logged_in_user)
+    st.dataframe(pengeluaran)
+
+    st.subheader("Historis Analisis Keuangan")
+    historis_analisis_keuangan = manage_historis_analisis_keuangan(st.session_state.logged_in_user)
+    st.dataframe(historis_analisis_keuangan)
+
+    st.subheader("Historis Keuntungan Bersih")
+    historis_keuntungan_bersih = manage_historis_keuntungan_bersih(st.session_state.logged_in_user)
+    st.dataframe(historis_keuntungan_bersih)
