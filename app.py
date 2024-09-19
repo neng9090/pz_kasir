@@ -197,7 +197,7 @@ else:
     # Gabungkan data pengguna yang ada dengan data pengguna baru
     all_users = pd.concat([existing_users, new_users], ignore_index=True)
     all_users.to_csv(user_data_file, index=False)
-
+    
 # Function for Stock Barang page
 def halaman_stock_barang():
     st.markdown('<h1 style="text-align: center;">Stock Barang</h1>', unsafe_allow_html=True)
