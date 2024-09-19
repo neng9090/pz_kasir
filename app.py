@@ -307,8 +307,13 @@ def halaman_penjualan():
             
             save_data()
     
+    # Debug: Display the DataFrame
     st.markdown('<h2 style="text-align: center;">Daftar Penjualan</h2>', unsafe_allow_html=True)
     st.dataframe(st.session_state.penjualan)
+
+    # Debugging output
+    st.write("Debugging Output:")
+    st.write(st.session_state.penjualan.head())  
 
 # Sidebar with login and page selection
 def sidebar():
