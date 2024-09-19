@@ -8,11 +8,11 @@ import os
 import time
 from io import StringIO
 
-import streamlit as st
-import pandas as pd
 import os
+import pandas as pd
+import streamlit as st
 from datetime import datetime
-import bcrypt
+from streamlit_option_menu import option_menu
 
 # File paths for user data
 USER_DATA_FILE = 'user_data.csv'
@@ -35,8 +35,6 @@ def initialize_session_state():
         st.session_state.logged_in_user = None
     if 'user_role' not in st.session_state:
         st.session_state.user_role = None
-    if 'login_success' not in st.session_state:
-        st.session_state.login_success = False
 
 # Load user data from CSV
 def load_user_data():
@@ -49,9 +47,7 @@ def load_user_data():
 def initialize_users():
     new_users = pd.DataFrame({
         "Username": ["mira", "yono", "tini"],
-        "Password": [bcrypt.hashpw("123".encode('utf-8'), bcrypt.gensalt()).decode('utf-8'),
-                     bcrypt.hashpw("456".encode('utf-8'), bcrypt.gensalt()).decode('utf-8'),
-                     bcrypt.hashpw("789".encode('utf-8'), bcrypt.gensalt()).decode('utf-8')],
+        "Password": ["123", "456", "789"],
         "Role": ["user", "user", "user"]
     })
 
@@ -62,40 +58,87 @@ def initialize_users():
         all_users = pd.concat([existing_users, new_users], ignore_index=True).drop_duplicates()
         all_users.to_csv(USER_DATA_FILE, index=False)
 
-# Initialize session state variables if they are not already set
-initialize_session_state()
+# Log in a user
+def login(username, password):
+    if 'user_data' not in st.session_state:
+        st.error("Data pengguna tidak ditemukan.")
+        return False
 
-# Load or initialize user data
+    user_data = st.session_state.user_data
+    user = user_data[(user_data['Username'] == username) & (user_data['Password'] == password)]
+    if not user.empty:
+        st.session_state.logged_in_user = username
+        st.session_state.user_role = user['Role'].values[0]
+        st.success(f"Selamat datang, {username}!")
+        return True
+    else:
+        st.error("Username atau password salah.")
+        return False
+
+# Initialize and load data
+initialize_session_state()
 load_user_data()
 initialize_users()
 
-def login(username, password):
-    # Authenticate user
-    user_data = st.session_state.user_data
-    user_row = user_data[user_data["Username"] == username]
-    if not user_row.empty:
-        hashed_password = user_row["Password"].values[0]
-        if bcrypt.checkpw(password.encode('utf-8'), hashed_password.encode('utf-8')):
-            st.session_state.logged_in_user = username
-            st.session_state.user_role = user_row["Role"].values[0]
-            return True
-    return False
+# Login form
+if st.session_state.logged_in_user is None:
+    st.title("Login")
+    username = st.text_input("Username")
+    password = st.text_input("Password", type="password")
+    if st.button("Login"):
+        if login(username, password):
+            st.experimental_rerun()  # Reload the app to show the dashboard
+else:
+    # Sidebar for navigation
+    with st.sidebar:
+        st.title("Dashboard")
+        st.write(f"**Logged in as:** {st.session_state.logged_in_user}")
+        
+        # Navigation menu
+        option = option_menu(
+            menu_title=None,
+            options=["Stok Barang", "Penjualan", "Supplier", "Piutang Konsumen", "Pengeluaran", "Laporan Keuangan"],
+            icons=["box", "cart", "person", "credit-card", "receipt", "file-text"], 
+            menu_icon="cast",
+            default_index=0,
+            styles={
+                "container": {"padding": "5!important", "background-color": "#f0f0f0"},
+                "icon": {"color": "black", "font-size": "16px"},
+                "nav-link": {"font-size": "16px", "text-align": "left", "margin": "5px", "--hover-color": "#ddd"},
+                "nav-link-selected": {"background-color": "#007bff"},
+            }
+        )
 
-def load_data(user):
     # Load user-specific data
-    files = get_user_file_paths(user)
-    for key in files:
-        file_path = files[key]
-        if os.path.exists(file_path):
-            st.session_state[key.lower()] = pd.read_csv(file_path)
-        else:
-            st.session_state[key.lower()] = pd.DataFrame()
+    def load_data(username):
+        user_files = get_user_file_paths(username)
+        
+        for key, file_path in user_files.items():
+            try:
+                if os.path.exists(file_path):
+                    st.session_state[key.lower()] = pd.read_csv(file_path)
+                    if 'Waktu' in st.session_state[key.lower()].columns:
+                        st.session_state[key.lower()]['Waktu'] = pd.to_datetime(st.session_state[key.lower()]['Waktu'])
+            except Exception as e:
+                st.error(f"Error loading {key.lower()} data: {e}")
 
-def check_role_permission(role_required):
-    if st.session_state.user_role != role_required:
-        st.error("Akses ditolak.")
-        st.stop()
+    load_data(st.session_state.logged_in_user)
 
+    # Dashboard based on the selected menu option
+    if option == "Stok Barang":
+        manage_stok_barang(st.session_state.logged_in_user)
+    elif option == "Penjualan":
+        manage_penjualan(st.session_state.logged_in_user)
+    elif option == "Supplier":
+        manage_supplier(st.session_state.logged_in_user)
+    elif option == "Piutang Konsumen":
+        manage_piutang_konsum(st.session_state.logged_in_user)
+    elif option == "Pengeluaran":
+        manage_pengeluaran(st.session_state.logged_in_user)
+    elif option == "Laporan Keuangan":
+        update_historical_data(st.session_state.logged_in_user)
+
+# Function definitions
 def manage_stok_barang(username):
     st.title("Manajemen Stok Barang")
     
@@ -245,7 +288,7 @@ def manage_pengeluaran(username):
     st.subheader("Tambah Pengeluaran")
     
     with st.form("pengeluaran_form"):
-        nama_penerima = st.text_input("Nama Penerima Dana")
+        nama_penerima_dana = st.text_input("Nama Penerima Dana")
         keterangan = st.text_input("Keterangan")
         total_biaya = st.number_input("Total Biaya", min_value=0.0)
         
@@ -253,7 +296,7 @@ def manage_pengeluaran(username):
         
         if submitted:
             new_pengeluaran = pd.DataFrame({
-                'Nama Penerima Dana': [nama_penerima],
+                'Nama Penerima Dana': [nama_penerima_dana],
                 'Keterangan': [keterangan],
                 'Total Biaya': [total_biaya],
                 'Waktu Input': [datetime.now()]
@@ -271,73 +314,9 @@ def manage_pengeluaran(username):
 def update_historical_data(username):
     st.title("Laporan Keuangan")
     
-    # Load historical data files
-    files = get_user_file_paths(username)
-    
-    try:
-        stok_barang = pd.read_csv(files['STOK_BARANG_FILE'])
-        penjualan = pd.read_csv(files['PENJUALAN_FILE'])
-        pengeluaran = pd.read_csv(files['PENGELUARAN_FILE'])
-        
-        total_sales = penjualan['Total Harga'].sum()
-        total_expenses = pengeluaran['Total Biaya'].sum()
-        net_profit = total_sales - total_expenses
-        
-        st.subheader("Total Penjualan")
-        st.write(f"Total Penjualan: Rp{total_sales:,.2f}")
-        
-        st.subheader("Total Pengeluaran")
-        st.write(f"Total Pengeluaran: Rp{total_expenses:,.2f}")
-        
-        st.subheader("Keuntungan Bersih")
-        st.write(f"Keuntungan Bersih: Rp{net_profit:,.2f}")
+    # Aggregate and display historical data here
+    st.write("Fitur ini sedang dalam pengembangan.")
 
-    except FileNotFoundError:
-        st.write("Data tidak ditemukan. Pastikan file CSV tersedia.")
-
-# Define Streamlit app layout and functionality
-def main():
-    st.title("Aplikasi Manajemen")
-
-    # Display login page if not logged in
-    if st.session_state.logged_in_user is None:
-        with st.form("login_form"):
-            username = st.text_input("Username")
-            password = st.text_input("Password", type="password")
-            login_button = st.form_submit_button("Login")
-            
-            if login_button:
-                if login(username, password):
-                    st.session_state.login_success = True
-                    st.success("Login berhasil!")
-                else:
-                    st.error("Username atau password salah.")
-    else:
-        st.sidebar.title("Menu")
-        if st.session_state.user_role == "admin":
-            choice = st.sidebar.selectbox("Pilih Halaman", [
-                "Manajemen Stok Barang",
-                "Manajemen Penjualan",
-                "Manajemen Supplier",
-                "Manajemen Piutang Konsumen",
-                "Manajemen Pengeluaran",
-                "Laporan Keuangan"
-            ])
-            
-            if choice == "Manajemen Stok Barang":
-                manage_stok_barang(st.session_state.logged_in_user)
-            elif choice == "Manajemen Penjualan":
-                manage_penjualan(st.session_state.logged_in_user)
-            elif choice == "Manajemen Supplier":
-                manage_supplier(st.session_state.logged_in_user)
-            elif choice == "Manajemen Piutang Konsumen":
-                manage_piutang_konsum(st.session_state.logged_in_user)
-            elif choice == "Manajemen Pengeluaran":
-                manage_pengeluaran(st.session_state.logged_in_user)
-            elif choice == "Laporan Keuangan":
-                update_historical_data(st.session_state.logged_in_user)
-        else:
-            st.write("Anda tidak memiliki akses ke halaman ini.")
-
-if __name__ == "__main__":
-    main()
+# Placeholder functions for user roles, permissions, and other features
+def user_role_permissions():
+    st.write("Pengaturan hak akses pengguna dan fitur lainnya akan ditambahkan di sini.")
