@@ -41,14 +41,21 @@ def save_data():
     if 'logged_in_user' in st.session_state and st.session_state.logged_in_user:
         user_files = get_user_file_paths(st.session_state.logged_in_user)
         try:
-            st.session_state.stok_barang.to_csv(user_files['STOK_BARANG_FILE'], index=False)
-            st.session_state.penjualan.to_csv(user_files['PENJUALAN_FILE'], index=False)
-            st.session_state.supplier.to_csv(user_files['SUPPLIER_FILE'], index=False)
-            st.session_state.piutang_konsumen.to_csv(user_files['PIUTANG_KONSUMEN_FILE'], index=False)
-            st.session_state.pengeluaran.to_csv(user_files['PENGELUARAN_FILE'], index=False)
-            st.session_state.historis_analisis_keuangan.to_csv(user_files['HISTORIS_KEUANGAN_FILE'], index=False)
-            st.session_state.historis_keuntungan_bersih.to_csv(user_files['HISTORIS_KEUNTUNGAN_FILE'], index=False)
-            st.success("Data saved successfully!")
+            if 'stok_barang' in st.session_state:
+                st.session_state.stok_barang.to_csv(user_files['STOK_BARANG_FILE'], index=False)
+            if 'penjualan' in st.session_state:
+                st.session_state.penjualan.to_csv(user_files['PENJUALAN_FILE'], index=False)
+            if 'supplier' in st.session_state:
+                st.session_state.supplier.to_csv(user_files['SUPPLIER_FILE'], index=False)
+            if 'piutang_konsumen' in st.session_state:
+                st.session_state.piutang_konsumen.to_csv(user_files['PIUTANG_KONSUMEN_FILE'], index=False)
+            if 'pengeluaran' in st.session_state:
+                st.session_state.pengeluaran.to_csv(user_files['PENGELUARAN_FILE'], index=False)
+            if 'historis_analisis_keuangan' in st.session_state:
+                st.session_state.historis_analisis_keuangan.to_csv(user_files['HISTORIS_KEUANGAN_FILE'], index=False)
+            if 'historis_keuntungan_bersih' in st.session_state:
+                st.session_state.historis_keuntungan_bersih.to_csv(user_files['HISTORIS_KEUNTUNGAN_FILE'], index=False)
+            st.success("Data berhasil disimpan!")
         except Exception as e:
             st.error(f"Error saving data: {e}")
 
@@ -78,7 +85,7 @@ def register(username, password, role='user'):
 def login(username, password):
     if 'user_data' not in st.session_state:
         st.error("Data pengguna tidak ditemukan.")
-        return
+        return False
 
     user_data = st.session_state.user_data
     user = user_data[(user_data['Username'] == username) & (user_data['Password'] == password)]
@@ -188,7 +195,6 @@ def main():
         if st.session_state.user_access == 'admin':
             menu_options.extend(["Stock Barang", "Penjualan", "Supplier", "Owner"])
         
-        # Use a unique key for the radio button
         menu = st.sidebar.radio("Pilih halaman:", menu_options, key="menu_radio")
 
         if menu == "Dashboard":
