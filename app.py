@@ -159,39 +159,68 @@ def load_or_initialize_csv(file_path, columns):
     else:
         return pd.DataFrame(columns=columns)
 
-# Form for STOK_BARANG_FILE
-def form_stok_barang():
-    st.subheader("Input Stok Barang")
+# Initialize and load data
+initialize_session_state()
+load_user_data()
+initialize_users()
+
+# Example login form
+st.title("Login")
+username = st.text_input("Username")
+password = st.text_input("Password", type="password")
+if st.button("Login"):
+    if login(username, password):
+        load_data(username)
+
+# Function to save DataFrame to CSV
+def save_to_csv(data, file_path):
+    try:
+        data.to_csv(file_path, index=False)
+        st.success(f"Data saved successfully to {file_path}")
+    except Exception as e:
+        st.error(f"Error saving data to {file_path}: {e}")
+
+# Function to handle STOK_BARANG_FILE
+def manage_stok_barang(username, data=None):
+    file_path = get_user_file_paths(username)['STOK_BARANG_FILE']
+    columns = ["Nama Barang", "Merk", "Ukuran/Kemasan", "Kode Warna/Base", "Jumlah", "Waktu Input"]
+    if data is None:
+        data = load_or_initialize_csv(file_path, columns)
+    st.write("Stok Barang")
     with st.form(key='stok_barang_form'):
+        st.subheader("Tambah/Edit Stok Barang")
         nama_barang = st.text_input("Nama Barang")
         merk = st.text_input("Merk")
         ukuran_kemasan = st.text_input("Ukuran/Kemasan")
         kode_warna = st.text_input("Kode Warna/Base")
-        jumlah = st.number_input("Jumlah", min_value=0)
-        waktu_input = st.date_input("Waktu Input", value=pd.to_datetime("today"))
+        jumlah = st.number_input("Jumlah", min_value=0, step=1)
+        waktu_input = st.datetime_input("Waktu Input", value=pd.Timestamp.now())
 
-        submit_button = st.form_submit_button(label='Simpan Stok Barang')
-
+        submit_button = st.form_submit_button(label="Simpan")
         if submit_button:
-            new_data = pd.DataFrame([{
-                "Nama Barang": nama_barang,
-                "Merk": merk,
-                "Ukuran/Kemasan": ukuran_kemasan,
-                "Kode Warna/Base": kode_warna,
-                "Jumlah": jumlah,
-                "Waktu Input": waktu_input
-            }])
-            if 'stok_barang' not in st.session_state:
-                st.session_state.stok_barang = pd.DataFrame(columns=[
-                    "Nama Barang", "Merk", "Ukuran/Kemasan", "Kode Warna/Base", "Jumlah", "Waktu Input"])
-            st.session_state.stok_barang = pd.concat([st.session_state.stok_barang, new_data], ignore_index=True)
-            save_data()
+            new_data = pd.DataFrame({
+                "Nama Barang": [nama_barang],
+                "Merk": [merk],
+                "Ukuran/Kemasan": [ukuran_kemasan],
+                "Kode Warna/Base": [kode_warna],
+                "Jumlah": [jumlah],
+                "Waktu Input": [waktu_input]
+            })
+            data = pd.concat([data, new_data], ignore_index=True)
+            save_to_csv(data, file_path)
 
-# Form for PENJUALAN_FILE
-def form_penjualan():
-    st.subheader("Input Penjualan")
+    st.write(data)
+
+# Function to handle PENJUALAN_FILE
+def manage_penjualan(username, data=None):
+    file_path = get_user_file_paths(username)['PENJUALAN_FILE']
+    columns = ["ID", "Nama Pelanggan", "Nomor Telepon", "Alamat", "Nama Barang", "Ukuran/Kemasan", "Merk", "Kode Warna", "Jumlah", "Total Harga", "Keuntungan", "Waktu"]
+    if data is None:
+        data = load_or_initialize_csv(file_path, columns)
+    st.write("Penjualan")
     with st.form(key='penjualan_form'):
-        id = st.text_input("ID")
+        st.subheader("Tambah/Edit Penjualan")
+        id_penjualan = st.text_input("ID Penjualan")
         nama_pelanggan = st.text_input("Nama Pelanggan")
         nomor_telepon = st.text_input("Nomor Telepon")
         alamat = st.text_input("Alamat")
@@ -199,188 +228,192 @@ def form_penjualan():
         ukuran_kemasan = st.text_input("Ukuran/Kemasan")
         merk = st.text_input("Merk")
         kode_warna = st.text_input("Kode Warna")
-        jumlah = st.number_input("Jumlah", min_value=0)
-        total_harga = st.number_input("Total Harga", min_value=0.0)
-        keuntungan = st.number_input("Keuntungan", min_value=0.0)
-        waktu = st.date_input("Waktu", value=pd.to_datetime("today"))
+        jumlah = st.number_input("Jumlah", min_value=0, step=1)
+        total_harga = st.number_input("Total Harga", min_value=0, step=1000)
+        keuntungan = st.number_input("Keuntungan", min_value=0, step=1000)
+        waktu = st.datetime_input("Waktu", value=pd.Timestamp.now())
 
-        submit_button = st.form_submit_button(label='Simpan Penjualan')
-
+        submit_button = st.form_submit_button(label="Simpan")
         if submit_button:
-            new_data = pd.DataFrame([{
-                "ID": id,
-                "Nama Pelanggan": nama_pelanggan,
-                "Nomor Telepon": nomor_telepon,
-                "Alamat": alamat,
-                "Nama Barang": nama_barang,
-                "Ukuran/Kemasan": ukuran_kemasan,
-                "Merk": merk,
-                "Kode Warna": kode_warna,
-                "Jumlah": jumlah,
-                "Total Harga": total_harga,
-                "Keuntungan": keuntungan,
-                "Waktu": waktu
-            }])
-            if 'penjualan' not in st.session_state:
-                st.session_state.penjualan = pd.DataFrame(columns=[
-                    "ID", "Nama Pelanggan", "Nomor Telepon", "Alamat", "Nama Barang", "Ukuran/Kemasan",
-                    "Merk", "Kode Warna", "Jumlah", "Total Harga", "Keuntungan", "Waktu"])
-            st.session_state.penjualan = pd.concat([st.session_state.penjualan, new_data], ignore_index=True)
-            save_data()
+            new_data = pd.DataFrame({
+                "ID": [id_penjualan],
+                "Nama Pelanggan": [nama_pelanggan],
+                "Nomor Telepon": [nomor_telepon],
+                "Alamat": [alamat],
+                "Nama Barang": [nama_barang],
+                "Ukuran/Kemasan": [ukuran_kemasan],
+                "Merk": [merk],
+                "Kode Warna": [kode_warna],
+                "Jumlah": [jumlah],
+                "Total Harga": [total_harga],
+                "Keuntungan": [keuntungan],
+                "Waktu": [waktu]
+            })
+            data = pd.concat([data, new_data], ignore_index=True)
+            save_to_csv(data, file_path)
 
-# Form for SUPPLIER_FILE
-def form_supplier():
-    st.subheader("Input Supplier")
+    st.write(data)
+
+# Function to handle SUPPLIER_FILE
+def manage_supplier(username, data=None):
+    file_path = get_user_file_paths(username)['SUPPLIER_FILE']
+    columns = ["Nama Barang", "Merk", "Ukuran/Kemasan", "Jumlah Barang", "Nama Supplier", "Tagihan", "Waktu"]
+    if data is None:
+        data = load_or_initialize_csv(file_path, columns)
+    st.write("Supplier")
     with st.form(key='supplier_form'):
+        st.subheader("Tambah/Edit Supplier")
         nama_barang = st.text_input("Nama Barang")
         merk = st.text_input("Merk")
         ukuran_kemasan = st.text_input("Ukuran/Kemasan")
-        jumlah_barang = st.number_input("Jumlah Barang", min_value=0)
+        jumlah_barang = st.number_input("Jumlah Barang", min_value=0, step=1)
         nama_supplier = st.text_input("Nama Supplier")
-        tagihan = st.number_input("Tagihan", min_value=0.0)
-        waktu = st.date_input("Waktu", value=pd.to_datetime("today"))
+        tagihan = st.number_input("Tagihan", min_value=0, step=1000)
+        waktu = st.datetime_input("Waktu", value=pd.Timestamp.now())
 
-        submit_button = st.form_submit_button(label='Simpan Supplier')
-
+        submit_button = st.form_submit_button(label="Simpan")
         if submit_button:
-            new_data = pd.DataFrame([{
-                "Nama Barang": nama_barang,
-                "Merk": merk,
-                "Ukuran/Kemasan": ukuran_kemasan,
-                "Jumlah Barang": jumlah_barang,
-                "Nama Supplier": nama_supplier,
-                "Tagihan": tagihan,
-                "Waktu": waktu
-            }])
-            if 'supplier' not in st.session_state:
-                st.session_state.supplier = pd.DataFrame(columns=[
-                    "Nama Barang", "Merk", "Ukuran/Kemasan", "Jumlah Barang", "Nama Supplier", "Tagihan", "Waktu"])
-            st.session_state.supplier = pd.concat([st.session_state.supplier, new_data], ignore_index=True)
-            save_data()
+            new_data = pd.DataFrame({
+                "Nama Barang": [nama_barang],
+                "Merk": [merk],
+                "Ukuran/Kemasan": [ukuran_kemasan],
+                "Jumlah Barang": [jumlah_barang],
+                "Nama Supplier": [nama_supplier],
+                "Tagihan": [tagihan],
+                "Waktu": [waktu]
+            })
+            data = pd.concat([data, new_data], ignore_index=True)
+            save_to_csv(data, file_path)
 
-# Form for PIUTANG_KONSUMEN_FILE
-def form_piutang_konsumen():
-    st.subheader("Input Piutang Konsumen")
-    with st.form(key='piutang_konsumen_form'):
-        nama_konsumen = st.text_input("Nama Konsumen")
-        jumlah_piutang = st.number_input("Jumlah Piutang", min_value=0.0)
-        tanggal = st.date_input("Tanggal", value=pd.to_datetime("today"))
+    st.write(data)
 
-        submit_button = st.form_submit_button(label='Simpan Piutang Konsumen')
+# Function to handle PIUTANG_KONSUMEN_FILE
+def manage_piutang_konsum(username, data=None):
+    file_path = get_user_file_paths(username)['PIUTANG_KONSUMEN_FILE']
+    columns = ["Nama Pelanggan", "Nomor Telepon", "Alamat", "Jumlah Piutang", "Tanggal"]
+    if data is None:
+        data = load_or_initialize_csv(file_path, columns)
+    st.write("Piutang Konsumen")
+    with st.form(key='piutang_konsum_form'):
+        st.subheader("Tambah/Edit Piutang Konsumen")
+        nama_pelanggan = st.text_input("Nama Pelanggan")
+        nomor_telepon = st.text_input("Nomor Telepon")
+        alamat = st.text_input("Alamat")
+        jumlah_piutang = st.number_input("Jumlah Piutang", min_value=0, step=1000)
+        tanggal = st.date_input("Tanggal", value=pd.Timestamp.now().date())
 
+        submit_button = st.form_submit_button(label="Simpan")
         if submit_button:
-            new_data = pd.DataFrame([{
-                "Nama Konsumen": nama_konsumen,
-                "Jumlah Piutang": jumlah_piutang,
-                "Tanggal": tanggal
-            }])
-            if 'piutang_konsumen' not in st.session_state:
-                st.session_state.piutang_konsumen = pd.DataFrame(columns=[
-                    "Nama Konsumen", "Jumlah Piutang", "Tanggal"])
-            st.session_state.piutang_konsumen = pd.concat([st.session_state.piutang_konsumen, new_data], ignore_index=True)
-            save_data()
+            new_data = pd.DataFrame({
+                "Nama Pelanggan": [nama_pelanggan],
+                "Nomor Telepon": [nomor_telepon],
+                "Alamat": [alamat],
+                "Jumlah Piutang": [jumlah_piutang],
+                "Tanggal": [tanggal]
+            })
+            data = pd.concat([data, new_data], ignore_index=True)
+            save_to_csv(data, file_path)
 
-# Form for PENGELUARAN_FILE
-def form_pengeluaran():
-    st.subheader("Input Pengeluaran")
+    st.write(data)
+
+# Function to handle PENGELUARAN_FILE
+def manage_pengeluaran(username, data=None):
+    file_path = get_user_file_paths(username)['PENGELUARAN_FILE']
+    columns = ["Nama Penerima Dana", "Keterangan", "Total Biaya", "Tanggal"]
+    if data is None:
+        data = load_or_initialize_csv(file_path, columns)
+    st.write("Pengeluaran")
     with st.form(key='pengeluaran_form'):
+        st.subheader("Tambah/Edit Pengeluaran")
         nama_penerima_dana = st.text_input("Nama Penerima Dana")
         keterangan = st.text_input("Keterangan")
-        total_biaya = st.number_input("Total Biaya", min_value=0.0)
-        tanggal = st.date_input("Tanggal", value=pd.to_datetime("today"))
+        total_biaya = st.number_input("Total Biaya", min_value=0, step=1000)
+        tanggal = st.date_input("Tanggal", value=pd.Timestamp.now().date())
 
-        submit_button = st.form_submit_button(label='Simpan Pengeluaran')
-
+        submit_button = st.form_submit_button(label="Simpan")
         if submit_button:
-            new_data = pd.DataFrame([{
-                "Nama Penerima Dana": nama_penerima_dana,
-                "Keterangan": keterangan,
-                "Total Biaya": total_biaya,
-                "Tanggal": tanggal
-            }])
-            if 'pengeluaran' not in st.session_state:
-                st.session_state.pengeluaran = pd.DataFrame(columns=[
-                    "Nama Penerima Dana", "Keterangan", "Total Biaya", "Tanggal"])
-            st.session_state.pengeluaran = pd.concat([st.session_state.pengeluaran, new_data], ignore_index=True)
-            save_data()
+            new_data = pd.DataFrame({
+                "Nama Penerima Dana": [nama_penerima_dana],
+                "Keterangan": [keterangan],
+                "Total Biaya": [total_biaya],
+                "Tanggal": [tanggal]
+            })
+            data = pd.concat([data, new_data], ignore_index=True)
+            save_to_csv(data, file_path)
 
-# Form for HISTORIS_KEUANGAN_FILE
-def form_historis_analisis_keuangan():
-    st.subheader("Input Historis Analisis Keuangan")
-    with st.form(key='historis_analisis_keuangan_form'):
-        bulan = st.text_input("Bulan")
-        total_pendapatan = st.number_input("Total Pendapatan", min_value=0.0)
-        total_pengeluaran = st.number_input("Total Pengeluaran", min_value=0.0)
-        saldo = st.number_input("Saldo", min_value=0.0)
+    st.write(data)
 
-        submit_button = st.form_submit_button(label='Simpan Analisis Keuangan')
+# Calculate and save historical financial data
+def update_historical_data(username):
+    user_files = get_user_file_paths(username)
+    
+    # Load necessary data
+    try:
+        stok_barang = pd.read_csv(user_files['STOK_BARANG_FILE'])
+    except Exception as e:
+        st.error(f"Error loading stock data: {e}")
+        return
 
-        if submit_button:
-            new_data = pd.DataFrame([{
-                "Bulan": bulan,
-                "Total Pendapatan": total_pendapatan,
-                "Total Pengeluaran": total_pengeluaran,
-                "Saldo": saldo
-            }])
-            if 'historis_analisis_keuangan' not in st.session_state:
-                st.session_state.historis_analisis_keuangan = pd.DataFrame(columns=[
-                    "Bulan", "Total Pendapatan", "Total Pengeluaran", "Saldo"])
-            st.session_state.historis_analisis_keuangan = pd.concat([st.session_state.historis_analisis_keuangan, new_data], ignore_index=True)
-            save_data()
+    try:
+        penjualan = pd.read_csv(user_files['PENJUALAN_FILE'])
+    except Exception as e:
+        st.error(f"Error loading sales data: {e}")
+        return
 
-# Form for HISTORIS_KEUNTUNGAN_FILE
-def form_historis_keuntungan_bersih():
-    st.subheader("Input Historis Keuntungan Bersih")
-    with st.form(key='historis_keuntungan_bersih_form'):
-        bulan = st.text_input("Bulan")
-        total_keuntungan = st.number_input("Total Keuntungan", min_value=0.0)
+    try:
+        pengeluaran = pd.read_csv(user_files['PENGELUARAN_FILE'])
+    except Exception as e:
+        st.error(f"Error loading expenses data: {e}")
+        return
 
-        submit_button = st.form_submit_button(label='Simpan Keuntungan Bersih')
+    # Historical financial analysis
+    historis_analisis_keuangan = pd.DataFrame()
+    historis_keuntungan_bersih = pd.DataFrame()
 
-        if submit_button:
-            new_data = pd.DataFrame([{
-                "Bulan": bulan,
-                "Total Keuntungan": total_keuntungan
-            }])
-            if 'historis_keuntungan_bersih' not in st.session_state:
-                st.session_state.historis_keuntungan_bersih = pd.DataFrame(columns=[
-                    "Bulan", "Total Keuntungan"])
-            st.session_state.historis_keuntungan_bersih = pd.concat([st.session_state.historis_keuntungan_bersih, new_data], ignore_index=True)
-            save_data()
+    # Calculate total income and expenses
+    if not penjualan.empty:
+        penjualan['Waktu'] = pd.to_datetime(penjualan['Waktu'])
+        total_income = penjualan.groupby(penjualan['Waktu'].dt.to_period("M")).agg({
+            'Total Harga': 'sum'
+        }).reset_index()
+        total_income['Waktu'] = total_income['Waktu'].dt.to_timestamp()
+        historis_analisis_keuangan = pd.concat([historis_analisis_keuangan, total_income], ignore_index=True)
 
-# Main Streamlit app
+    if not pengeluaran.empty:
+        pengeluaran['Tanggal'] = pd.to_datetime(pengeluaran['Tanggal'])
+        total_expenses = pengeluaran.groupby(pengeluaran['Tanggal'].dt.to_period("M")).agg({
+            'Total Biaya': 'sum'
+        }).reset_index()
+        total_expenses['Tanggal'] = total_expenses['Tanggal'].dt.to_timestamp()
+        historis_keuntungan_bersih = pd.concat([historis_keuntungan_bersih, total_expenses], ignore_index=True)
+
+    # Save to file
+    historis_analisis_keuangan.to_csv(user_files['HISTORIS_KEUANGAN_FILE'], index=False)
+    historis_keuntungan_bersih.to_csv(user_files['HISTORIS_KEUNTUNGAN_FILE'], index=False)
+
+# Main application function
 def main():
-    st.title("Aplikasi Manajemen Data")
-
-    # Initialize session state
-    initialize_session_state()
-    load_user_data()
-    initialize_users()
-
-    # Login form
-    if st.session_state.logged_in_user is None:
-        st.subheader("Login")
-        username = st.text_input("Username")
-        password = st.text_input("Password", type='password')
-        login_button = st.button("Login")
-
-        if login_button:
-            if login(username, password):
-                load_data(username)
-    else:
-        st.sidebar.title(f"Welcome {st.session_state.logged_in_user}")
-        st.sidebar.button("Logout", on_click=lambda: st.session_state.update({'logged_in_user': None, 'user_role': None}))
-
-        st.subheader("Forms")
+    username = st.text_input("Enter Username")
+    
+    if username:
+        # Manage data based on user
+        data_management_options = ["Stok Barang", "Penjualan", "Supplier", "Piutang Konsumen", "Pengeluaran"]
+        selection = st.sidebar.selectbox("Select Management Option", data_management_options)
         
-        # Display forms
-        form_stok_barang()
-        form_penjualan()
-        form_supplier()
-        form_piutang_konsumen()
-        form_pengeluaran()
-        form_historis_analisis_keuangan()
-        form_historis_keuntungan_bersih()
+        if selection == "Stok Barang":
+            manage_stok_barang(username)
+        elif selection == "Penjualan":
+            manage_penjualan(username)
+        elif selection == "Supplier":
+            manage_supplier(username)
+        elif selection == "Piutang Konsumen":
+            manage_piutang_konsum(username)
+        elif selection == "Pengeluaran":
+            manage_pengeluaran(username)
+        
+        # Update historical data
+        if st.button("Update Historical Data"):
+            update_historical_data(username)
 
 if __name__ == "__main__":
     main()
