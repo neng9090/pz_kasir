@@ -1,3 +1,7 @@
+Masuk
+
+Buat akun baru
+Anda bilang:
 import streamlit as st
 from streamlit_option_menu import option_menu
 import pandas as pd
@@ -16,6 +20,7 @@ def get_user_file_paths(username):
         'HISTORIS_KEUNTUNGAN_FILE': f'{username}_historis_keuntungan_bersih.csv'
     }
 
+# File path for user data
 USER_DATA_FILE = 'user_data.csv'
 
 # Initialize session state
@@ -30,84 +35,17 @@ def load_user_data():
     if os.path.exists(USER_DATA_FILE):
         st.session_state.user_data = pd.read_csv(USER_DATA_FILE)
     else:
-        initialize_users()
+        st.session_state.user_data = pd.DataFrame(columns=["Username", "Password", "Role"])
+        initialize_users()  # Initialize with default users if file is missing
 
-# Initialize new users
+# Initialize new users if user_data.csv does not exist or is empty
 def initialize_users():
     new_users = pd.DataFrame({
         "Username": ["mira", "yono", "tini"],
-        "Password": [hash_password("123oke"), hash_password("456"), hash_password("789")],
+        "Password": ["123oke", "456", "789"],
         "Role": ["user", "user", "user"]
     })
     new_users.to_csv(USER_DATA_FILE, index=False)
-
-# Password hashing functions
-def hash_password(password):
-    return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
-
-def check_password(hashed_password, password):
-    return bcrypt.checkpw(password.encode('utf-8'), hashed_password)
-
-# Data management functions
-def manage_data(username, file_key, columns):
-    file_path = get_user_file_paths(username)[file_key]
-    
-    # Load data
-    if os.path.exists(file_path):
-        data = pd.read_csv(file_path)
-    else:
-        data = pd.DataFrame(columns=columns)
-
-    st.dataframe(data)
-
-    # Form for data entry
-    with st.form(f"{file_key}_form"):
-        inputs = {col: st.text_input(col) if col != 'Jumlah' else st.number_input(col, min_value=0)
-                  for col in columns}
-        submitted = st.form_submit_button("Simpan")
-        
-        if submitted:
-            new_data = pd.DataFrame([inputs])
-            data = pd.concat([data, new_data], ignore_index=True)
-            data.to_csv(file_path, index=False)
-            st.success(f"{file_key.replace('_', ' ').title()} berhasil diperbarui.")
-
-# Function to manage stock items
-def manage_stok_barang(username):
-    st.title("Manajemen Stok Barang")
-    manage_data(username, 'STOK_BARANG_FILE', 
-                ['Nama Barang', 'Merk', 'Ukuran/Kemasan', 'Jumlah', 'Harga', 'Waktu Input'])
-
-# Function to manage sales
-def manage_penjualan(username):
-    st.title("Manajemen Penjualan")
-    manage_data(username, 'PENJUALAN_FILE', 
-                ['Nama Pelanggan', 'Nomor Telepon', 'Alamat', 'Nama Barang', 'Jumlah', 'Harga Jual', 'Total Harga', 'Waktu'])
-
-# Function to manage suppliers
-def manage_supplier(username):
-    st.title("Manajemen Supplier")
-    manage_data(username, 'SUPPLIER_FILE', 
-                ['Nama Supplier', 'Alamat', 'Kontak', 'Waktu Input'])
-
-# Function to manage consumer debts
-def manage_piutang_konsum(username):
-    st.title("Manajemen Piutang Konsumen")
-    manage_data(username, 'PIUTANG_KONSUMEN_FILE', 
-                ['Nama Konsumen', 'Jumlah Piutang', 'Tanggal', 'Waktu Input'])
-
-# Function to manage expenses
-def manage_pengeluaran(username):
-    st.title("Manajemen Pengeluaran")
-    manage_data(username, 'PENGELUARAN_FILE', 
-                ['Nama Penerima Dana', 'Keterangan', 'Total Biaya', 'Waktu Input'])
-
-# Function to update historical financial data
-def update_historical_data(username):
-    st.title("Laporan Keuangan")
-    manage_data(username, 'HISTORIS_KEUANGAN_FILE', 
-                ['Tanggal', 'Total Pemasukan', 'Total Pengeluaran'])
-
 
 # Function to manage stock items
 def manage_stok_barang(username):
@@ -368,24 +306,20 @@ def main():
         if st.sidebar.button("Login"):
             if username in st.session_state.user_data['Username'].values:
                 user_data = st.session_state.user_data[st.session_state.user_data['Username'] == username]
-                try:
-                    if check_password(user_data['Password'].values[0], password):
-                        st.session_state.logged_in_user = username
-                        st.session_state.user_role = user_data['Role'].values[0]
-                        st.sidebar.success("Login successful!")
-                        st.experimental_rerun()
-                    else:
-                        st.sidebar.error("Incorrect password.")
-                except Exception as e:
-                    st.sidebar.error(f"An error occurred: {e}")
+                if user_data['Password'].values[0] == password:
+                    st.session_state.logged_in_user = username
+                    st.session_state.user_role = user_data['Role'].values[0]
+                    st.sidebar.success("Login successful!")
+                    st.experimental_rerun()  # Refresh the page to reflect changes
+                else:
+                    st.sidebar.error("Incorrect password.")
             else:
                 st.sidebar.error("Username not found.")
     else:
         with st.sidebar:
             choice = option_menu(
                 menu_title="Main Menu",
-                options=["Manajemen Stok Barang", "Manajemen Penjualan", "Manajemen Supplier", 
-                         "Manajemen Piutang Konsumen", "Manajemen Pengeluaran", "Laporan Keuangan"],
+                options=["Manajemen Stok Barang", "Manajemen Penjualan", "Manajemen Supplier", "Manajemen Piutang Konsumen", "Manajemen Pengeluaran", "Laporan Keuangan"],
                 icons=["box", "cart", "person", "credit-card", "cash", "bar-chart"],
                 default_index=0
             )
@@ -404,5 +338,4 @@ def main():
             update_historical_data(st.session_state.logged_in_user)
 
 if __name__ == "__main__":
-    main()
     main()
