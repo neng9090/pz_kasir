@@ -98,57 +98,84 @@ def login(username, password):
 def load_data(username):
     user_files = get_user_file_paths(username)
     
-    if os.path.exists(user_files['STOK_BARANG_FILE']):
-        try:
+    # Load stock barang
+    try:
+        if os.path.exists(user_files['STOK_BARANG_FILE']):
             st.session_state.stok_barang = pd.read_csv(user_files['STOK_BARANG_FILE'])
             if 'Waktu Input' in st.session_state.stok_barang.columns:
                 st.session_state.stok_barang['Waktu Input'] = pd.to_datetime(st.session_state.stok_barang['Waktu Input'])
-        except Exception as e:
-            st.error(f"Error loading {user_files['STOK_BARANG_FILE']}: {e}")
+    except Exception as e:
+        st.error(f"Error loading {user_files['STOK_BARANG_FILE']}: {e}")
 
-    if os.path.exists(user_files['PENJUALAN_FILE']):
-        try:
+    # Load penjualan
+    try:
+        if os.path.exists(user_files['PENJUALAN_FILE']):
             st.session_state.penjualan = pd.read_csv(user_files['PENJUALAN_FILE'])
             if 'Waktu' in st.session_state.penjualan.columns:
                 st.session_state.penjualan['Waktu'] = pd.to_datetime(st.session_state.penjualan['Waktu'])
-        except Exception as e:
-            st.error(f"Error loading {user_files['PENJUALAN_FILE']}: {e}")
+    except Exception as e:
+        st.error(f"Error loading {user_files['PENJUALAN_FILE']}: {e}")
 
-    if os.path.exists(user_files['SUPPLIER_FILE']):
-        try:
+    # Load supplier
+    try:
+        if os.path.exists(user_files['SUPPLIER_FILE']):
             st.session_state.supplier = pd.read_csv(user_files['SUPPLIER_FILE'])
             if 'Waktu' in st.session_state.supplier.columns:
                 st.session_state.supplier['Waktu'] = pd.to_datetime(st.session_state.supplier['Waktu'])
-        except Exception as e:
-            st.error(f"Error loading {user_files['SUPPLIER_FILE']}: {e}")
+    except Exception as e:
+        st.error(f"Error loading {user_files['SUPPLIER_FILE']}: {e}")
 
-    if os.path.exists(user_files['PIUTANG_KONSUMEN_FILE']):
-        try:
+    # Load piutang_konsumen
+    try:
+        if os.path.exists(user_files['PIUTANG_KONSUMEN_FILE']):
             st.session_state.piutang_konsumen = pd.read_csv(user_files['PIUTANG_KONSUMEN_FILE'])
-        except Exception as e:
-            st.error(f"Error loading {user_files['PIUTANG_KONSUMEN_FILE']}: {e}")
+    except Exception as e:
+        st.error(f"Error loading {user_files['PIUTANG_KONSUMEN_FILE']}: {e}")
 
-    if os.path.exists(user_files['PENGELUARAN_FILE']):
-        try:
+    # Load pengeluaran
+    try:
+        if os.path.exists(user_files['PENGELUARAN_FILE']):
             st.session_state.pengeluaran = pd.read_csv(user_files['PENGELUARAN_FILE'])
-        except Exception as e:
-            st.error(f"Error loading {user_files['PENGELUARAN_FILE']}: {e}")
+    except Exception as e:
+        st.error(f"Error loading {user_files['PENGELUARAN_FILE']}: {e}")
 
-    if os.path.exists(user_files['HISTORIS_KEUANGAN_FILE']):
-        try:
+    # Load historis_analisis_keuangan
+    try:
+        if os.path.exists(user_files['HISTORIS_KEUANGAN_FILE']):
             st.session_state.historis_analisis_keuangan = pd.read_csv(user_files['HISTORIS_KEUANGAN_FILE'])
-        except Exception as e:
-            st.error(f"Error loading {user_files['HISTORIS_KEUANGAN_FILE']}: {e}")
+    except Exception as e:
+        st.error(f"Error loading {user_files['HISTORIS_KEUANGAN_FILE']}: {e}")
 
-    if os.path.exists(user_files['HISTORIS_KEUNTUNGAN_FILE']):
-        try:
+    # Load historis_keuntungan_bersih
+    try:
+        if os.path.exists(user_files['HISTORIS_KEUNTUNGAN_FILE']):
             st.session_state.historis_keuntungan_bersih = pd.read_csv(user_files['HISTORIS_KEUNTUNGAN_FILE'])
-        except Exception as e:
-            st.error(f"Error loading {user_files['HISTORIS_KEUNTUNGAN_FILE']}: {e}")
+    except Exception as e:
+        st.error(f"Error loading {user_files['HISTORIS_KEUNTUNGAN_FILE']}: {e}")
+
+def halaman_stock_barang():
+    # Define the page content for Stock Barang
+    st.title("Stock Barang")
+    # Implement page-specific logic here
+
+def halaman_penjualan():
+    # Define the page content for Penjualan
+    st.title("Penjualan")
+    # Implement page-specific logic here
+
+def halaman_supplier():
+    # Define the page content for Supplier
+    st.title("Supplier")
+    # Implement page-specific logic here
+
+def halaman_owner():
+    # Define the page content for Owner
+    st.title("Owner")
+    # Implement page-specific logic here
 
 def app():
     st.sidebar.title("Aplikasi")
-    pages = ["Login", "Register"]
+    pages = ["Login", "Register", "Stock Barang", "Penjualan", "Supplier", "Owner"]
     page = st.sidebar.selectbox("Pilih Halaman", pages)
     
     if page == "Login":
@@ -171,32 +198,46 @@ def app():
             register_button = st.form_submit_button("Register")
             if register_button:
                 register(username, password, role)
+    
+    elif page == "Stock Barang":
+        if st.session_state.logged_in_user:
+            load_data(st.session_state.logged_in_user)
+            halaman_stock_barang()
+
+    elif page == "Penjualan":
+        if st.session_state.logged_in_user:
+            load_data(st.session_state.logged_in_user)
+            halaman_penjualan()
+
+    elif page == "Supplier":
+        if st.session_state.logged_in_user:
+            load_data(st.session_state.logged_in_user)
+            halaman_supplier()
+    
+    elif page == "Owner":
+        if st.session_state.logged_in_user:
+            load_data(st.session_state.logged_in_user)
+            halaman_owner()
 
 if __name__ == "__main__":
     initialize_session_state()
     load_user_data()
+    
+    # Initialize new users if user_data.csv does not exist or is empty
+    new_users = pd.DataFrame({
+        "Username": ["mira", "yono", "tini"],
+        "Password": ["123", "456", "789"],
+        "Role": ["user", "user", "user"]
+    })
+
+    if not os.path.exists(USER_DATA_FILE) or pd.read_csv(USER_DATA_FILE).empty:
+        new_users.to_csv(USER_DATA_FILE, index=False)
+    else:
+        existing_users = pd.read_csv(USER_DATA_FILE)
+        all_users = pd.concat([existing_users, new_users], ignore_index=True)
+        all_users.to_csv(USER_DATA_FILE, index=False)
+
     app()
-
-# Insert new users into user_data.csv
-import pandas as pd
-import os
-
-# Data pengguna baru
-new_users = pd.DataFrame({
-    "Username": ["mira", "yono", "tini"],
-    "Password": ["123", "456", "789"],
-    "Role": ["user", "user", "user"]
-})
-
-# Simpan ke file CSV
-user_data_file = 'user_data.csv'
-if not os.path.exists(user_data_file):
-    new_users.to_csv(user_data_file, index=False)
-else:
-    existing_users = pd.read_csv(user_data_file)
-    # Gabungkan data pengguna yang ada dengan data pengguna baru
-    all_users = pd.concat([existing_users, new_users], ignore_index=True)
-    all_users.to_csv(user_data_file, index=False)
     
 # Function for Stock Barang page
 def halaman_stock_barang():
