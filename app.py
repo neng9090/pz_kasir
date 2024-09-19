@@ -38,7 +38,7 @@ def load_user_data():
 def initialize_users():
     new_users = pd.DataFrame({
         "Username": ["mira", "yono", "tini"],
-        "Password": ["123", "456", "789"],
+        "Password": ["123oke", "456", "789"],
         "Role": ["user", "user", "user"]
     })
     new_users.to_csv(USER_DATA_FILE, index=False)
