@@ -54,7 +54,7 @@ def login(username, password):
         st.session_state.user_access = user.iloc[0]['Role']
         load_data()  # Load user-specific data after login
     else:
-        st.error("Invalid username or password")
+        st.error("Username atau password salah!")
 
 # Load data based on the logged-in user
 def load_data():
@@ -91,31 +91,29 @@ def main():
                 login(username, password)
         return
 
-    # Display the dashboard if user is logged in
-    st.title("Multi-User Dashboard")
-    st.write(f"Welcome, {st.session_state.logged_in_user}!")
-    
+    # Sidebar navigation only after login
+    st.sidebar.title("Menu")
+    menu = st.sidebar.radio(
+        "Pilih halaman:",
+        ["Dashboard"] if st.session_state.logged_in_user else []
+    )
+
     # Display the appropriate dashboard based on user role
-    if st.session_state.user_access == 'admin':
-        st.write("Admin Dashboard")
-        # Example functionality for admin role
-        if 'stok_barang' in st.session_state:
-            st.subheader("Stock Barang")
-            st.dataframe(st.session_state.stok_barang)
-        if 'penjualan' in st.session_state:
-            st.subheader("Penjualan")
-            st.dataframe(st.session_state.penjualan)
-    
-    elif st.session_state.user_access == 'owner':
-        st.write("Owner Dashboard")
-        # Example functionality for owner role
-        if 'penjualan' in st.session_state:
-            st.subheader("Penjualan")
-            st.dataframe(st.session_state.penjualan)
-    
-    else:
-        st.write("No access or role not recognized")
-    
+    if menu == "Dashboard":
+        st.title("Multi-User Dashboard")
+        st.write(f"Selamat datang, {st.session_state.logged_in_user}!")
+        
+        # Show additional pages if the user is logged in
+        if st.session_state.user_access == 'admin':
+            with st.sidebar.expander("Admin Pages"):
+                st.sidebar.write("1. Stock Barang")
+                st.sidebar.write("2. Penjualan")
+                st.sidebar.write("3. Supplier")
+                st.sidebar.write("4. Owner")
+        
+        # Include further logic for showing other pages based on the role
+        # ...
+
     # Ensure data is saved when the app is closed
     st.session_state._on_shutdown(save_data)
 
