@@ -80,37 +80,8 @@ def save_data():
 
 # Main app logic
 def main():
-    if st.session_state.logged_in_user:
-        # Only show dashboard if the user is logged in
-        st.title("Multi-User Dashboard")
-        st.write(f"Welcome, {st.session_state.logged_in_user}!")
-        
-        if st.session_state.user_access == 'admin':
-            # Show admin dashboard
-            st.write("Admin Dashboard")
-            # Add functionality for admin role
-            
-            # Example: Display stock items
-            if 'stok_barang' in st.session_state:
-                st.dataframe(st.session_state.stok_barang)
-            
-        elif st.session_state.user_access == 'owner':
-            # Show owner dashboard
-            st.write("Owner Dashboard")
-            # Add functionality for owner role
-            
-            # Example: Display sales data
-            if 'penjualan' in st.session_state:
-                st.dataframe(st.session_state.penjualan)
-        
-        else:
-            st.write("No access or role not recognized")
-        
-        # Save data when the app is closed
-        st.session_state._on_shutdown(save_data)
-        
-    else:
-        # Login form if not logged in
+    # Display login form if user is not logged in
+    if not st.session_state.logged_in_user:
         st.title("Login")
         with st.form("login_form"):
             username = st.text_input("Username")
@@ -118,7 +89,36 @@ def main():
             submitted = st.form_submit_button("Login")
             if submitted:
                 login(username, password)
+        return
+
+    # Display the dashboard if user is logged in
+    st.title("Multi-User Dashboard")
+    st.write(f"Welcome, {st.session_state.logged_in_user}!")
     
+    # Display the appropriate dashboard based on user role
+    if st.session_state.user_access == 'admin':
+        st.write("Admin Dashboard")
+        # Example functionality for admin role
+        if 'stok_barang' in st.session_state:
+            st.subheader("Stock Barang")
+            st.dataframe(st.session_state.stok_barang)
+        if 'penjualan' in st.session_state:
+            st.subheader("Penjualan")
+            st.dataframe(st.session_state.penjualan)
+    
+    elif st.session_state.user_access == 'owner':
+        st.write("Owner Dashboard")
+        # Example functionality for owner role
+        if 'penjualan' in st.session_state:
+            st.subheader("Penjualan")
+            st.dataframe(st.session_state.penjualan)
+    
+    else:
+        st.write("No access or role not recognized")
+    
+    # Ensure data is saved when the app is closed
+    st.session_state._on_shutdown(save_data)
+
 if __name__ == "__main__":
     initialize_session_state()
     load_user_data()
