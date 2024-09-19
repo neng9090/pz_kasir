@@ -222,7 +222,7 @@ def halaman_stock_barang():
             st.session_state.stok_barang = st.session_state.stok_barang.append(new_item, ignore_index=True)
             save_data()
             st.success("Barang baru berhasil ditambahkan!")
-# Function for Penjualan page
+# Define the page functions
 def halaman_penjualan():
     st.header("Penjualan")
 
@@ -345,37 +345,15 @@ def halaman_penjualan():
                     "Stok"
                 ] -= jumlah
 
-                st.success(f"Penjualan untuk {nama_pelanggan} berhasil disimpan!")
-                # save_data() # Uncomment this line if you have a function to save data
-            else:
-                st.error("Kombinasi Nama Barang, Ukuran/Kemasan, dan Merk tidak ditemukan di stok.")
+                st.success(f"Penjualan untuk {nama_barang} berhasil disimpan!")
 
-    # Fitur pencarian
-    st.subheader("Cari Barang di Stok")
-    search_barang = st.text_input("Cari Barang")
-    if search_barang:
-        hasil_pencarian = st.session_state.stok_barang[st.session_state.stok_barang["Nama Barang"].str.contains(search_barang, case=False)]
-        st.write("Hasil Pencarian:")
-        if not hasil_pencarian.empty:
-            st.dataframe(hasil_pencarian, use_container_width=True, hide_index=False)
-
-    st.subheader("Stok Barang Terupdate")
-    df_stok_barang = st.session_state.stok_barang.copy()
-    if "Persentase Keuntungan" in df_stok_barang.columns:
-        df_stok_barang = df_stok_barang.drop(columns=["Persentase Keuntungan"])
-    if "Harga" in df_stok_barang.columns:
-        df_stok_barang = df_stok_barang.drop(columns=["Harga"])  # Hapus kolom Harga dari tabel
-    st.dataframe(df_stok_barang, use_container_width=True, hide_index=False)
-
+    # Display the sales data
     st.subheader("Data Penjualan")
     if not st.session_state.penjualan.empty:
-        st.session_state.penjualan["Nomor Telepon"] = st.session_state.penjualan["Nomor Telepon"].astype(str)
-        if "Keuntungan" in st.session_state.penjualan.columns:
-            st.session_state.penjualan = st.session_state.penjualan.drop(columns=["Keuntungan"])  # Hapus kolom Keuntungan dari tabel
         st.dataframe(st.session_state.penjualan, use_container_width=True, hide_index=False)
     else:
         st.write("Belum ada data penjualan.")
-
+        
 # Function for Penjualan page
 def halaman_penjualan():
     st.markdown('<h1 style="text-align: center;">Penjualan</h1>', unsafe_allow_html=True)
