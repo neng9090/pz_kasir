@@ -4,8 +4,6 @@ import pandas as pd
 import os
 from datetime import datetime
 
-import bcrypt
-
 # Define file paths for user-specific data
 def get_user_file_paths(username):
     return {
@@ -50,16 +48,13 @@ def hash_password(password):
 def check_password(hashed_password, password):
     return bcrypt.checkpw(password.encode('utf-8'), hashed_password)
 
-# Data management functions
+# General data management function
 def manage_data(username, file_key, columns):
     file_path = get_user_file_paths(username)[file_key]
     
     # Load data
-    if os.path.exists(file_path):
-        data = pd.read_csv(file_path)
-    else:
-        data = pd.DataFrame(columns=columns)
-
+    data = pd.read_csv(file_path) if os.path.exists(file_path) else pd.DataFrame(columns=columns)
+    
     st.dataframe(data)
 
     # Form for data entry
@@ -73,7 +68,6 @@ def manage_data(username, file_key, columns):
             data = pd.concat([data, new_data], ignore_index=True)
             data.to_csv(file_path, index=False)
             st.success(f"{file_key.replace('_', ' ').title()} berhasil diperbarui.")
-
 
 # Function to manage stock items
 def manage_stok_barang(username):
@@ -353,27 +347,18 @@ def main():
                 default_index=0
             )
 
-        if choice == "Manajemen Stok Barang":
-            manage_data(st.session_state.logged_in_user, 'STOK_BARANG_FILE', 
-                        ['Nama Barang', 'Merk', 'Ukuran/Kemasan', 'Jumlah', 'Harga', 'Waktu Input'])
-        elif choice == "Manajemen Penjualan":
-            manage_data(st.session_state.logged_in_user, 'PENJUALAN_FILE', 
-                        ['Nama Pelanggan', 'Nomor Telepon', 'Alamat', 'Nama Barang', 'Jumlah', 'Harga Jual', 'Total Harga', 'Waktu'])
-        elif choice == "Manajemen Supplier":
-            manage_data(st.session_state.logged_in_user, 'SUPPLIER_FILE', 
-                        ['Nama Supplier', 'Alamat', 'Kontak', 'Waktu Input'])
-        elif choice == "Manajemen Piutang Konsumen":
-            manage_data(st.session_state.logged_in_user, 'PIUTANG_KONSUMEN_FILE', 
-                        ['Nama Konsumen', 'Jumlah Piutang', 'Tanggal', 'Waktu Input'])
-        elif choice == "Manajemen Pengeluaran":
-            manage_data(st.session_state.logged_in_user, 'PENGELUARAN_FILE', 
-                        ['Nama Penerima Dana', 'Keterangan', 'Total Biaya', 'Waktu Input'])
-        elif choice == "Laporan Keuangan":
-            manage_data(st.session_state.logged_in_user, 'HISTORIS_KEUANGAN_FILE', 
-                        ['Tanggal', 'Total Pemasukan', 'Total Pengeluaran'])
+        menu_map = {
+            "Manajemen Stok Barang": ('STOK_BARANG_FILE', ['Nama Barang', 'Merk', 'Ukuran/Kemasan', 'Jumlah', 'Harga', 'Waktu Input']),
+            "Manajemen Penjualan": ('PENJUALAN_FILE', ['Nama Pelanggan', 'Nomor Telepon', 'Alamat', 'Nama Barang', 'Jumlah', 'Harga Jual', 'Total Harga', 'Waktu']),
+            "Manajemen Supplier": ('SUPPLIER_FILE', ['Nama Supplier', 'Alamat', 'Kontak', 'Waktu Input']),
+            "Manajemen Piutang Konsumen": ('PIUTANG_KONSUMEN_FILE', ['Nama Konsumen', 'Jumlah Piutang', 'Tanggal', 'Waktu Input']),
+            "Manajemen Pengeluaran": ('PENGELUARAN_FILE', ['Nama Penerima Dana', 'Keterangan', 'Total Biaya', 'Waktu Input']),
+            "Laporan Keuangan": ('HISTORIS_KEUANGAN_FILE', ['Tanggal', 'Total Pemasukan', 'Total Pengeluaran']),
+        }
 
-if __name__ == "__main__":
-    main()
+        if choice in menu_map:
+            file_key, columns = menu_map[choice]
+            manage_data(st.session_state.logged_in_user, file_key, columns)
 
 if __name__ == "__main__":
     main()
