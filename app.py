@@ -76,27 +76,6 @@ def save_data():
         except Exception as e:
             st.error(f"Error saving data: {e}")
 
-# Register a new user
-def register(username, password, role='user'):
-    if 'user_data' not in st.session_state:
-        st.error("Data pengguna tidak ditemukan.")
-        return False
-
-    user_data = st.session_state.user_data
-    if username in user_data['Username'].values:
-        st.error("Username sudah ada. Silakan pilih username lain.")
-        return False
-
-    new_user = pd.DataFrame({
-        "Username": [username],
-        "Password": [password],
-        "Role": [role]
-    })
-    user_data = pd.concat([user_data, new_user], ignore_index=True)
-    user_data.to_csv(USER_DATA_FILE, index=False)
-    st.success("Akun berhasil dibuat!")
-    return True
-
 # Log in a user
 def login(username, password):
     if 'user_data' not in st.session_state:
@@ -194,149 +173,113 @@ def halaman_stock_barang():
                 "Merk": barang_dipilih["Merk"].values[0],
                 "Ukuran/Kemasan": barang_dipilih["Ukuran/Kemasan"].values[0],
                 "Harga": barang_dipilih["Harga"].values[0],
-                "Stok": barang_dipilih["Stok"].values[0],
-                "Kode Warna": barang_dipilih["Kode Warna"].values[0] if "Kode Warna" in barang_dipilih.columns else ""
+                "Warna/Base": barang_dipilih["Warna/Base"].values[0] if "Warna/Base" in barang_dipilih.columns else ""
             }
         else:
-            default_values = {
-                "Nama Barang": "",
-                "Merk": "",
-                "Ukuran/Kemasan": "",
-                "Harga": 0,
-                "Stok": 0,
-                "Kode Warna": ""
-            }
-
-    else:
-        # Untuk tambah barang baru, set default values kosong
-        selected_id = "Tambah Baru"
-        default_values = {
-            "Nama Barang": "",
-            "Merk": "",
-            "Ukuran/Kemasan": "",
-            "Harga": 0,
-            "Stok": 0,
-            "Kode Warna": ""
-        }
-
-    with st.form("input_barang"):
-        nama_barang = st.text_input("Nama Barang", value=default_values["Nama Barang"])
-        merk = st.text_input("Merk", value=default_values["Merk"])
-        ukuran = st.text_input("Ukuran/Kemasan", value=default_values["Ukuran/Kemasan"])
-        harga = st.number_input("Harga", min_value=0, value=int(default_values["Harga"]))
-        stok = st.number_input("Stok Barang", min_value=0, value=int(default_values["Stok"]))
-        kode_warna = st.text_input("Kode Warna/Base", value=default_values["Kode Warna"], placeholder="Opsional")
+            default_values = {"Nama Barang": "", "Merk": "", "Ukuran/Kemasan": "", "Harga": "", "Warna/Base": ""}
         
-        # Calculate the selling price as 15% more than the base price
-        selling_price = harga * 1.15
+        nama_barang = st.text_input("Nama Barang", default_values["Nama Barang"])
+        merk = st.text_input("Merk", default_values["Merk"])
+        ukuran_kemasan = st.text_input("Ukuran/Kemasan", default_values["Ukuran/Kemasan"])
+        harga = st.number_input("Harga", value=default_values["Harga"], step=1)
+        warna_base = st.text_input("Warna/Base", default_values["Warna/Base"]) if "Warna/Base" in default_values else ""
         
-        submit = st.form_submit_button("Simpan Barang")
-
-        if submit:
-            # Check if an item with the same attributes exists
-            existing_item = st.session_state.stok_barang[(
-                st.session_state.stok_barang["Nama Barang"] == nama_barang) &
-                (st.session_state.stok_barang["Merk"] == merk) &
-                (st.session_state.stok_barang["Ukuran/Kemasan"] == ukuran) &
-                (st.session_state.stok_barang["Kode Warna"] == kode_warna)
-            ]
-
-            if not existing_item.empty:
-                # Update existing item
-                existing_id = existing_item["ID"].values[0]
-                st.session_state.stok_barang.loc[
-                    st.session_state.stok_barang["ID"] == existing_id,
-                    ["Stok", "Harga Jual"]
-                ] = [existing_item["Stok"].values[0] + stok, selling_price]
-                st.success("Stok barang berhasil diperbarui!")
+        if st.button("Simpan"):
+            if selected_id == "Tambah Baru":
+                new_id = len(st.session_state.stok_barang) + 1
+                new_item = {
+                    "ID": new_id,
+                    "Nama Barang": nama_barang,
+                    "Merk": merk,
+                    "Ukuran/Kemasan": ukuran_kemasan,
+                    "Harga": harga,
+                    "Warna/Base": warna_base
+                }
+                st.session_state.stok_barang = st.session_state.stok_barang.append(new_item, ignore_index=True)
             else:
-                # Add new item
-                new_id = st.session_state.stok_barang["ID"].max() + 1 if not st.session_state.stok_barang.empty else 1
-                new_data = pd.DataFrame({
-                    "ID": [new_id],
-                    "Nama Barang": [nama_barang],
-                    "Merk": [merk],
-                    "Ukuran/Kemasan": [ukuran],
-                    "Harga": [harga],
-                    "Stok": [stok],
-                    "Kode Warna": [kode_warna],
-                    "Harga Jual": [selling_price],
-                    "Waktu Input": [datetime.now()]
-                })
-                st.session_state.stok_barang = pd.concat([st.session_state.stok_barang, new_data], ignore_index=True)
-                st.success("Barang berhasil ditambahkan!")
-
-            save_data()  # Save data after adding or updating item
-
-    # Tabel stok barang
-    st.markdown('<h2 style="text-align: center;">Daftar Stok Barang</h2>', unsafe_allow_html=True)
-    df_stok_barang = st.session_state.stok_barang.copy()
-    
-    # Hapus kolom "Harga" dari tabel jika ada
-    if "Harga" in df_stok_barang.columns:
-        df_stok_barang = df_stok_barang.drop(columns=["Harga"])
-    
-    # Pencarian nama barang atau merk
-    search_text = st.text_input("Cari Nama Barang atau Merk", key='search_text')
-    if search_text:
-        df_stok_barang = df_stok_barang[
-            (df_stok_barang["Nama Barang"].str.contains(search_text, case=False, na=False)) |
-            (df_stok_barang["Merk"].str.contains(search_text, case=False, na=False))
-        ]
-    
-    st.dataframe(df_stok_barang)
-
-# Main application function
-def app():
-    st.sidebar.title("Navigation")
-    pages = ["Login", "Register", "Stock Barang", "Penjualan", "Supplier", "Owner"]
-    page = st.sidebar.radio("Pilih Halaman", pages)
-
-    if page == "Login":
-        st.title("Login")
-        with st.form(key="login_form"):
-            username = st.text_input("Username")
-            password = st.text_input("Password", type="password")
-            submitted = st.form_submit_button("Login")
-            if submitted:
-                if login(username, password):
-                    st.session_state.page = "Stock Barang"
-
-    elif page == "Register":
-        st.title("Register")
-        with st.form(key="register_form"):
-            username = st.text_input("Username")
-            password = st.text_input("Password", type="password")
-            role = st.selectbox("Role", ["user", "admin"])
-            submitted = st.form_submit_button("Register")
-            if submitted:
-                if register(username, password, role):
-                    st.session_state.page = "Stock Barang"
-
+                st.session_state.stok_barang.loc[st.session_state.stok_barang["ID"] == selected_id, ["Nama Barang", "Merk", "Ukuran/Kemasan", "Harga", "Warna/Base"]] = [nama_barang, merk, ukuran_kemasan, harga, warna_base]
+            save_data()
+            st.success("Data barang berhasil disimpan!")
     else:
-        if st.session_state.logged_in_user:
-            if page == "Stock Barang":
-                load_data(st.session_state.logged_in_user)
-                halaman_stock_barang()
+        # Form input barang baru
+        st.markdown('<h2 style="text-align: center;">Tambah Barang Baru</h2>', unsafe_allow_html=True)
+        nama_barang = st.text_input("Nama Barang")
+        merk = st.text_input("Merk")
+        ukuran_kemasan = st.text_input("Ukuran/Kemasan")
+        harga = st.number_input("Harga", step=1)
+        warna_base = st.text_input("Warna/Base") if "Warna/Base" in st.session_state.stok_barang.columns else ""
+        
+        if st.button("Tambah"):
+            new_id = len(st.session_state.stok_barang) + 1
+            new_item = {
+                "ID": new_id,
+                "Nama Barang": nama_barang,
+                "Merk": merk,
+                "Ukuran/Kemasan": ukuran_kemasan,
+                "Harga": harga,
+                "Warna/Base": warna_base
+            }
+            st.session_state.stok_barang = st.session_state.stok_barang.append(new_item, ignore_index=True)
+            save_data()
+            st.success("Barang baru berhasil ditambahkan!")
 
-            elif page == "Penjualan":
-                load_data(st.session_state.logged_in_user)
-                halaman_penjualan()
+# Function for Penjualan page
+def halaman_penjualan():
+    st.markdown('<h1 style="text-align: center;">Penjualan</h1>', unsafe_allow_html=True)
+    
+    # Implement Penjualan functionalities here...
 
-            elif page == "Supplier":
-                load_data(st.session_state.logged_in_user)
-                halaman_supplier()
-            
-            elif page == "Owner":
-                load_data(st.session_state.logged_in_user)
-                halaman_owner()
+# Function for Supplier page
+def halaman_supplier():
+    st.markdown('<h1 style="text-align: center;">Supplier</h1>', unsafe_allow_html=True)
+    
+    # Implement Supplier functionalities here...
 
-if __name__ == "__main__":
+# Function for Owner page
+def halaman_owner():
+    st.markdown('<h1 style="text-align: center;">Owner</h1>', unsafe_allow_html=True)
+    
+    # Implement Owner functionalities here...
+
+# Function for login
+def login_page():
+    st.markdown('<h1 style="text-align: center;">Login</h1>', unsafe_allow_html=True)
+    
+    username = st.text_input("Username")
+    password = st.text_input("Password", type='password')
+    
+    if st.button("Login"):
+        if login(username, password):
+            load_data(username)
+            st.session_state.logged_in_user = username
+            st.session_state.user_role = st.session_state.user_data.loc[st.session_state.user_data['Username'] == username, 'Role'].values[0]
+            st.success("Login berhasil!")
+        else:
+            st.error("Login gagal!")
+
+# Main function to render the application
+def main():
     initialize_session_state()
     load_user_data()
-    initialize_users()  # Initialize new users
-    app()
+    initialize_users()
 
+    if st.session_state.logged_in_user:
+        st.sidebar.title("Menu")
+        selected_page = st.sidebar.radio("Pilih Halaman", ["Stock Barang", "Penjualan", "Supplier", "Owner"])
+        
+        if selected_page == "Stock Barang":
+            halaman_stock_barang()
+        elif selected_page == "Penjualan":
+            halaman_penjualan()
+        elif selected_page == "Supplier":
+            halaman_supplier()
+        elif selected_page == "Owner":
+            halaman_owner()
+    else:
+        login_page()
+
+if __name__ == "__main__":
+    main()
 # Function for Penjualan page
 def halaman_penjualan():
     st.header("Penjualan")
