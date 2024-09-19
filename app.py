@@ -154,24 +154,28 @@ def load_data(username):
         st.error(f"Error loading {user_files['HISTORIS_KEUNTUNGAN_FILE']}: {e}")
 
 def halaman_stock_barang():
-    # Define the page content for Stock Barang
-    st.title("Stock Barang")
-    # Implement page-specific logic here
+    if st.session_state.logged_in_user:
+        st.title("Stock Barang")
+        # Implement page-specific logic here
+        st.write("Stock Barang page content goes here.")
 
 def halaman_penjualan():
-    # Define the page content for Penjualan
-    st.title("Penjualan")
-    # Implement page-specific logic here
+    if st.session_state.logged_in_user:
+        st.title("Penjualan")
+        # Implement page-specific logic here
+        st.write("Penjualan page content goes here.")
 
 def halaman_supplier():
-    # Define the page content for Supplier
-    st.title("Supplier")
-    # Implement page-specific logic here
+    if st.session_state.logged_in_user:
+        st.title("Supplier")
+        # Implement page-specific logic here
+        st.write("Supplier page content goes here.")
 
 def halaman_owner():
-    # Define the page content for Owner
-    st.title("Owner")
-    # Implement page-specific logic here
+    if st.session_state.logged_in_user:
+        st.title("Owner")
+        # Implement page-specific logic here
+        st.write("Owner page content goes here.")
 
 def app():
     st.sidebar.title("Aplikasi")
@@ -183,11 +187,10 @@ def app():
         with st.form(key="login_form"):
             username = st.text_input("Username")
             password = st.text_input("Password", type="password")
-            login_button = st.form_submit_button("Login")
-            if login_button:
+            submitted = st.form_submit_button("Login")
+            if submitted:
                 if login(username, password):
-                    load_data(username)
-                    st.success("Berhasil Login")
+                    st.session_state.page = "Stock Barang"
     
     elif page == "Register":
         st.title("Register")
@@ -195,33 +198,33 @@ def app():
             username = st.text_input("Username")
             password = st.text_input("Password", type="password")
             role = st.selectbox("Role", ["user", "admin"])
-            register_button = st.form_submit_button("Register")
-            if register_button:
-                register(username, password, role)
+            submitted = st.form_submit_button("Register")
+            if submitted:
+                if register(username, password, role):
+                    st.session_state.page = "Stock Barang"
     
-    elif page == "Stock Barang":
+    else:
         if st.session_state.logged_in_user:
-            load_data(st.session_state.logged_in_user)
-            halaman_stock_barang()
+            if page == "Stock Barang":
+                load_data(st.session_state.logged_in_user)
+                halaman_stock_barang()
 
-    elif page == "Penjualan":
-        if st.session_state.logged_in_user:
-            load_data(st.session_state.logged_in_user)
-            halaman_penjualan()
+            elif page == "Penjualan":
+                load_data(st.session_state.logged_in_user)
+                halaman_penjualan()
 
-    elif page == "Supplier":
-        if st.session_state.logged_in_user:
-            load_data(st.session_state.logged_in_user)
-            halaman_supplier()
-    
-    elif page == "Owner":
-        if st.session_state.logged_in_user:
-            load_data(st.session_state.logged_in_user)
-            halaman_owner()
+            elif page == "Supplier":
+                load_data(st.session_state.logged_in_user)
+                halaman_supplier()
+            
+            elif page == "Owner":
+                load_data(st.session_state.logged_in_user)
+                halaman_owner()
 
 if __name__ == "__main__":
     initialize_session_state()
     load_user_data()
+    app()
     
     # Initialize new users if user_data.csv does not exist or is empty
     new_users = pd.DataFrame({
