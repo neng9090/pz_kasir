@@ -52,42 +52,61 @@ def initialize_users():
         all_users = pd.concat([existing_users, new_users], ignore_index=True).drop_duplicates()
         all_users.to_csv(USER_DATA_FILE, index=False)
 
-# Log in a user
+# Initialize session state variables if they are not already set
+if 'logged_in_user' not in st.session_state:
+    st.session_state.logged_in_user = None
+if 'login_success' not in st.session_state:
+    st.session_state.login_success = False
+
 def login(username, password):
-    if 'user_data' not in st.session_state:
-        st.error("Data pengguna tidak ditemukan.")
-        return False
-
-    user_data = st.session_state.user_data
-    user = user_data[(user_data['Username'] == username) & (user_data['Password'] == password)]
-    if not user.empty:
+    # Dummy authentication for demonstration
+    # Replace with actual authentication logic
+    if username == "admin" and password == "password":
         st.session_state.logged_in_user = username
-        st.session_state.user_role = user['Role'].values[0]
-        st.success(f"Selamat datang, {username}!")
         return True
-    else:
-        st.error("Username atau password salah.")
-        return False
+    return False
 
-# Initialize and load data
-initialize_session_state()
-load_user_data()
-initialize_users()
+def load_data(user):
+    # Function to load user-specific data
+    st.write(f"Loading data for {user}")
 
-# Login form
+def manage_stok_barang(user):
+    st.write(f"Managing Stok Barang for {user}")
+
+def manage_penjualan(user):
+    st.write(f"Managing Penjualan for {user}")
+
+def manage_supplier(user):
+    st.write(f"Managing Supplier for {user}")
+
+def manage_piutang_konsum(user):
+    st.write(f"Managing Piutang Konsumen for {user}")
+
+def manage_pengeluaran(user):
+    st.write(f"Managing Pengeluaran for {user}")
+
+def update_historical_data(user):
+    st.write(f"Updating historical data for {user}")
+
+# Login page
 if st.session_state.logged_in_user is None:
     st.title("Login")
     username = st.text_input("Username")
     password = st.text_input("Password", type="password")
     if st.button("Login"):
         if login(username, password):
+            st.session_state.login_success = True
             st.experimental_rerun()  # Reload the app to show the dashboard
+        else:
+            st.error("Invalid credentials, please try again.")
 else:
+    st.session_state.login_success = True
+
     # Sidebar for navigation
     with st.sidebar:
         st.title("Dashboard")
         st.write(f"**Logged in as:** {st.session_state.logged_in_user}")
-        
+
         # Navigation menu
         option = option_menu(
             menu_title=None,
@@ -104,18 +123,6 @@ else:
         )
 
     # Load user-specific data
-    def load_data(username):
-        user_files = get_user_file_paths(username)
-        
-        for key, file_path in user_files.items():
-            try:
-                if os.path.exists(file_path):
-                    st.session_state[key.lower()] = pd.read_csv(file_path)
-                    if 'Waktu' in st.session_state[key.lower()].columns:
-                        st.session_state[key.lower()]['Waktu'] = pd.to_datetime(st.session_state[key.lower()]['Waktu'])
-            except Exception as e:
-                st.error(f"Error loading {key.lower()} data: {e}")
-
     load_data(st.session_state.logged_in_user)
 
     # Dashboard based on the selected menu option
@@ -131,7 +138,6 @@ else:
         manage_pengeluaran(st.session_state.logged_in_user)
     elif option == "Laporan Keuangan":
         update_historical_data(st.session_state.logged_in_user)
-
 # Function definitions
 def manage_stok_barang(username):
     st.title("Manajemen Stok Barang")
