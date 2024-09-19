@@ -9,6 +9,16 @@ import time
 from io import StringIO
 
 
+# Define file paths
+STOK_BARANG_FILE = 'stok_barang.csv'
+PENJUALAN_FILE = 'penjualan.csv'
+SUPPLIER_FILE = 'supplier.csv'
+PIUTANG_KONSUMEN_FILE = 'piutang_konsumen.csv'
+PENGELUARAN_FILE = 'pengeluaran.csv'
+HISTORIS_KEUANGAN_FILE = 'historis_analisis_keuangan.csv'
+HISTORIS_KEUNTUNGAN_FILE = 'historis_keuntungan_bersih.csv'
+OWNER_FILE = 'owner.csv'
+
 # Initialize session state
 def initialize_session_state():
     if 'username' not in st.session_state:
