@@ -265,6 +265,15 @@ def update_historical_data(username):
 
     if 'historical_data' in st.session_state:
         st.dataframe(st.session_state.historical_data)
+        
+        # Calculate total income and total expenses
+        total_income = st.session_state.historical_data['Total Pemasukan'].sum()
+        total_expenses = st.session_state.historical_data['Total Pengeluaran'].sum()
+        
+        st.subheader("Total Keuangan")
+        st.write(f"Total Pemasukan: {total_income}")
+        st.write(f"Total Pengeluaran: {total_expenses}")
+        st.write(f"Sisa: {total_income - total_expenses}")
     
     st.subheader("Tambah Data Keuangan")
     
