@@ -288,7 +288,7 @@ def update_historical_data(username):
             st.session_state.historical_data.to_csv(file_path, index=False)
             st.success("Data keuangan berhasil diperbarui.")
 
-# Application
+# Application entry point
 def main():
     initialize_session_state()
     load_user_data()
