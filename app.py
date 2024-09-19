@@ -132,50 +132,50 @@ else:
     elif option == "Laporan Keuangan":
         update_historical_data(st.session_state.logged_in_user)
 
-# Define function before calling it
-def manage_stok_barang(username):
-    st.title("Manajemen Stok Barang")
-    
-    # Display existing stock if available
-    if 'stok_barang' in st.session_state:
-        st.dataframe(st.session_state.stok_barang)
-    
-    # Form to add/update stock items
-    st.subheader("Tambah/Update Stok Barang")
-    
-    with st.form("stock_form"):
-        nama_barang = st.text_input("Nama Barang")
-        merk = st.text_input("Merk")
-        ukuran_kemasan = st.text_input("Ukuran/Kemasan")
-        jumlah = st.number_input("Jumlah", min_value=0)
-        harga = st.number_input("Harga", min_value=0.0)
+    # Define function before calling it
+    def manage_stok_barang(username):
+        st.title("Manajemen Stok Barang")
         
-        submitted = st.form_submit_button("Simpan")
+        # Display existing stock if available
+        if 'stok_barang' in st.session_state:
+            st.dataframe(st.session_state.stok_barang)
         
-        if submitted:
-            new_stock = pd.DataFrame({
-                'Nama Barang': [nama_barang],
-                'Merk': [merk],
-                'Ukuran/Kemasan': [ukuran_kemasan],
-                'Jumlah': [jumlah],
-                'Harga': [harga],
-                'Waktu Input': [datetime.now()]
-            })
+        # Form to add/update stock items
+        st.subheader("Tambah/Update Stok Barang")
+        
+        with st.form("stock_form"):
+            nama_barang = st.text_input("Nama Barang")
+            merk = st.text_input("Merk")
+            ukuran_kemasan = st.text_input("Ukuran/Kemasan")
+            jumlah = st.number_input("Jumlah", min_value=0)
+            harga = st.number_input("Harga", min_value=0.0)
             
-            if 'stok_barang' in st.session_state:
-                st.session_state.stok_barang = pd.concat([st.session_state.stok_barang, new_stock], ignore_index=True)
-            else:
-                st.session_state.stok_barang = new_stock
+            submitted = st.form_submit_button("Simpan")
             
-            # Save updated data to CSV
-            file_path = f'{username}_stok_barang.csv'
-            st.session_state.stok_barang.to_csv(file_path, index=False)
-            st.success("Stok barang berhasil diperbarui.")
-
-# Example call to function
-initialize_session_state()
-st.session_state.logged_in_user = 'mira'  # Simulate a logged-in user for testing
-manage_stok_barang(st.session_state.logged_in_user)
+            if submitted:
+                new_stock = pd.DataFrame({
+                    'Nama Barang': [nama_barang],
+                    'Merk': [merk],
+                    'Ukuran/Kemasan': [ukuran_kemasan],
+                    'Jumlah': [jumlah],
+                    'Harga': [harga],
+                    'Waktu Input': [datetime.now()]
+                })
+                
+                if 'stok_barang' in st.session_state:
+                    st.session_state.stok_barang = pd.concat([st.session_state.stok_barang, new_stock], ignore_index=True)
+                else:
+                    st.session_state.stok_barang = new_stock
+                
+                # Save updated data to CSV
+                file_path = f'{username}_stok_barang.csv'
+                st.session_state.stok_barang.to_csv(file_path, index=False)
+                st.success("Stok barang berhasil diperbarui.")
+    
+    # Example call to function
+    initialize_session_state()
+    st.session_state.logged_in_user = 'mira'  # Simulate a logged-in user for testing
+    manage_stok_barang(st.session_state.logged_in_user)
 
 def manage_penjualan(username):
     st.title("Manajemen Penjualan")
