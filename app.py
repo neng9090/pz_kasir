@@ -8,6 +8,11 @@ import os
 import time
 from io import StringIO
 
+import streamlit as st
+import pandas as pd
+import os
+from datetime import datetime
+
 # File paths for user data
 USER_DATA_FILE = 'user_data.csv'
 
@@ -22,60 +27,6 @@ def get_user_file_paths(username):
         'HISTORIS_KEUANGAN_FILE': f'{username}_historis_analisis_keuangan.csv',
         'HISTORIS_KEUNTUNGAN_FILE': f'{username}_historis_keuntungan_bersih.csv'
     }
-# Initialize session state
-def initialize_session_state():
-    if 'logged_in_user' not in st.session_state:
-        st.session_state.logged_in_user = None
-    if 'user_role' not in st.session_state:
-        st.session_state.user_role = None
-
-# Load user data from CSV
-def load_user_data():
-    if os.path.exists(USER_DATA_FILE):
-        st.session_state.user_data = pd.read_csv(USER_DATA_FILE)
-    else:
-        st.session_state.user_data = pd.DataFrame(columns=["Username", "Password", "Role"])
-
-# Login function
-def login():
-    st.sidebar.title("Login")
-    username = st.sidebar.text_input("Username")
-    password = st.sidebar.text_input("Password", type="password")
-    
-    if st.sidebar.button("Login"):
-        if username in st.session_state.user_data['Username'].values:
-            user_data = st.session_state.user_data[st.session_state.user_data['Username'] == username]
-            
-            # Debugging statements
-            st.write("Debug Information:")
-            st.write(f"Username entered: {username}")
-            st.write(f"Password entered: {password}")
-            st.write("User data from file:")
-            st.write(user_data)
-            
-            # Check if password matches
-            stored_password = user_data['Password'].values[0]
-            st.write(f"Stored password: {stored_password}")
-            
-            if stored_password == password:
-                st.session_state.logged_in_user = username
-                st.session_state.user_role = user_data['Role'].values[0]
-                st.sidebar.success("Login successful!")
-            else:
-                st.sidebar.error("Incorrect password.")
-        else:
-            st.sidebar.error("Username not found.")
-
-# Main application logic
-def main():
-    initialize_session_state()
-    load_user_data()
-    
-    if st.session_state.logged_in_user is None:
-        login()
-    else:
-        st.title("Welcome to the Dashboard")
-        st.write(f"Welcome {st.session_state.logged_in_user}!")
 
 # Initialize session state
 def initialize_session_state():
@@ -90,6 +41,7 @@ def load_user_data():
         st.session_state.user_data = pd.read_csv(USER_DATA_FILE)
     else:
         st.session_state.user_data = pd.DataFrame(columns=["Username", "Password", "Role"])
+        initialize_users()  # Initialize with default users if file is missing
 
 # Initialize new users if user_data.csv does not exist or is empty
 def initialize_users():
@@ -122,8 +74,11 @@ def login():
 def manage_stok_barang(username):
     st.title("Manajemen Stok Barang")
     
-    if 'stok_barang' in st.session_state:
-        st.dataframe(st.session_state.stok_barang)
+    file_path = get_user_file_paths(username)['STOK_BARANG_FILE']
+    if os.path.exists(file_path):
+        st.session_state.stok_barang = pd.read_csv(file_path)
+    else:
+        st.session_state.stok_barang = pd.DataFrame(columns=['Nama Barang', 'Merk', 'Ukuran/Kemasan', 'Jumlah', 'Harga', 'Waktu Input'])
     
     st.subheader("Tambah/Update Stok Barang")
     
@@ -151,7 +106,6 @@ def manage_stok_barang(username):
             else:
                 st.session_state.stok_barang = new_stock
             
-            file_path = get_user_file_paths(username)['STOK_BARANG_FILE']
             st.session_state.stok_barang.to_csv(file_path, index=False)
             st.success("Stok barang berhasil diperbarui.")
 
@@ -159,8 +113,11 @@ def manage_stok_barang(username):
 def manage_penjualan(username):
     st.title("Manajemen Penjualan")
     
-    if 'penjualan' in st.session_state:
-        st.dataframe(st.session_state.penjualan)
+    file_path = get_user_file_paths(username)['PENJUALAN_FILE']
+    if os.path.exists(file_path):
+        st.session_state.penjualan = pd.read_csv(file_path)
+    else:
+        st.session_state.penjualan = pd.DataFrame(columns=['Nama Pelanggan', 'Nomor Telepon', 'Alamat', 'Nama Barang', 'Jumlah', 'Harga Jual', 'Total Harga', 'Waktu'])
     
     st.subheader("Tambah Penjualan")
     
@@ -192,7 +149,6 @@ def manage_penjualan(username):
             else:
                 st.session_state.penjualan = new_sale
             
-            file_path = get_user_file_paths(username)['PENJUALAN_FILE']
             st.session_state.penjualan.to_csv(file_path, index=False)
             st.success("Penjualan berhasil diperbarui.")
 
@@ -200,8 +156,11 @@ def manage_penjualan(username):
 def manage_supplier(username):
     st.title("Manajemen Supplier")
     
-    if 'supplier' in st.session_state:
-        st.dataframe(st.session_state.supplier)
+    file_path = get_user_file_paths(username)['SUPPLIER_FILE']
+    if os.path.exists(file_path):
+        st.session_state.supplier = pd.read_csv(file_path)
+    else:
+        st.session_state.supplier = pd.DataFrame(columns=['Nama Supplier', 'Alamat', 'Kontak', 'Waktu Input'])
     
     st.subheader("Tambah Supplier")
     
@@ -225,7 +184,6 @@ def manage_supplier(username):
             else:
                 st.session_state.supplier = new_supplier
             
-            file_path = get_user_file_paths(username)['SUPPLIER_FILE']
             st.session_state.supplier.to_csv(file_path, index=False)
             st.success("Supplier berhasil diperbarui.")
 
@@ -233,8 +191,11 @@ def manage_supplier(username):
 def manage_piutang_konsum(username):
     st.title("Manajemen Piutang Konsumen")
     
-    if 'piutang_konsum' in st.session_state:
-        st.dataframe(st.session_state.piutang_konsum)
+    file_path = get_user_file_paths(username)['PIUTANG_KONSUMEN_FILE']
+    if os.path.exists(file_path):
+        st.session_state.piutang_konsum = pd.read_csv(file_path)
+    else:
+        st.session_state.piutang_konsum = pd.DataFrame(columns=['Nama Konsumen', 'Jumlah Piutang', 'Tanggal', 'Waktu Input'])
     
     st.subheader("Tambah Piutang Konsumen")
     
@@ -258,7 +219,6 @@ def manage_piutang_konsum(username):
             else:
                 st.session_state.piutang_konsum = new_piutang
             
-            file_path = get_user_file_paths(username)['PIUTANG_KONSUMEN_FILE']
             st.session_state.piutang_konsum.to_csv(file_path, index=False)
             st.success("Piutang konsumen berhasil diperbarui.")
 
@@ -266,23 +226,26 @@ def manage_piutang_konsum(username):
 def manage_pengeluaran(username):
     st.title("Manajemen Pengeluaran")
     
-    if 'pengeluaran' in st.session_state:
-        st.dataframe(st.session_state.pengeluaran)
+    file_path = get_user_file_paths(username)['PENGELUARAN_FILE']
+    if os.path.exists(file_path):
+        st.session_state.pengeluaran = pd.read_csv(file_path)
+    else:
+        st.session_state.pengeluaran = pd.DataFrame(columns=['Keterangan', 'Jumlah', 'Tanggal', 'Waktu Input'])
     
     st.subheader("Tambah Pengeluaran")
     
     with st.form("pengeluaran_form"):
-        nama_penerima_dana = st.text_input("Nama Penerima Dana")
         keterangan = st.text_input("Keterangan")
-        total_biaya = st.number_input("Total Biaya", min_value=0.0)
+        jumlah = st.number_input("Jumlah", min_value=0.0)
+        tanggal = st.date_input("Tanggal", value=datetime.now())
         
         submitted = st.form_submit_button("Simpan")
         
         if submitted:
             new_pengeluaran = pd.DataFrame({
-                'Nama Penerima Dana': [nama_penerima_dana],
                 'Keterangan': [keterangan],
-                'Total Biaya': [total_biaya],
+                'Jumlah': [jumlah],
+                'Tanggal': [tanggal],
                 'Waktu Input': [datetime.now()]
             })
             
@@ -291,51 +254,35 @@ def manage_pengeluaran(username):
             else:
                 st.session_state.pengeluaran = new_pengeluaran
             
-            file_path = get_user_file_paths(username)['PENGELUARAN_FILE']
             st.session_state.pengeluaran.to_csv(file_path, index=False)
             st.success("Pengeluaran berhasil diperbarui.")
 
-# Main application logic
+# Main application
 def main():
+    st.sidebar.title("Navigasi")
+    menu = ["Login", "Manajemen Stok Barang", "Manajemen Penjualan", "Manajemen Supplier", "Manajemen Piutang Konsumen", "Manajemen Pengeluaran"]
+    choice = st.sidebar.selectbox("Pilih Menu", menu)
+    
     initialize_session_state()
     load_user_data()
     
-    if st.session_state.logged_in_user is None:
+    if choice == "Login":
         login()
     else:
-        # Set up navigation
-        with st.sidebar:
-            option = st.selectbox(
-                "Navigation",
-                ["Dashboard", "Stok Barang", "Penjualan", "Supplier", "Piutang Konsumen", "Pengeluaran"]
-            )
-        
-        user_files = get_user_file_paths(st.session_state.logged_in_user)
-        
-        if os.path.exists(user_files['STOK_BARANG_FILE']):
-            st.session_state.stok_barang = pd.read_csv(user_files['STOK_BARANG_FILE'])
-        if os.path.exists(user_files['PENJUALAN_FILE']):
-            st.session_state.penjualan = pd.read_csv(user_files['PENJUALAN_FILE'])
-        if os.path.exists(user_files['SUPPLIER_FILE']):
-            st.session_state.supplier = pd.read_csv(user_files['SUPPLIER_FILE'])
-        if os.path.exists(user_files['PIUTANG_KONSUMEN_FILE']):
-            st.session_state.piutang_konsum = pd.read_csv(user_files['PIUTANG_KONSUMEN_FILE'])
-        if os.path.exists(user_files['PENGELUARAN_FILE']):
-            st.session_state.pengeluaran = pd.read_csv(user_files['PENGELUARAN_FILE'])
-        
-        if option == "Dashboard":
-            st.title("Dashboard")
-            st.write(f"Welcome {st.session_state.logged_in_user}!")
-        elif option == "Stok Barang":
-            manage_stok_barang(st.session_state.logged_in_user)
-        elif option == "Penjualan":
-            manage_penjualan(st.session_state.logged_in_user)
-        elif option == "Supplier":
-            manage_supplier(st.session_state.logged_in_user)
-        elif option == "Piutang Konsumen":
-            manage_piutang_konsum(st.session_state.logged_in_user)
-        elif option == "Pengeluaran":
-            manage_pengeluaran(st.session_state.logged_in_user)
+        if st.session_state.logged_in_user:
+            username = st.session_state.logged_in_user
+            if choice == "Manajemen Stok Barang":
+                manage_stok_barang(username)
+            elif choice == "Manajemen Penjualan":
+                manage_penjualan(username)
+            elif choice == "Manajemen Supplier":
+                manage_supplier(username)
+            elif choice == "Manajemen Piutang Konsumen":
+                manage_piutang_konsum(username)
+            elif choice == "Manajemen Pengeluaran":
+                manage_pengeluaran(username)
+        else:
+            st.warning("Silakan login terlebih dahulu.")
 
 if __name__ == "__main__":
     main()
