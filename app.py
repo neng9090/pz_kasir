@@ -1122,3 +1122,20 @@ with st.sidebar:
         default_index=0
     )
 
+# Page routing
+if selected_page == "Stock Barang":
+    initialize_session_state()
+    load_data()
+    halaman_stock_barang()
+elif selected_page == "Penjualan":
+    initialize_session_state()
+    load_data()
+    halaman_penjualan()  # Ensure this is called correctly
+elif selected_page == "Supplier":
+    initialize_session_state()
+    load_data()
+    halaman_supplier()
+elif selected_page == "Owner":
+    initialize_session_state()
+    load_data()
+    halaman_owner()
