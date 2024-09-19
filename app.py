@@ -8,82 +8,101 @@ import os
 import time
 from io import StringIO
 
-# Define file paths
-STOK_BARANG_FILE = 'stok_barang.csv'
-PENJUALAN_FILE = 'penjualan.csv'
-SUPPLIER_FILE = 'supplier.csv'
-CSV_FILE_PATH = 'piutang_konsumen.csv'
-OWNER_FILE = 'owner.csv'  # Add the owner file path
 
-# Initialize session state data if not already present
+# Initialize session state
 def initialize_session_state():
+    if 'username' not in st.session_state:
+        st.session_state.username = None
+    if 'authenticated' not in st.session_state:
+        st.session_state.authenticated = False
     if 'stok_barang' not in st.session_state:
-        st.session_state.stok_barang = pd.DataFrame(columns=[
-            "ID", "Nama Barang", "Merk", "Ukuran/Kemasan", "Harga", "Stok", "Persentase Keuntungan", "Waktu Input"
-        ])
+        st.session_state.stok_barang = pd.DataFrame(columns=["ID", "Nama Barang", "Merk", "Ukuran/Kemasan", "Harga", "Stok", "Persentase Keuntungan", "Waktu Input"])
     if 'penjualan' not in st.session_state:
-        st.session_state.penjualan = pd.DataFrame(columns=[
-            "ID", "Nama Pelanggan", "Nomor Telepon", "Alamat", "Nama Barang", "Ukuran/Kemasan", "Merk", "Jumlah", "Total Harga", "Keuntungan", "Waktu"
-        ])
+        st.session_state.penjualan = pd.DataFrame(columns=["ID", "Nama Pelanggan", "Nomor Telepon", "Alamat", "Nama Barang", "Ukuran/Kemasan", "Merk", "Jumlah", "Total Harga", "Keuntungan", "Waktu"])
     if 'supplier' not in st.session_state:
-        st.session_state.supplier = pd.DataFrame(columns=[
-            "ID", "Nama Barang", "Merk", "Ukuran/Kemasan", "Jumlah Barang", "Nama Supplier", "Tagihan", "Waktu"
-        ])
+        st.session_state.supplier = pd.DataFrame(columns=["ID", "Nama Barang", "Merk", "Ukuran/Kemasan", "Jumlah Barang", "Nama Supplier", "Tagihan", "Waktu"])
     if 'owner' not in st.session_state:
-        st.session_state.owner = pd.DataFrame(columns=[
-            "ID", "Username", "Password"  # Adjust columns as needed
-        ])
+        st.session_state.owner = pd.DataFrame(columns=["ID", "Username", "Password"])
+    if 'piutang_konsumen' not in st.session_state:
+        st.session_state.piutang_konsumen = pd.DataFrame(columns=["ID", "Nama Konsumen", "Jumlah Piutang", "Waktu"])
+    if 'pengeluaran' not in st.session_state:
+        st.session_state.pengeluaran = pd.DataFrame(columns=["ID", "Jenis Pengeluaran", "Jumlah", "Waktu"])
+    if 'historis_analisis_keuangan' not in st.session_state:
+        st.session_state.historis_analisis_keuangan = pd.DataFrame(columns=["Bulan", "Total Pendapatan", "Total Pengeluaran", "Keuntungan Bersih"])
+    if 'historis_keuntungan_bersih' not in st.session_state:
+        st.session_state.historis_keuntungan_bersih = pd.DataFrame(columns=["Bulan", "Keuntungan Bersih"])
 
+# Function to generate file paths dynamically for each user
+def get_file_path(file_type, username):
+    folder = f"data/{username}"
+    os.makedirs(folder, exist_ok=True)
+    return os.path.join(folder, f"{file_type}.csv")
 
-# Load data from CSV files if they exist
-def load_data():
-    if os.path.exists(STOK_BARANG_FILE):
-        st.session_state.stok_barang = pd.read_csv(STOK_BARANG_FILE)
-        # Convert 'Waktu Input' column to datetime after loading
-        if 'Waktu Input' in st.session_state.stok_barang.columns:
-            st.session_state.stok_barang['Waktu Input'] = pd.to_datetime(st.session_state.stok_barang['Waktu Input'])
-    
-    if os.path.exists(PENJUALAN_FILE):
-        st.session_state.penjualan = pd.read_csv(PENJUALAN_FILE)
-        # Convert 'Waktu' column to datetime after loading
-        if 'Waktu' in st.session_state.penjualan.columns:
-            st.session_state.penjualan['Waktu'] = pd.to_datetime(st.session_state.penjualan['Waktu'])
-    
-    if os.path.exists(SUPPLIER_FILE):
-        st.session_state.supplier = pd.read_csv(SUPPLIER_FILE)
-        # Convert 'Waktu' column to datetime after loading
-        if 'Waktu' in st.session_state.supplier.columns:
-            st.session_state.supplier['Waktu'] = pd.to_datetime(st.session_state.supplier['Waktu'])
+# Function to load data from CSV files for the logged-in user
+def load_user_data(username):
+    stok_barang_file = get_file_path('stok_barang', username)
+    penjualan_file = get_file_path('penjualan', username)
+    supplier_file = get_file_path('supplier', username)
+    owner_file = get_file_path('owner', username)
+    piutang_konsumen_file = get_file_path('piutang_konsumen', username)
+    pengeluaran_file = get_file_path('pengeluaran', username)
+    historis_keuangan_file = get_file_path('historis_analisis_keuangan', username)
+    historis_keuntungan_file = get_file_path('historis_keuntungan_bersih', username)
 
+    if os.path.exists(stok_barang_file):
+        st.session_state.stok_barang = pd.read_csv(stok_barang_file)
+    if os.path.exists(penjualan_file):
+        st.session_state.penjualan = pd.read_csv(penjualan_file)
+    if os.path.exists(supplier_file):
+        st.session_state.supplier = pd.read_csv(supplier_file)
+    if os.path.exists(owner_file):
+        st.session_state.owner = pd.read_csv(owner_file)
+    if os.path.exists(piutang_konsumen_file):
+        st.session_state.piutang_konsumen = pd.read_csv(piutang_konsumen_file)
+    if os.path.exists(pengeluaran_file):
+        st.session_state.pengeluaran = pd.read_csv(pengeluaran_file)
+    if os.path.exists(historis_keuangan_file):
+        st.session_state.historis_analisis_keuangan = pd.read_csv(historis_keuangan_file)
+    if os.path.exists(historis_keuntungan_file):
+        st.session_state.historis_keuntungan_bersih = pd.read_csv(historis_keuntungan_file)
 
-# Save data to CSV files
-def save_data():
-    st.session_state.stok_barang.to_csv(STOK_BARANG_FILE, index=False)
-    st.session_state.penjualan.to_csv(PENJUALAN_FILE, index=False)
-    st.session_state.supplier.to_csv(SUPPLIER_FILE, index=False)
-    st.session_state.owner.to_csv(OWNER_FILE, index=False)  # Save owner data
-    st.session_state.stok_barang.to_csv("stok_barang.csv", index=False)
-    st.session_state.penjualan.to_csv("penjualan.csv", index=False)
-    st.session_state.supplier.to_csv("supplier.csv", index=False)
-    st.session_state.piutang_konsumen.to_csv("piutang_konsumen.csv", index=False)
-    st.session_state.pengeluaran.to_csv("pengeluaran.csv", index=False)
-    st.session_state.historis_analisis_keuangan.to_csv("historis_analisis_keuangan.csv", index=False)
-    st.session_state.historis_keuntungan_bersih.to_csv("historis_keuntungan_bersih.csv", index=False)
+# Function to save user data to their respective CSV files
+def save_user_data(username):
+    st.session_state.stok_barang.to_csv(get_file_path('stok_barang', username), index=False)
+    st.session_state.penjualan.to_csv(get_file_path('penjualan', username), index=False)
+    st.session_state.supplier.to_csv(get_file_path('supplier', username), index=False)
+    st.session_state.owner.to_csv(get_file_path('owner', username), index=False)
+    st.session_state.piutang_konsumen.to_csv(get_file_path('piutang_konsumen', username), index=False)
+    st.session_state.pengeluaran.to_csv(get_file_path('pengeluaran', username), index=False)
+    st.session_state.historis_analisis_keuangan.to_csv(get_file_path('historis_analisis_keuangan', username), index=False)
+    st.session_state.historis_keuntungan_bersih.to_csv(get_file_path('historis_keuntungan_bersih', username), index=False)
 
-def save_to_excel():
-    with pd.ExcelWriter("data_laporan.xlsx") as writer:
-        st.session_state.stok_barang.to_excel(writer, sheet_name="Stock Barang", index=False)
-        st.session_state.penjualan.to_excel(writer, sheet_name="Penjualan", index=False)
-        st.session_state.supplier.to_excel(writer, sheet_name="Supplier", index=False)
-        st.session_state.piutang_konsumen.to_excel(writer, sheet_name="Piutang Konsumen", index=False)
-        st.session_state.pengeluaran.to_excel(writer, sheet_name="Pengeluaran", index=False)
-        st.session_state.historis_analisis_keuangan.to_excel(writer, sheet_name="Historis Analisis Keuangan", index=False)
-        st.session_state.historis_keuntungan_bersih.to_excel(writer, sheet_name="Historis Keuntungan Bersih", index=False)
+# Authentication check
+def authenticate(username, password):
+    users = {
+        "user1": "password1",
+        "user2": "password2"
+        # Add more users here
+    }
+    if username in users and users[username] == password:
+        return True
+    return False
 
-# Function to save data to file (implement as needed)
-def save_data():
-    st.session_state.stok_barang.to_csv('stok_barang.csv', index=False)  # Example file path
-
+# Login form
+def login():
+    with st.form("login_form"):
+        username = st.text_input("Username")
+        password = st.text_input("Password", type="password")
+        submit = st.form_submit_button("Login")
+        
+        if submit:
+            if authenticate(username, password):
+                st.session_state.username = username
+                st.session_state.authenticated = True
+                load_user_data(username)
+                st.success("Login successful!")
+            else:
+                st.error("Invalid username or password")
 
 # Function for Stock Barang page
 def halaman_stock_barang():
