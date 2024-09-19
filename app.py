@@ -47,10 +47,17 @@ def login():
             user_data = st.session_state.user_data[st.session_state.user_data['Username'] == username]
             
             # Debugging statements
-            st.write(f"User data found for {username}:")
+            st.write("Debug Information:")
+            st.write(f"Username entered: {username}")
+            st.write(f"Password entered: {password}")
+            st.write("User data from file:")
             st.write(user_data)
             
-            if user_data['Password'].values[0] == password:
+            # Check if password matches
+            stored_password = user_data['Password'].values[0]
+            st.write(f"Stored password: {stored_password}")
+            
+            if stored_password == password:
                 st.session_state.logged_in_user = username
                 st.session_state.user_role = user_data['Role'].values[0]
                 st.sidebar.success("Login successful!")
