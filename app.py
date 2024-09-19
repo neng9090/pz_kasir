@@ -18,7 +18,7 @@ def get_user_file_paths(username):
         'STOK_BARANG_FILE': f'{username}_stok_barang.csv',
         'PENJUALAN_FILE': f'{username}_penjualan.csv',
         'SUPPLIER_FILE': f'{username}_supplier.csv',
-        'PIUTANG_KONSUMEN_FILE': f'{username}_piutang_konsumen.csv',
+        'PIUTANG_KONSUMEN_FILE': f'{username}_piutang_konsum.csv',
         'PENGELUARAN_FILE': f'{username}_pengeluaran.csv',
         'HISTORIS_KEUANGAN_FILE': f'{username}_historis_analisis_keuangan.csv',
         'HISTORIS_KEUNTUNGAN_FILE': f'{username}_historis_keuntungan_bersih.csv'
@@ -37,7 +37,6 @@ def load_user_data():
     else:
         st.session_state.user_data = pd.DataFrame(columns=["Username", "Password", "Role"])
 
-# Define your save function
 def save_data():
     if 'logged_in_user' in st.session_state and st.session_state.logged_in_user:
         user_files = get_user_file_paths(st.session_state.logged_in_user)
@@ -155,22 +154,42 @@ def main():
     load_user_data()
 
     if st.session_state.logged_in_user is None:
-        st.title("Login")
-        with st.form("login_form"):
-            username = st.text_input("Username")
-            password = st.text_input("Password", type="password")
-            submitted = st.form_submit_button("Login")
-            if submitted:
-                if login(username, password):
-                    load_data(username)
-        return
+        st.sidebar.title("Menu")
+        menu = st.sidebar.radio("Pilih halaman:", ["Login", "Register"], key="menu_main")
+        
+        if menu == "Register":
+            st.title("Pendaftaran Akun")
+            with st.form("registration_form"):
+                username = st.text_input("Username")
+                password = st.text_input("Password", type="password")
+                role = st.selectbox("Role", ["user", "admin"])  # Choose role if needed
+                submitted = st.form_submit_button("Daftar")
+                if submitted:
+                    if register(username, password, role):
+                        st.session_state.logged_in_user = username
+                        st.session_state.user_access = role
+                        load_data(username)
+            return
+
+        if menu == "Login":
+            st.title("Login")
+            with st.form("login_form"):
+                username = st.text_input("Username")
+                password = st.text_input("Password", type="password")
+                submitted = st.form_submit_button("Login")
+                if submitted:
+                    if login(username, password):
+                        load_data(username)
+            return
 
     if st.session_state.logged_in_user:
         st.sidebar.title("Menu")
         menu_options = ["Dashboard"]
         if st.session_state.user_access == 'admin':
             menu_options.extend(["Stock Barang", "Penjualan", "Supplier", "Owner"])
-        menu = st.sidebar.radio("Pilih halaman:", menu_options)
+        
+        # Use a unique key for the radio button
+        menu = st.sidebar.radio("Pilih halaman:", menu_options, key="menu_radio")
 
         if menu == "Dashboard":
             st.title("Multi-User Dashboard")
