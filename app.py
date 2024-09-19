@@ -22,6 +22,53 @@ def get_user_file_paths(username):
         'HISTORIS_KEUANGAN_FILE': f'{username}_historis_analisis_keuangan.csv',
         'HISTORIS_KEUNTUNGAN_FILE': f'{username}_historis_keuntungan_bersih.csv'
     }
+# Initialize session state
+def initialize_session_state():
+    if 'logged_in_user' not in st.session_state:
+        st.session_state.logged_in_user = None
+    if 'user_role' not in st.session_state:
+        st.session_state.user_role = None
+
+# Load user data from CSV
+def load_user_data():
+    if os.path.exists(USER_DATA_FILE):
+        st.session_state.user_data = pd.read_csv(USER_DATA_FILE)
+    else:
+        st.session_state.user_data = pd.DataFrame(columns=["Username", "Password", "Role"])
+
+# Login function
+def login():
+    st.sidebar.title("Login")
+    username = st.sidebar.text_input("Username")
+    password = st.sidebar.text_input("Password", type="password")
+    
+    if st.sidebar.button("Login"):
+        if username in st.session_state.user_data['Username'].values:
+            user_data = st.session_state.user_data[st.session_state.user_data['Username'] == username]
+            
+            # Debugging statements
+            st.write(f"User data found for {username}:")
+            st.write(user_data)
+            
+            if user_data['Password'].values[0] == password:
+                st.session_state.logged_in_user = username
+                st.session_state.user_role = user_data['Role'].values[0]
+                st.sidebar.success("Login successful!")
+            else:
+                st.sidebar.error("Incorrect password.")
+        else:
+            st.sidebar.error("Username not found.")
+
+# Main application logic
+def main():
+    initialize_session_state()
+    load_user_data()
+    
+    if st.session_state.logged_in_user is None:
+        login()
+    else:
+        st.title("Welcome to the Dashboard")
+        st.write(f"Welcome {st.session_state.logged_in_user}!")
 
 # Initialize session state
 def initialize_session_state():
