@@ -156,6 +156,13 @@ def load_data(username):
     except Exception as e:
         st.error(f"Error loading {user_files['HISTORIS_KEUNTUNGAN_FILE']}: {e}")
 
+# Load or initialize CSV file
+def load_or_initialize_csv(file_path, columns):
+    if os.path.exists(file_path):
+        return pd.read_csv(file_path)
+    else:
+        return pd.DataFrame(columns=columns)
+
 # Initialize and load data
 initialize_session_state()
 load_user_data()
@@ -190,9 +197,8 @@ def manage_stok_barang(username, data=None):
 # Function to handle PENJUALAN_FILE
 def manage_penjualan(username, data=None):
     file_path = get_user_file_paths(username)['PENJUALAN_FILE']
-    columns = ["ID", "Nama Pelanggan", "Nomor Telepon", "Alamat", "Nama Barang", "Ukuran/Kemasan", "Merk", 
-               "Kode Warna", "Jumlah", "Total Harga", "Keuntungan", "Waktu"]
-
+    columns = ["ID", "Nama Pelanggan", "Nomor Telepon", "Alamat", "Nama Barang", "Ukuran/Kemasan", "Merk", "Kode Warna", "Jumlah", "Total Harga", "Keuntungan", "Waktu"]
+    
     if data is not None:
         save_to_csv(data, file_path)
     else:
@@ -202,7 +208,7 @@ def manage_penjualan(username, data=None):
 def manage_supplier(username, data=None):
     file_path = get_user_file_paths(username)['SUPPLIER_FILE']
     columns = ["Nama Barang", "Merk", "Ukuran/Kemasan", "Jumlah Barang", "Nama Supplier", "Tagihan", "Waktu"]
-
+    
     if data is not None:
         save_to_csv(data, file_path)
     else:
@@ -212,7 +218,7 @@ def manage_supplier(username, data=None):
 def manage_piutang_konsumen(username, data=None):
     file_path = get_user_file_paths(username)['PIUTANG_KONSUMEN_FILE']
     columns = ["Nama Konsumen", "Jumlah Piutang", "Tanggal"]
-
+    
     if data is not None:
         save_to_csv(data, file_path)
     else:
@@ -222,7 +228,7 @@ def manage_piutang_konsumen(username, data=None):
 def manage_pengeluaran(username, data=None):
     file_path = get_user_file_paths(username)['PENGELUARAN_FILE']
     columns = ["Nama Penerima Dana", "Keterangan", "Total Biaya", "Tanggal"]
-
+    
     if data is not None:
         save_to_csv(data, file_path)
     else:
@@ -232,7 +238,7 @@ def manage_pengeluaran(username, data=None):
 def manage_historis_analisis_keuangan(username, data=None):
     file_path = get_user_file_paths(username)['HISTORIS_KEUANGAN_FILE']
     columns = ["Bulan", "Total Pendapatan", "Total Pengeluaran", "Saldo"]
-
+    
     if data is not None:
         save_to_csv(data, file_path)
     else:
@@ -242,7 +248,7 @@ def manage_historis_analisis_keuangan(username, data=None):
 def manage_historis_keuntungan_bersih(username, data=None):
     file_path = get_user_file_paths(username)['HISTORIS_KEUNTUNGAN_FILE']
     columns = ["Bulan", "Total Keuntungan"]
-
+    
     if data is not None:
         save_to_csv(data, file_path)
     else:
