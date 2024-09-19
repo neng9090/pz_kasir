@@ -19,12 +19,14 @@ def get_user_file_paths(username):
 # File path for user data
 USER_DATA_FILE = 'user_data.csv'
 
-# Initialize session state
 def initialize_session_state():
     if 'logged_in_user' not in st.session_state:
         st.session_state.logged_in_user = None
     if 'user_role' not in st.session_state:
         st.session_state.user_role = None
+    if 'user_data' not in st.session_state:
+        load_user_data()
+
 
 # Load user data from CSV
 def load_user_data():
