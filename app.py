@@ -173,93 +173,6 @@ def load_data(username):
     except Exception as e:
         st.error(f"Error loading {user_files['HISTORIS_KEUNTUNGAN_FILE']}: {e}")
 
-# Define the pages
-def halaman_stock_barang():
-    if st.session_state.logged_in_user:
-        st.title("Stock Barang")
-        # Example implementation for viewing and editing stock barang
-        if 'stok_barang' in st.session_state and st.session_state.stok_barang is not None:
-            st.dataframe(st.session_state.stok_barang)
-            # Add functionality to edit stock barang
-            # ...
-
-def halaman_penjualan():
-    if st.session_state.logged_in_user:
-        st.title("Penjualan")
-        # Example implementation for viewing and editing penjualan
-        if 'penjualan' in st.session_state and st.session_state.penjualan is not None:
-            st.dataframe(st.session_state.penjualan)
-            # Add functionality to edit penjualan
-            # ...
-
-def halaman_supplier():
-    if st.session_state.logged_in_user:
-        st.title("Supplier")
-        # Example implementation for viewing and editing supplier
-        if 'supplier' in st.session_state and st.session_state.supplier is not None:
-            st.dataframe(st.session_state.supplier)
-            # Add functionality to edit supplier
-            # ...
-
-def halaman_owner():
-    if st.session_state.logged_in_user:
-        st.title("Owner")
-        # Example implementation for viewing and editing owner-related data
-        # Add functionality to edit owner-related data
-        # ...
-
-# Main application function
-def app():
-    st.sidebar.title("Navigation")
-    pages = ["Login", "Register", "Stock Barang", "Penjualan", "Supplier", "Owner"]
-    page = st.sidebar.radio("Pilih Halaman", pages)
-
-    if page == "Login":
-        st.title("Login")
-        with st.form(key="login_form"):
-            username = st.text_input("Username")
-            password = st.text_input("Password", type="password")
-            submitted = st.form_submit_button("Login")
-            if submitted:
-                if login(username, password):
-                    st.session_state.page = "Stock Barang"
-
-    elif page == "Register":
-        st.title("Register")
-        with st.form(key="register_form"):
-            username = st.text_input("Username")
-            password = st.text_input("Password", type="password")
-            role = st.selectbox("Role", ["user", "admin"])
-            submitted = st.form_submit_button("Register")
-            if submitted:
-                if register(username, password, role):
-                    st.session_state.page = "Stock Barang"
-
-    else:
-        if st.session_state.logged_in_user:
-            if page == "Stock Barang":
-                load_data(st.session_state.logged_in_user)
-                halaman_stock_barang()
-
-            elif page == "Penjualan":
-                load_data(st.session_state.logged_in_user)
-                halaman_penjualan()
-
-            elif page == "Supplier":
-                load_data(st.session_state.logged_in_user)
-                halaman_supplier()
-            
-            elif page == "Owner":
-                load_data(st.session_state.logged_in_user)
-                halaman_owner()
-
-if __name__ == "__main__":
-    initialize_session_state()
-    load_user_data()
-    initialize_users()  # Initialize new users
-    app()
-    
-    
 # Function for Stock Barang page
 def halaman_stock_barang():
     st.markdown('<h1 style="text-align: center;">Stock Barang</h1>', unsafe_allow_html=True)
@@ -321,8 +234,8 @@ def halaman_stock_barang():
 
         if submit:
             # Check if an item with the same attributes exists
-            existing_item = st.session_state.stok_barang[
-                (st.session_state.stok_barang["Nama Barang"] == nama_barang) &
+            existing_item = st.session_state.stok_barang[(
+                st.session_state.stok_barang["Nama Barang"] == nama_barang) &
                 (st.session_state.stok_barang["Merk"] == merk) &
                 (st.session_state.stok_barang["Ukuran/Kemasan"] == ukuran) &
                 (st.session_state.stok_barang["Kode Warna"] == kode_warna)
@@ -372,6 +285,57 @@ def halaman_stock_barang():
         ]
     
     st.dataframe(df_stok_barang)
+
+# Main application function
+def app():
+    st.sidebar.title("Navigation")
+    pages = ["Login", "Register", "Stock Barang", "Penjualan", "Supplier", "Owner"]
+    page = st.sidebar.radio("Pilih Halaman", pages)
+
+    if page == "Login":
+        st.title("Login")
+        with st.form(key="login_form"):
+            username = st.text_input("Username")
+            password = st.text_input("Password", type="password")
+            submitted = st.form_submit_button("Login")
+            if submitted:
+                if login(username, password):
+                    st.session_state.page = "Stock Barang"
+
+    elif page == "Register":
+        st.title("Register")
+        with st.form(key="register_form"):
+            username = st.text_input("Username")
+            password = st.text_input("Password", type="password")
+            role = st.selectbox("Role", ["user", "admin"])
+            submitted = st.form_submit_button("Register")
+            if submitted:
+                if register(username, password, role):
+                    st.session_state.page = "Stock Barang"
+
+    else:
+        if st.session_state.logged_in_user:
+            if page == "Stock Barang":
+                load_data(st.session_state.logged_in_user)
+                halaman_stock_barang()
+
+            elif page == "Penjualan":
+                load_data(st.session_state.logged_in_user)
+                halaman_penjualan()
+
+            elif page == "Supplier":
+                load_data(st.session_state.logged_in_user)
+                halaman_supplier()
+            
+            elif page == "Owner":
+                load_data(st.session_state.logged_in_user)
+                halaman_owner()
+
+if __name__ == "__main__":
+    initialize_session_state()
+    load_user_data()
+    initialize_users()  # Initialize new users
+    app()
 
 # Function for Penjualan page
 def halaman_penjualan():
