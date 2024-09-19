@@ -28,47 +28,65 @@ def get_user_file_paths(username):
 def initialize_session_state():
     if 'logged_in_user' not in st.session_state:
         st.session_state.logged_in_user = None
-    if 'user_access' not in st.session_state:
-        st.session_state.user_access = None
+    if 'user_role' not in st.session_state:
+        st.session_state.user_role = None
 
+# Load user data from CSV
 def load_user_data():
     if os.path.exists(USER_DATA_FILE):
         st.session_state.user_data = pd.read_csv(USER_DATA_FILE)
     else:
         st.session_state.user_data = pd.DataFrame(columns=["Username", "Password", "Role"])
 
+# Initialize new users if user_data.csv does not exist or is empty
+def initialize_users():
+    new_users = pd.DataFrame({
+        "Username": ["mira", "yono", "tini"],
+        "Password": ["123", "456", "789"],
+        "Role": ["user", "user", "user"]
+    })
+
+    if not os.path.exists(USER_DATA_FILE) or pd.read_csv(USER_DATA_FILE).empty:
+        new_users.to_csv(USER_DATA_FILE, index=False)
+    else:
+        existing_users = pd.read_csv(USER_DATA_FILE)
+        all_users = pd.concat([existing_users, new_users], ignore_index=True)
+        all_users.to_csv(USER_DATA_FILE, index=False)
+
+# Save data for the logged-in user
 def save_data():
-    if 'logged_in_user' in st.session_state and st.session_state.logged_in_user:
+    if st.session_state.logged_in_user:
         user_files = get_user_file_paths(st.session_state.logged_in_user)
         try:
-            if 'stok_barang' in st.session_state:
+            if 'stok_barang' in st.session_state and st.session_state.stok_barang is not None:
                 st.session_state.stok_barang.to_csv(user_files['STOK_BARANG_FILE'], index=False)
-            if 'penjualan' in st.session_state:
+            if 'penjualan' in st.session_state and st.session_state.penjualan is not None:
                 st.session_state.penjualan.to_csv(user_files['PENJUALAN_FILE'], index=False)
-            if 'supplier' in st.session_state:
+            if 'supplier' in st.session_state and st.session_state.supplier is not None:
                 st.session_state.supplier.to_csv(user_files['SUPPLIER_FILE'], index=False)
-            if 'piutang_konsumen' in st.session_state:
+            if 'piutang_konsumen' in st.session_state and st.session_state.piutang_konsumen is not None:
                 st.session_state.piutang_konsumen.to_csv(user_files['PIUTANG_KONSUMEN_FILE'], index=False)
-            if 'pengeluaran' in st.session_state:
+            if 'pengeluaran' in st.session_state and st.session_state.pengeluaran is not None:
                 st.session_state.pengeluaran.to_csv(user_files['PENGELUARAN_FILE'], index=False)
-            if 'historis_analisis_keuangan' in st.session_state:
+            if 'historis_analisis_keuangan' in st.session_state and st.session_state.historis_analisis_keuangan is not None:
                 st.session_state.historis_analisis_keuangan.to_csv(user_files['HISTORIS_KEUANGAN_FILE'], index=False)
-            if 'historis_keuntungan_bersih' in st.session_state:
+            if 'historis_keuntungan_bersih' in st.session_state and st.session_state.historis_keuntungan_bersih is not None:
                 st.session_state.historis_keuntungan_bersih.to_csv(user_files['HISTORIS_KEUNTUNGAN_FILE'], index=False)
             st.success("Data berhasil disimpan!")
         except Exception as e:
             st.error(f"Error saving data: {e}")
 
+# Register a new user
 def register(username, password, role='user'):
-    if os.path.exists(USER_DATA_FILE):
-        user_data = pd.read_csv(USER_DATA_FILE)
-    else:
-        user_data = pd.DataFrame(columns=["Username", "Password", "Role"])
-    
+    if 'user_data' not in st.session_state:
+        st.error("Data pengguna tidak ditemukan.")
+        return False
+
+    user_data = st.session_state.user_data
     if username in user_data['Username'].values:
         st.error("Username sudah ada. Silakan pilih username lain.")
         return False
-    
+
     new_user = pd.DataFrame({
         "Username": [username],
         "Password": [password],
@@ -79,6 +97,7 @@ def register(username, password, role='user'):
     st.success("Akun berhasil dibuat!")
     return True
 
+# Log in a user
 def login(username, password):
     if 'user_data' not in st.session_state:
         st.error("Data pengguna tidak ditemukan.")
@@ -88,13 +107,14 @@ def login(username, password):
     user = user_data[(user_data['Username'] == username) & (user_data['Password'] == password)]
     if not user.empty:
         st.session_state.logged_in_user = username
-        st.session_state.user_access = user['Role'].values[0]
+        st.session_state.user_role = user['Role'].values[0]
         st.success(f"Selamat datang, {username}!")
         return True
     else:
         st.error("Username atau password salah.")
         return False
 
+# Load data for the logged-in user
 def load_data(username):
     user_files = get_user_file_paths(username)
     
@@ -153,35 +173,47 @@ def load_data(username):
     except Exception as e:
         st.error(f"Error loading {user_files['HISTORIS_KEUNTUNGAN_FILE']}: {e}")
 
+# Define the pages
 def halaman_stock_barang():
     if st.session_state.logged_in_user:
         st.title("Stock Barang")
-        # Implement page-specific logic here
-        st.write("Stock Barang page content goes here.")
+        # Example implementation for viewing and editing stock barang
+        if 'stok_barang' in st.session_state and st.session_state.stok_barang is not None:
+            st.dataframe(st.session_state.stok_barang)
+            # Add functionality to edit stock barang
+            # ...
 
 def halaman_penjualan():
     if st.session_state.logged_in_user:
         st.title("Penjualan")
-        # Implement page-specific logic here
-        st.write("Penjualan page content goes here.")
+        # Example implementation for viewing and editing penjualan
+        if 'penjualan' in st.session_state and st.session_state.penjualan is not None:
+            st.dataframe(st.session_state.penjualan)
+            # Add functionality to edit penjualan
+            # ...
 
 def halaman_supplier():
     if st.session_state.logged_in_user:
         st.title("Supplier")
-        # Implement page-specific logic here
-        st.write("Supplier page content goes here.")
+        # Example implementation for viewing and editing supplier
+        if 'supplier' in st.session_state and st.session_state.supplier is not None:
+            st.dataframe(st.session_state.supplier)
+            # Add functionality to edit supplier
+            # ...
 
 def halaman_owner():
     if st.session_state.logged_in_user:
         st.title("Owner")
-        # Implement page-specific logic here
-        st.write("Owner page content goes here.")
+        # Example implementation for viewing and editing owner-related data
+        # Add functionality to edit owner-related data
+        # ...
 
+# Main application function
 def app():
-    st.sidebar.title("Aplikasi")
+    st.sidebar.title("Navigation")
     pages = ["Login", "Register", "Stock Barang", "Penjualan", "Supplier", "Owner"]
-    page = st.sidebar.selectbox("Pilih Halaman", pages)
-    
+    page = st.sidebar.radio("Pilih Halaman", pages)
+
     if page == "Login":
         st.title("Login")
         with st.form(key="login_form"):
@@ -191,7 +223,7 @@ def app():
             if submitted:
                 if login(username, password):
                     st.session_state.page = "Stock Barang"
-    
+
     elif page == "Register":
         st.title("Register")
         with st.form(key="register_form"):
@@ -202,7 +234,7 @@ def app():
             if submitted:
                 if register(username, password, role):
                     st.session_state.page = "Stock Barang"
-    
+
     else:
         if st.session_state.logged_in_user:
             if page == "Stock Barang":
@@ -224,23 +256,9 @@ def app():
 if __name__ == "__main__":
     initialize_session_state()
     load_user_data()
+    initialize_users()  # Initialize new users
     app()
     
-    # Initialize new users if user_data.csv does not exist or is empty
-    new_users = pd.DataFrame({
-        "Username": ["mira", "yono", "tini"],
-        "Password": ["123", "456", "789"],
-        "Role": ["user", "user", "user"]
-    })
-
-    if not os.path.exists(USER_DATA_FILE) or pd.read_csv(USER_DATA_FILE).empty:
-        new_users.to_csv(USER_DATA_FILE, index=False)
-    else:
-        existing_users = pd.read_csv(USER_DATA_FILE)
-        all_users = pd.concat([existing_users, new_users], ignore_index=True)
-        all_users.to_csv(USER_DATA_FILE, index=False)
-
-    app()
     
 # Function for Stock Barang page
 def halaman_stock_barang():
