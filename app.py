@@ -60,18 +60,15 @@ def save_data():
             st.error(f"Error saving data: {e}")
 
 def register(username, password, role='user'):
-    # Load existing user data
     if os.path.exists(USER_DATA_FILE):
         user_data = pd.read_csv(USER_DATA_FILE)
     else:
         user_data = pd.DataFrame(columns=["Username", "Password", "Role"])
     
-    # Check if the username already exists
     if username in user_data['Username'].values:
         st.error("Username sudah ada. Silakan pilih username lain.")
         return False
     
-    # Append new user data
     new_user = pd.DataFrame({
         "Username": [username],
         "Password": [password],
@@ -101,7 +98,6 @@ def login(username, password):
 def load_data(username):
     user_files = get_user_file_paths(username)
     
-    # Load Stock Barang
     if os.path.exists(user_files['STOK_BARANG_FILE']):
         try:
             st.session_state.stok_barang = pd.read_csv(user_files['STOK_BARANG_FILE'])
@@ -110,7 +106,6 @@ def load_data(username):
         except Exception as e:
             st.error(f"Error loading {user_files['STOK_BARANG_FILE']}: {e}")
 
-    # Load Penjualan
     if os.path.exists(user_files['PENJUALAN_FILE']):
         try:
             st.session_state.penjualan = pd.read_csv(user_files['PENJUALAN_FILE'])
@@ -119,7 +114,6 @@ def load_data(username):
         except Exception as e:
             st.error(f"Error loading {user_files['PENJUALAN_FILE']}: {e}")
 
-    # Load Supplier
     if os.path.exists(user_files['SUPPLIER_FILE']):
         try:
             st.session_state.supplier = pd.read_csv(user_files['SUPPLIER_FILE'])
@@ -128,96 +122,81 @@ def load_data(username):
         except Exception as e:
             st.error(f"Error loading {user_files['SUPPLIER_FILE']}: {e}")
 
-    # Load Piutang Konsumen
     if os.path.exists(user_files['PIUTANG_KONSUMEN_FILE']):
         try:
             st.session_state.piutang_konsumen = pd.read_csv(user_files['PIUTANG_KONSUMEN_FILE'])
         except Exception as e:
             st.error(f"Error loading {user_files['PIUTANG_KONSUMEN_FILE']}: {e}")
 
-    # Load Pengeluaran
     if os.path.exists(user_files['PENGELUARAN_FILE']):
         try:
             st.session_state.pengeluaran = pd.read_csv(user_files['PENGELUARAN_FILE'])
         except Exception as e:
             st.error(f"Error loading {user_files['PENGELUARAN_FILE']}: {e}")
 
-    # Load Historis Analisis Keuangan
     if os.path.exists(user_files['HISTORIS_KEUANGAN_FILE']):
         try:
             st.session_state.historis_analisis_keuangan = pd.read_csv(user_files['HISTORIS_KEUANGAN_FILE'])
         except Exception as e:
             st.error(f"Error loading {user_files['HISTORIS_KEUANGAN_FILE']}: {e}")
 
-    # Load Historis Keuntungan Bersih
     if os.path.exists(user_files['HISTORIS_KEUNTUNGAN_FILE']):
         try:
             st.session_state.historis_keuntungan_bersih = pd.read_csv(user_files['HISTORIS_KEUNTUNGAN_FILE'])
         except Exception as e:
             st.error(f"Error loading {user_files['HISTORIS_KEUNTUNGAN_FILE']}: {e}")
 
-def main():
-    initialize_session_state()
-    load_user_data()
-
-    if st.session_state.logged_in_user is None:
-        st.sidebar.title("Menu")
-        menu = st.sidebar.radio("Pilih halaman:", ["Login", "Register"], key="menu_main")
-        
-        if menu == "Register":
-            st.title("Pendaftaran Akun")
-            with st.form("registration_form"):
-                username = st.text_input("Username")
-                password = st.text_input("Password", type="password")
-                role = st.selectbox("Role", ["user", "admin"])  # Choose role if needed
-                submitted = st.form_submit_button("Daftar")
-                if submitted:
-                    if register(username, password, role):
-                        st.session_state.logged_in_user = username
-                        st.session_state.user_access = role
-                        load_data(username)
-            return
-
-        if menu == "Login":
-            st.title("Login")
-            with st.form("login_form"):
-                username = st.text_input("Username")
-                password = st.text_input("Password", type="password")
-                submitted = st.form_submit_button("Login")
-                if submitted:
-                    if login(username, password):
-                        load_data(username)
-            return
-
-    if st.session_state.logged_in_user:
-        st.sidebar.title("Menu")
-        menu_options = ["Dashboard"]
-        if st.session_state.user_access == 'admin':
-            menu_options.extend(["Stock Barang", "Penjualan", "Supplier", "Owner"])
-        
-        menu = st.sidebar.radio("Pilih halaman:", menu_options, key="menu_radio")
-
-        if menu == "Dashboard":
-            st.title("Multi-User Dashboard")
-            st.write(f"Selamat datang, {st.session_state.logged_in_user}!")
-        elif menu == "Stock Barang":
-            st.title("Stock Barang")
-            # Add Stock Barang functionality here
-        elif menu == "Penjualan":
-            st.title("Penjualan")
-            # Add Penjualan functionality here
-        elif menu == "Supplier":
-            st.title("Supplier")
-            # Add Supplier functionality here
-        elif menu == "Owner":
-            st.title("Owner")
-            # Add Owner functionality here
-
-    st.sidebar.button("Save Data", on_click=save_data)
-    st.sidebar.button("Logout", on_click=lambda: st.session_state.update(logged_in_user=None, user_access=None))
+def app():
+    st.sidebar.title("Aplikasi")
+    pages = ["Login", "Register"]
+    page = st.sidebar.selectbox("Pilih Halaman", pages)
+    
+    if page == "Login":
+        st.title("Login")
+        with st.form(key="login_form"):
+            username = st.text_input("Username")
+            password = st.text_input("Password", type="password")
+            login_button = st.form_submit_button("Login")
+            if login_button:
+                if login(username, password):
+                    load_data(username)
+                    st.success("Berhasil Login")
+    
+    elif page == "Register":
+        st.title("Register")
+        with st.form(key="register_form"):
+            username = st.text_input("Username")
+            password = st.text_input("Password", type="password")
+            role = st.selectbox("Role", ["user", "admin"])
+            register_button = st.form_submit_button("Register")
+            if register_button:
+                register(username, password, role)
 
 if __name__ == "__main__":
-    main()
+    initialize_session_state()
+    load_user_data()
+    app()
+
+# Insert new users into user_data.csv
+import pandas as pd
+import os
+
+# Data pengguna baru
+new_users = pd.DataFrame({
+    "Username": ["mira", "yono", "tini"],
+    "Password": ["123", "456", "789"],
+    "Role": ["user", "user", "user"]
+})
+
+# Simpan ke file CSV
+user_data_file = 'user_data.csv'
+if not os.path.exists(user_data_file):
+    new_users.to_csv(user_data_file, index=False)
+else:
+    existing_users = pd.read_csv(user_data_file)
+    # Gabungkan data pengguna yang ada dengan data pengguna baru
+    all_users = pd.concat([existing_users, new_users], ignore_index=True)
+    all_users.to_csv(user_data_file, index=False)
 
 # Function for Stock Barang page
 def halaman_stock_barang():
