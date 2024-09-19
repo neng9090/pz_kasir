@@ -154,39 +154,7 @@ def main():
     initialize_session_state()
     load_user_data()
 
-    # Show registration form if no user is logged in
     if st.session_state.logged_in_user is None:
-        st.title("Pendaftaran Akun")
-        with st.form("registration_form"):
-            username = st.text_input("Username")
-            password = st.text_input("Password", type="password")
-            role = st.selectbox("Role", ["user", "admin"])  # Choose role if needed
-            submitted = st.form_submit_button("Daftar")
-            if submitted:
-                if register(username, password, role):
-                    st.session_state.logged_in_user = username
-                    st.session_state.user_access = role
-                    load_data(username)
-        return
-
-    # Show login form if no user is logged in
-    if st.session_state.logged_in_user is None:
-        st.title("Login")
-        with st.form("login_form"):
-            username = st.text_input("Username")
-            password = st.text_input("Password", type="password")
-            submitted = st.form_submit_button("Login")
-            if submitted:
-                if login(username, password):
-                    load_data(username)
-        return
-
-# Your main function
-def main():
-    initialize_session_state()
-    load_user_data()
-
-    if 'logged_in_user' not in st.session_state or st.session_state.logged_in_user is None:
         st.title("Login")
         with st.form("login_form"):
             username = st.text_input("Username")
@@ -209,12 +177,16 @@ def main():
             st.write(f"Selamat datang, {st.session_state.logged_in_user}!")
         elif menu == "Stock Barang":
             st.title("Stock Barang")
+            # Add Stock Barang functionality here
         elif menu == "Penjualan":
             st.title("Penjualan")
+            # Add Penjualan functionality here
         elif menu == "Supplier":
             st.title("Supplier")
+            # Add Supplier functionality here
         elif menu == "Owner":
             st.title("Owner")
+            # Add Owner functionality here
 
     st.sidebar.button("Save Data", on_click=save_data)
     st.sidebar.button("Logout", on_click=lambda: st.session_state.update(logged_in_user=None, user_access=None))
