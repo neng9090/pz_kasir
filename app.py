@@ -37,17 +37,21 @@ def load_user_data():
     else:
         st.session_state.user_data = pd.DataFrame(columns=["Username", "Password", "Role"])
 
+# Define your save function
 def save_data():
-    # Save user-specific data when needed
-    if st.session_state.logged_in_user:
+    if 'logged_in_user' in st.session_state and st.session_state.logged_in_user:
         user_files = get_user_file_paths(st.session_state.logged_in_user)
-        st.session_state.stok_barang.to_csv(user_files['STOK_BARANG_FILE'], index=False)
-        st.session_state.penjualan.to_csv(user_files['PENJUALAN_FILE'], index=False)
-        st.session_state.supplier.to_csv(user_files['SUPPLIER_FILE'], index=False)
-        st.session_state.piutang_konsumen.to_csv(user_files['PIUTANG_KONSUMEN_FILE'], index=False)
-        st.session_state.pengeluaran.to_csv(user_files['PENGELUARAN_FILE'], index=False)
-        st.session_state.historis_analisis_keuangan.to_csv(user_files['HISTORIS_KEUANGAN_FILE'], index=False)
-        st.session_state.historis_keuntungan_bersih.to_csv(user_files['HISTORIS_KEUNTUNGAN_FILE'], index=False)
+        try:
+            st.session_state.stok_barang.to_csv(user_files['STOK_BARANG_FILE'], index=False)
+            st.session_state.penjualan.to_csv(user_files['PENJUALAN_FILE'], index=False)
+            st.session_state.supplier.to_csv(user_files['SUPPLIER_FILE'], index=False)
+            st.session_state.piutang_konsumen.to_csv(user_files['PIUTANG_KONSUMEN_FILE'], index=False)
+            st.session_state.pengeluaran.to_csv(user_files['PENGELUARAN_FILE'], index=False)
+            st.session_state.historis_analisis_keuangan.to_csv(user_files['HISTORIS_KEUANGAN_FILE'], index=False)
+            st.session_state.historis_keuntungan_bersih.to_csv(user_files['HISTORIS_KEUNTUNGAN_FILE'], index=False)
+            st.success("Data saved successfully!")
+        except Exception as e:
+            st.error(f"Error saving data: {e}")
 
 def register(username, password, role='user'):
     # Load existing user data
@@ -177,7 +181,22 @@ def main():
                     load_data(username)
         return
 
-    # Sidebar navigation only after login
+# Your main function
+def main():
+    initialize_session_state()
+    load_user_data()
+
+    if 'logged_in_user' not in st.session_state or st.session_state.logged_in_user is None:
+        st.title("Login")
+        with st.form("login_form"):
+            username = st.text_input("Username")
+            password = st.text_input("Password", type="password")
+            submitted = st.form_submit_button("Login")
+            if submitted:
+                if login(username, password):
+                    load_data(username)
+        return
+
     if st.session_state.logged_in_user:
         st.sidebar.title("Menu")
         menu_options = ["Dashboard"]
@@ -185,31 +204,23 @@ def main():
             menu_options.extend(["Stock Barang", "Penjualan", "Supplier", "Owner"])
         menu = st.sidebar.radio("Pilih halaman:", menu_options)
 
-        # Display the selected page based on menu selection
         if menu == "Dashboard":
             st.title("Multi-User Dashboard")
             st.write(f"Selamat datang, {st.session_state.logged_in_user}!")
-            # Add more dashboard logic here
         elif menu == "Stock Barang":
             st.title("Stock Barang")
-            # Add Stock Barang page logic here
         elif menu == "Penjualan":
             st.title("Penjualan")
-            # Add Penjualan page logic here
         elif menu == "Supplier":
             st.title("Supplier")
-            # Add Supplier page logic here
         elif menu == "Owner":
             st.title("Owner")
-            # Add Owner page logic here
 
-    # Ensure data is saved when the app is closed
-    if st.session_state.logged_in_user:
-        st.session_state._on_shutdown(lambda: save_data())
+    st.sidebar.button("Save Data", on_click=save_data)
+    st.sidebar.button("Logout", on_click=lambda: st.session_state.update(logged_in_user=None, user_access=None))
 
 if __name__ == "__main__":
     main()
-
 # Function for Stock Barang page
 def halaman_stock_barang():
     st.markdown('<h1 style="text-align: center;">Stock Barang</h1>', unsafe_allow_html=True)
