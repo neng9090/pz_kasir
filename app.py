@@ -57,7 +57,7 @@ def load_data():
                 st.session_state.stok_barang['Waktu Input'] = pd.to_datetime(st.session_state.stok_barang['Waktu Input'])
         except Exception as e:
             st.error(f"Error loading {STOK_BARANG_FILE}: {e}")
-    
+
     # Load Penjualan
     if os.path.exists(PENJUALAN_FILE):
         try:
@@ -110,6 +110,12 @@ def load_data():
             st.session_state.historis_keuntungan_bersih = pd.read_csv(HISTORIS_KEUNTUNGAN_FILE)
         except Exception as e:
             st.error(f"Error loading {HISTORIS_KEUNTUNGAN_FILE}: {e}")
+
+# Call load_data() in your main app code
+try:
+    load_data()
+except Exception as e:
+    st.error(f"Error in load_data function: {e}")
 
     if os.path.exists(stok_barang_file):
         st.session_state.stok_barang = pd.read_csv(stok_barang_file)
