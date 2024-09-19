@@ -30,6 +30,20 @@ def initialize_session_state():
         st.session_state.logged_in_user = None
     if 'user_role' not in st.session_state:
         st.session_state.user_role = None
+    if 'stok_barang' not in st.session_state:
+        st.session_state.stok_barang = pd.DataFrame()
+    if 'penjualan' not in st.session_state:
+        st.session_state.penjualan = pd.DataFrame()
+    if 'supplier' not in st.session_state:
+        st.session_state.supplier = pd.DataFrame()
+    if 'piutang_konsumen' not in st.session_state:
+        st.session_state.piutang_konsumen = pd.DataFrame()
+    if 'pengeluaran' not in st.session_state:
+        st.session_state.pengeluaran = pd.DataFrame()
+    if 'historis_analisis_keuangan' not in st.session_state:
+        st.session_state.historis_analisis_keuangan = pd.DataFrame()
+    if 'historis_keuntungan_bersih' not in st.session_state:
+        st.session_state.historis_keuntungan_bersih = pd.DataFrame()
 
 # Load user data from CSV
 def load_user_data():
@@ -51,6 +65,7 @@ def initialize_users():
     else:
         existing_users = pd.read_csv(USER_DATA_FILE)
         all_users = pd.concat([existing_users, new_users], ignore_index=True)
+        all_users.drop_duplicates(subset=["Username"], keep="last", inplace=True)
         all_users.to_csv(USER_DATA_FILE, index=False)
 
 # Save data for the logged-in user
@@ -58,19 +73,19 @@ def save_data():
     if st.session_state.logged_in_user:
         user_files = get_user_file_paths(st.session_state.logged_in_user)
         try:
-            if 'stok_barang' in st.session_state and st.session_state.stok_barang is not None:
+            if not st.session_state.stok_barang.empty:
                 st.session_state.stok_barang.to_csv(user_files['STOK_BARANG_FILE'], index=False)
-            if 'penjualan' in st.session_state and st.session_state.penjualan is not None:
+            if not st.session_state.penjualan.empty:
                 st.session_state.penjualan.to_csv(user_files['PENJUALAN_FILE'], index=False)
-            if 'supplier' in st.session_state and st.session_state.supplier is not None:
+            if not st.session_state.supplier.empty:
                 st.session_state.supplier.to_csv(user_files['SUPPLIER_FILE'], index=False)
-            if 'piutang_konsumen' in st.session_state and st.session_state.piutang_konsumen is not None:
+            if not st.session_state.piutang_konsumen.empty:
                 st.session_state.piutang_konsumen.to_csv(user_files['PIUTANG_KONSUMEN_FILE'], index=False)
-            if 'pengeluaran' in st.session_state and st.session_state.pengeluaran is not None:
+            if not st.session_state.pengeluaran.empty:
                 st.session_state.pengeluaran.to_csv(user_files['PENGELUARAN_FILE'], index=False)
-            if 'historis_analisis_keuangan' in st.session_state and st.session_state.historis_analisis_keuangan is not None:
+            if not st.session_state.historis_analisis_keuangan.empty:
                 st.session_state.historis_analisis_keuangan.to_csv(user_files['HISTORIS_KEUANGAN_FILE'], index=False)
-            if 'historis_keuntungan_bersih' in st.session_state and st.session_state.historis_keuntungan_bersih is not None:
+            if not st.session_state.historis_keuntungan_bersih.empty:
                 st.session_state.historis_keuntungan_bersih.to_csv(user_files['HISTORIS_KEUNTUNGAN_FILE'], index=False)
             st.success("Data berhasil disimpan!")
         except Exception as e:
@@ -159,12 +174,12 @@ def halaman_stock_barang():
     # Form input barang baru dan edit barang
     st.markdown('<h2 style="text-align: center;">Tambah/Edit Barang</h2>', unsafe_allow_html=True)
     
-    # Pilih barang yang akan diedit atau pilih "Tambah Baru"
-    selected_action = st.selectbox("Pilih Aksi", ["Tambah Barang", "Edit Barang"], key='action_select')
+    # Pilih barang yang akan diedit atau pilih tambah barang baru
+    selected_action = st.selectbox("Pilih Aksi", ["Tambah Barang", "Edit Barang"], key='stock_action')
     
     if selected_action == "Edit Barang":
-        # Pilih ID Barang untuk Diedit
-        selected_id = st.selectbox("Pilih ID Barang untuk Diedit", st.session_state.stok_barang["ID"].tolist() + ["Tambah Baru"], key='id_select')
+        # Pilih ID Barang untuk diedit
+        selected_id = st.selectbox("Pilih ID Barang untuk Diedit", st.session_state.stok_barang["ID"].tolist() + ["Tambah Baru"], key='stock_id_select')
         
         if selected_id != "Tambah Baru":
             barang_dipilih = st.session_state.stok_barang[st.session_state.stok_barang["ID"] == selected_id]
@@ -173,186 +188,154 @@ def halaman_stock_barang():
                 "Merk": barang_dipilih["Merk"].values[0],
                 "Ukuran/Kemasan": barang_dipilih["Ukuran/Kemasan"].values[0],
                 "Harga": barang_dipilih["Harga"].values[0],
-                "Warna/Base": barang_dipilih["Warna/Base"].values[0] if "Warna/Base" in barang_dipilih.columns else ""
+                "Warna/Base": barang_dipilih["Warna/Base"].values[0]
             }
         else:
-            default_values = {"Nama Barang": "", "Merk": "", "Ukuran/Kemasan": "", "Harga": "", "Warna/Base": ""}
+            default_values = {
+                "Nama Barang": "",
+                "Merk": "",
+                "Ukuran/Kemasan": "",
+                "Harga": "",
+                "Warna/Base": ""
+            }
+    else:
+        default_values = {
+            "Nama Barang": "",
+            "Merk": "",
+            "Ukuran/Kemasan": "",
+            "Harga": "",
+            "Warna/Base": ""
+        }
+    
+    # Input form
+    with st.form(key='stock_form'):
+        nama_barang = st.text_input("Nama Barang", value=default_values["Nama Barang"])
+        merk = st.text_input("Merk", value=default_values["Merk"])
+        ukuran_kemasan = st.text_input("Ukuran/Kemasan", value=default_values["Ukuran/Kemasan"])
+        harga = st.number_input("Harga", value=default_values["Harga"])
+        warna_base = st.text_input("Warna/Base", value=default_values["Warna/Base"])
+        submit_button = st.form_submit_button("Simpan")
         
-        nama_barang = st.text_input("Nama Barang", default_values["Nama Barang"])
-        merk = st.text_input("Merk", default_values["Merk"])
-        ukuran_kemasan = st.text_input("Ukuran/Kemasan", default_values["Ukuran/Kemasan"])
-        harga = st.number_input("Harga", value=default_values["Harga"], step=1)
-        warna_base = st.text_input("Warna/Base", default_values["Warna/Base"]) if "Warna/Base" in default_values else ""
-        
-        if st.button("Simpan"):
-            if selected_id == "Tambah Baru":
-                new_id = len(st.session_state.stok_barang) + 1
+        if submit_button:
+            # Add/Edit logic
+            if selected_action == "Tambah Barang":
+                new_id = st.session_state.stok_barang["ID"].max() + 1 if not st.session_state.stok_barang.empty else 1
                 new_item = {
                     "ID": new_id,
                     "Nama Barang": nama_barang,
                     "Merk": merk,
                     "Ukuran/Kemasan": ukuran_kemasan,
                     "Harga": harga,
-                    "Warna/Base": warna_base
+                    "Warna/Base": warna_base,
+                    "Waktu Input": datetime.now()
                 }
                 st.session_state.stok_barang = st.session_state.stok_barang.append(new_item, ignore_index=True)
             else:
                 st.session_state.stok_barang.loc[st.session_state.stok_barang["ID"] == selected_id, ["Nama Barang", "Merk", "Ukuran/Kemasan", "Harga", "Warna/Base"]] = [nama_barang, merk, ukuran_kemasan, harga, warna_base]
+            
             save_data()
-            st.success("Data barang berhasil disimpan!")
-    else:
-        # Form input barang baru
-        st.markdown('<h2 style="text-align: center;">Tambah Barang Baru</h2>', unsafe_allow_html=True)
-        nama_barang = st.text_input("Nama Barang")
-        merk = st.text_input("Merk")
-        ukuran_kemasan = st.text_input("Ukuran/Kemasan")
-        harga = st.number_input("Harga", step=1)
-        warna_base = st.text_input("Warna/Base") if "Warna/Base" in st.session_state.stok_barang.columns else ""
-        
-        if st.button("Tambah"):
-            new_id = len(st.session_state.stok_barang) + 1
-            new_item = {
-                "ID": new_id,
-                "Nama Barang": nama_barang,
-                "Merk": merk,
-                "Ukuran/Kemasan": ukuran_kemasan,
-                "Harga": harga,
-                "Warna/Base": warna_base
-            }
-            st.session_state.stok_barang = st.session_state.stok_barang.append(new_item, ignore_index=True)
-            save_data()
-            st.success("Barang baru berhasil ditambahkan!")
-# Define the page functions
+    
+    st.markdown('<h2 style="text-align: center;">Daftar Barang</h2>', unsafe_allow_html=True)
+    st.dataframe(st.session_state.stok_barang)
+
+# Function for Penjualan page
 def halaman_penjualan():
-    st.header("Penjualan")
-
-    # Initialize session state variables if they don't exist
-    if 'penjualan' not in st.session_state:
-        st.session_state.penjualan = pd.DataFrame(columns=[
-            "ID", "Nama Pelanggan", "Nomor Telepon", "Alamat", 
-            "Nama Barang", "Ukuran/Kemasan", "Merk", "Kode Warna", 
-            "Jumlah", "Total Harga", "Keuntungan", "Waktu"
-        ])
-
-    if 'stok_barang' not in st.session_state:
-        st.session_state.stok_barang = pd.DataFrame(columns=[
-            "Nama Barang", "Ukuran/Kemasan", "Merk", "Harga", "Harga Jual", "Persentase Keuntungan", "Stok", "Kode Warna"
-        ])
-
-    # Formulir untuk menambah/memperbarui penjualan
-    st.subheader("Tambah/Edit Penjualan")
-
-    if not st.session_state.penjualan.empty:
-        id_penjualan = st.selectbox("Pilih ID Penjualan untuk Diedit", st.session_state.penjualan["ID"].tolist() + ["Tambah Baru"])
-
-        if id_penjualan != "Tambah Baru":
-            penjualan_edit = st.session_state.penjualan[st.session_state.penjualan["ID"] == id_penjualan].iloc[0]
+    st.markdown('<h1 style="text-align: center;">Penjualan</h1>', unsafe_allow_html=True)
+    
+    st.markdown('<h2 style="text-align: center;">Tambah/Edit Penjualan</h2>', unsafe_allow_html=True)
+    
+    selected_action = st.selectbox("Pilih Aksi", ["Tambah Penjualan", "Edit Penjualan"], key='penjualan_action')
+    
+    if selected_action == "Edit Penjualan":
+        # Pilih ID Penjualan untuk Diedit
+        selected_id = st.selectbox("Pilih ID Penjualan untuk Diedit", st.session_state.penjualan["ID"].tolist() + ["Tambah Baru"], key='penjualan_id_select')
+        
+        if selected_id != "Tambah Baru":
+            penjualan_dipilih = st.session_state.penjualan[st.session_state.penjualan["ID"] == selected_id]
             default_values = {
-                "Nama Pelanggan": penjualan_edit["Nama Pelanggan"],
-                "Nomor Telepon": penjualan_edit["Nomor Telepon"],
-                "Alamat": penjualan_edit["Alamat"],
-                "Nama Barang": penjualan_edit["Nama Barang"],
-                "Ukuran/Kemasan": penjualan_edit["Ukuran/Kemasan"],
-                "Merk": penjualan_edit["Merk"],
-                "Kode Warna": penjualan_edit["Kode Warna"] if "Kode Warna" in penjualan_edit.index else "",
-                "Jumlah": penjualan_edit["Jumlah"]
+                "ID Barang": penjualan_dipilih["ID Barang"].values[0],
+                "Nama Pelanggan": penjualan_dipilih["Nama Pelanggan"].values[0],
+                "Nomor Telepon": penjualan_dipilih["Nomor Telepon"].values[0],
+                "Jumlah": penjualan_dipilih["Jumlah"].values[0],
+                "Harga Jual": penjualan_dipilih["Harga Jual"].values[0],
+                "Waktu": penjualan_dipilih["Waktu"].values[0]
             }
         else:
             default_values = {
+                "ID Barang": "",
                 "Nama Pelanggan": "",
                 "Nomor Telepon": "",
-                "Alamat": "",
-                "Nama Barang": st.session_state.stok_barang["Nama Barang"].tolist()[0] if not st.session_state.stok_barang.empty else "",
-                "Ukuran/Kemasan": st.session_state.stok_barang["Ukuran/Kemasan"].tolist()[0] if not st.session_state.stok_barang.empty else "",
-                "Merk": st.session_state.stok_barang["Merk"].tolist()[0] if not st.session_state.stok_barang.empty else "",
-                "Kode Warna": "",
-                "Jumlah": 1
+                "Jumlah": "",
+                "Harga Jual": "",
+                "Waktu": datetime.now()
             }
     else:
-        id_penjualan = "Tambah Baru"
         default_values = {
+            "ID Barang": "",
             "Nama Pelanggan": "",
             "Nomor Telepon": "",
-            "Alamat": "",
-            "Nama Barang": st.session_state.stok_barang["Nama Barang"].tolist()[0] if not st.session_state.stok_barang.empty else "",
-            "Ukuran/Kemasan": st.session_state.stok_barang["Ukuran/Kemasan"].tolist()[0] if not st.session_state.stok_barang.empty else "",
-            "Merk": st.session_state.stok_barang["Merk"].tolist()[0] if not st.session_state.stok_barang.empty else "",
-            "Kode Warna": "",
-            "Jumlah": 1
+            "Jumlah": "",
+            "Harga Jual": "",
+            "Waktu": datetime.now()
         }
-
-    with st.form("input_penjualan"):
+    
+    # Input form
+    with st.form(key='penjualan_form'):
+        id_barang = st.text_input("ID Barang", value=default_values["ID Barang"])
         nama_pelanggan = st.text_input("Nama Pelanggan", value=default_values["Nama Pelanggan"])
-        nomor_telpon = st.text_input("Nomor Telepon", value=default_values["Nomor Telepon"])
-        alamat = st.text_area("Alamat", value=default_values["Alamat"])
-        nama_barang_options = st.session_state.stok_barang["Nama Barang"].tolist()
-        nama_barang = st.selectbox("Pilih Barang", nama_barang_options, index=nama_barang_options.index(default_values["Nama Barang"]) if default_values["Nama Barang"] in nama_barang_options else 0)
+        nomor_telepon = st.text_input("Nomor Telepon", value=default_values["Nomor Telepon"])
+        jumlah = st.number_input("Jumlah", value=default_values["Jumlah"])
+        harga_jual = st.number_input("Harga Jual", value=default_values["Harga Jual"])
+        waktu = st.date_input("Waktu", value=default_values["Waktu"])
+        submit_button = st.form_submit_button("Simpan")
+        
+        if submit_button:
+            if selected_action == "Tambah Penjualan":
+                new_id = st.session_state.penjualan["ID"].max() + 1 if not st.session_state.penjualan.empty else 1
+                new_item = {
+                    "ID": new_id,
+                    "ID Barang": id_barang,
+                    "Nama Pelanggan": nama_pelanggan,
+                    "Nomor Telepon": nomor_telepon,
+                    "Jumlah": jumlah,
+                    "Harga Jual": harga_jual,
+                    "Waktu": waktu
+                }
+                st.session_state.penjualan = st.session_state.penjualan.append(new_item, ignore_index=True)
+            else:
+                st.session_state.penjualan.loc[st.session_state.penjualan["ID"] == selected_id, ["ID Barang", "Nama Pelanggan", "Nomor Telepon", "Jumlah", "Harga Jual", "Waktu"]] = [id_barang, nama_pelanggan, nomor_telepon, jumlah, harga_jual, waktu]
+            
+            save_data()
+    
+    st.markdown('<h2 style="text-align: center;">Daftar Penjualan</h2>', unsafe_allow_html=True)
+    st.dataframe(st.session_state.penjualan)
 
-        ukuran_options = st.session_state.stok_barang[st.session_state.stok_barang["Nama Barang"] == nama_barang]["Ukuran/Kemasan"].tolist()
-        ukuran = st.selectbox("Ukuran/Kemasan", ukuran_options, index=ukuran_options.index(default_values["Ukuran/Kemasan"]) if default_values["Ukuran/Kemasan"] in ukuran_options else 0)
-
-        merk_options = st.session_state.stok_barang[
-            (st.session_state.stok_barang["Nama Barang"] == nama_barang) &
-            (st.session_state.stok_barang["Ukuran/Kemasan"] == ukuran)
-        ]["Merk"].tolist()
-        merk = st.selectbox("Merk", merk_options, index=merk_options.index(default_values["Merk"]) if default_values["Merk"] in merk_options else 0)
-
-        kode_warna = st.text_input("Kode Warna", value=default_values["Kode Warna"], placeholder="Opsional")
-        jumlah = st.number_input("Jumlah Orderan", min_value=1, value=int(default_values["Jumlah"]))
-
-        submit = st.form_submit_button("Simpan Penjualan")
-
-        if submit:
-            stok_barang_filter = st.session_state.stok_barang[
-                (st.session_state.stok_barang["Nama Barang"] == nama_barang) &
-                (st.session_state.stok_barang["Ukuran/Kemasan"] == ukuran) &
-                (st.session_state.stok_barang["Merk"] == merk)
-            ]
-
-            if not stok_barang_filter.empty:
-                harga_jual = stok_barang_filter["Harga Jual"].values[0]  # Use Harga Jual
-                persentase_keuntungan = stok_barang_filter["Persentase Keuntungan"].values[0]
-                total_harga = harga_jual * jumlah
-                keuntungan = total_harga * (persentase_keuntungan / 100)
-                waktu = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-
-                new_penjualan = pd.DataFrame({
-                    "ID": [st.session_state.penjualan["ID"].max() + 1 if not st.session_state.penjualan.empty else 1],
-                    "Nama Pelanggan": [nama_pelanggan],
-                    "Nomor Telepon": [nomor_telpon],
-                    "Alamat": [alamat],
-                    "Nama Barang": [nama_barang],
-                    "Ukuran/Kemasan": [ukuran],
-                    "Merk": [merk],
-                    "Kode Warna": [kode_warna if "Kode Warna" in st.session_state.stok_barang.columns else ""],
-                    "Jumlah": [jumlah],
-                    "Total Harga": [total_harga],
-                    "Keuntungan": [keuntungan],
-                    "Waktu": [waktu]
-                })
-
-                if id_penjualan == "Tambah Baru":
-                    st.session_state.penjualan = pd.concat([st.session_state.penjualan, new_penjualan], ignore_index=True)
-                else:
-                    st.session_state.penjualan.loc[st.session_state.penjualan["ID"] == id_penjualan, 
-                        ["Nama Pelanggan", "Nomor Telepon", "Alamat", "Nama Barang", "Ukuran/Kemasan", "Merk", "Kode Warna", "Jumlah", "Total Harga", "Keuntungan", "Waktu"]] = \
-                        [nama_pelanggan, nomor_telpon, alamat, nama_barang, ukuran, merk, kode_warna, jumlah, total_harga, keuntungan, waktu]
-
-                st.session_state.stok_barang.loc[
-                    (st.session_state.stok_barang["Nama Barang"] == nama_barang) &
-                    (st.session_state.stok_barang["Ukuran/Kemasan"] == ukuran) &
-                    (st.session_state.stok_barang["Merk"] == merk),
-                    "Stok"
-                ] -= jumlah
-
-                st.success(f"Penjualan untuk {nama_barang} berhasil disimpan!")
-
-    # Display the sales data
-    st.subheader("Data Penjualan")
-    if not st.session_state.penjualan.empty:
-        st.dataframe(st.session_state.penjualan, use_container_width=True, hide_index=False)
+# Sidebar with login and page selection
+def sidebar():
+    st.sidebar.title("Login")
+    if st.session_state.logged_in_user:
+        st.sidebar.write(f"Selamat datang, {st.session_state.logged_in_user}!")
+        st.sidebar.write(f"Role: {st.session_state.user_role}")
+        st.sidebar.button("Logout", on_click=logout)
     else:
-        st.write("Belum ada data penjualan.")
+        username = st.sidebar.text_input("Username")
+        password = st.sidebar.text_input("Password", type="password")
+        login_button = st.sidebar.button("Login")
+        if login_button:
+            if login(username, password):
+                load_data(username)
+
+def logout():
+    st.session_state.logged_in_user = None
+    st.session_state.user_role = None
+    st.session_state.stok_barang = pd.DataFrame()
+    st.session_state.penjualan = pd.DataFrame()
+    st.session_state.supplier = pd.DataFrame()
+    st.session_state.piutang_konsumen = pd.DataFrame()
+    st.session_state.pengeluaran = pd.DataFrame()
+    st.session_state.historis_analisis_keuangan = pd.DataFrame()
+    st.session_state.historis_keuntungan_bersih = pd.DataFrame()
+    st.experimental_rerun()
         
 # Function for Penjualan page
 def halaman_penjualan():
