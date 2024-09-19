@@ -8,12 +8,6 @@ import os
 import time
 from io import StringIO
 
-import streamlit as st
-from streamlit_option_menu import option_menu
-import pandas as pd
-import os
-from datetime import datetime
-
 # File paths for user data
 USER_DATA_FILE = 'user_data.csv'
 
@@ -138,14 +132,15 @@ else:
     elif option == "Laporan Keuangan":
         update_historical_data(st.session_state.logged_in_user)
 
+# Define function before calling it
 def manage_stok_barang(username):
     st.title("Manajemen Stok Barang")
     
-    # Display existing stock
+    # Display existing stock if available
     if 'stok_barang' in st.session_state:
         st.dataframe(st.session_state.stok_barang)
     
-    # Add or update stock items
+    # Form to add/update stock items
     st.subheader("Tambah/Update Stok Barang")
     
     with st.form("stock_form"):
@@ -172,8 +167,15 @@ def manage_stok_barang(username):
             else:
                 st.session_state.stok_barang = new_stock
             
-            st.session_state.stok_barang.to_csv(get_user_file_paths(username)['STOK_BARANG_FILE'], index=False)
+            # Save updated data to CSV
+            file_path = f'{username}_stok_barang.csv'
+            st.session_state.stok_barang.to_csv(file_path, index=False)
             st.success("Stok barang berhasil diperbarui.")
+
+# Example call to function
+initialize_session_state()
+st.session_state.logged_in_user = 'mira'  # Simulate a logged-in user for testing
+manage_stok_barang(st.session_state.logged_in_user)
 
 def manage_penjualan(username):
     st.title("Manajemen Penjualan")
