@@ -73,9 +73,9 @@ def register(username, password, role='user'):
     
     # Append new user data
     new_user = pd.DataFrame({
-        "Username": [username],
-        "Password": [password],
-        "Role": [role]
+        "Username": ["Mira","anton","joko"],
+        "Password": ["123","456","789"],
+        "Role": ["user", "user", "user"]
     })
     user_data = pd.concat([user_data, new_user], ignore_index=True)
     user_data.to_csv(USER_DATA_FILE, index=False)
