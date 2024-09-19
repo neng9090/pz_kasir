@@ -9,7 +9,7 @@ import time
 from io import StringIO
 
 
-# Define file paths for user data
+# File paths for user data
 USER_DATA_FILE = 'user_data.csv'
 
 # Define file paths for user-specific data
@@ -52,6 +52,40 @@ def initialize_users():
         existing_users = pd.read_csv(USER_DATA_FILE)
         all_users = pd.concat([existing_users, new_users], ignore_index=True)
         all_users.to_csv(USER_DATA_FILE, index=False)
+
+# Log in a user
+def login(username, password):
+    if 'user_data' not in st.session_state:
+        st.error("Data pengguna tidak ditemukan.")
+        return False
+
+    user_data = st.session_state.user_data
+    user = user_data[(user_data['Username'] == username) & (user_data['Password'] == password)]
+    if not user.empty:
+        st.session_state.logged_in_user = username
+        st.session_state.user_role = user['Role'].values[0]
+        st.success(f"Selamat datang, {username}!")
+        return True
+    else:
+        st.error("Username atau password salah.")
+        return False
+
+# Initialize and load data
+initialize_session_state()
+load_user_data()
+initialize_users()
+
+# Login form
+if st.session_state.logged_in_user is None:
+    st.title("Login")
+    username = st.text_input("Username")
+    password = st.text_input("Password", type="password")
+    if st.button("Login"):
+        if login(username, password):
+            st.experimental_rerun()  # Reload the app to show the dashboard
+else:
+    # Dashboard will be implemented here
+    pass
 
 # Save data for the logged-in user
 def save_data():
@@ -391,29 +425,102 @@ def update_historical_data(username):
     historis_analisis_keuangan.to_csv(user_files['HISTORIS_KEUANGAN_FILE'], index=False)
     historis_keuntungan_bersih.to_csv(user_files['HISTORIS_KEUNTUNGAN_FILE'], index=False)
 
-# Main application function
-def main():
-    username = st.text_input("Enter Username")
+# Ensure the user is logged in
+if st.session_state.logged_in_user:
+    # Define functions for handling data for each page
+    def manage_stok_barang(username):
+        file_path = get_user_file_paths(username)['STOK_BARANG_FILE']
+        if os.path.exists(file_path):
+            return pd.read_csv(file_path)
+        else:
+            return pd.DataFrame(columns=["Nama Barang", "Merk", "Ukuran/Kemasan", "Kode Warna", "Jumlah", "Harga"])
+
+    def manage_penjualan(username):
+        file_path = get_user_file_paths(username)['PENJUALAN_FILE']
+        if os.path.exists(file_path):
+            return pd.read_csv(file_path)
+        else:
+            return pd.DataFrame(columns=["ID", "Nama Pelanggan", "Nomor Telepon", "Alamat", "Nama Barang", "Ukuran/Kemasan", "Merk", "Kode Warna", "Jumlah", "Total Harga", "Keuntungan", "Waktu"])
+
+    def manage_supplier(username):
+        file_path = get_user_file_paths(username)['SUPPLIER_FILE']
+        if os.path.exists(file_path):
+            return pd.read_csv(file_path)
+        else:
+            return pd.DataFrame(columns=["Nama Barang", "Merk", "Ukuran/Kemasan", "Jumlah Barang", "Nama Supplier", "Tagihan", "Waktu"])
+
+    def manage_piutang_konsumen(username):
+        file_path = get_user_file_paths(username)['PIUTANG_KONSUMEN_FILE']
+        if os.path.exists(file_path):
+            return pd.read_csv(file_path)
+        else:
+            return pd.DataFrame(columns=["Nama Konsumen", "Jumlah Piutang", "Tanggal Jatuh Tempo", "Status"])
+
+    def manage_pengeluaran(username):
+        file_path = get_user_file_paths(username)['PENGELUARAN_FILE']
+        if os.path.exists(file_path):
+            return pd.read_csv(file_path)
+        else:
+            return pd.DataFrame(columns=["Nama Penerima Dana", "Keterangan", "Total Biaya"])
+
+    def manage_historis_analisis_keuangan(username):
+        file_path = get_user_file_paths(username)['HISTORIS_KEUANGAN_FILE']
+        if os.path.exists(file_path):
+            return pd.read_csv(file_path)
+        else:
+            return pd.DataFrame(columns=["Bulan", "Total Pendapatan", "Total Pengeluaran", "Keuntungan Bersih"])
+
+    def manage_historis_keuntungan_bersih(username):
+        file_path = get_user_file_paths(username)['HISTORIS_KEUNTUNGAN_FILE']
+        if os.path.exists(file_path):
+            return pd.read_csv(file_path)
+        else:
+            return pd.DataFrame(columns=["Tanggal", "Total Pendapatan", "Total Pengeluaran", "Keuntungan Bersih"])
+
+    st.title("Dashboard")
+
+    # Define a sidebar for navigation
+    option = st.sidebar.selectbox("Pilih Halaman", ["Home", "Stok Barang", "Penjualan", "Supplier", "Piutang Konsumen", "Pengeluaran", "Historis Analisis Keuangan", "Historis Keuntungan Bersih"])
+
+    # Navigation options
+    if option == "Home":
+        st.subheader("Selamat datang di Dashboard!")
+        st.write("Pilih menu di sebelah kiri untuk mengakses halaman yang diinginkan.")
     
-    if username:
-        # Manage data based on user
-        data_management_options = ["Stok Barang", "Penjualan", "Supplier", "Piutang Konsumen", "Pengeluaran"]
-        selection = st.sidebar.selectbox("Select Management Option", data_management_options)
-        
-        if selection == "Stok Barang":
-            manage_stok_barang(username)
-        elif selection == "Penjualan":
-            manage_penjualan(username)
-        elif selection == "Supplier":
-            manage_supplier(username)
-        elif selection == "Piutang Konsumen":
-            manage_piutang_konsum(username)
-        elif selection == "Pengeluaran":
-            manage_pengeluaran(username)
-        
-        # Update historical data
-        if st.button("Update Historical Data"):
-            update_historical_data(username)
+    elif option == "Stok Barang":
+        st.subheader("Manajemen Stok Barang")
+        stok_barang = manage_stok_barang(st.session_state.logged_in_user)
+        st.dataframe(stok_barang)
+
+    elif option == "Penjualan":
+        st.subheader("Manajemen Penjualan")
+        penjualan = manage_penjualan(st.session_state.logged_in_user)
+        st.dataframe(penjualan)
+
+    elif option == "Supplier":
+        st.subheader("Manajemen Supplier")
+        supplier = manage_supplier(st.session_state.logged_in_user)
+        st.dataframe(supplier)
+
+    elif option == "Piutang Konsumen":
+        st.subheader("Manajemen Piutang Konsumen")
+        piutang_konsumen = manage_piutang_konsumen(st.session_state.logged_in_user)
+        st.dataframe(piutang_konsumen)
+
+    elif option == "Pengeluaran":
+        st.subheader("Manajemen Pengeluaran")
+        pengeluaran = manage_pengeluaran(st.session_state.logged_in_user)
+        st.dataframe(pengeluaran)
+
+    elif option == "Historis Analisis Keuangan":
+        st.subheader("Historis Analisis Keuangan")
+        historis_analisis_keuangan = manage_historis_analisis_keuangan(st.session_state.logged_in_user)
+        st.dataframe(historis_analisis_keuangan)
+
+    elif option == "Historis Keuntungan Bersih":
+        st.subheader("Historis Keuntungan Bersih")
+        historis_keuntungan_bersih = manage_historis_keuntungan_bersih(st.session_state.logged_in_user)
+        st.dataframe(historis_keuntungan_bersih)
 
 if __name__ == "__main__":
     main()
