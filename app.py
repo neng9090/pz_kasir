@@ -8,6 +8,12 @@ import os
 import time
 from io import StringIO
 
+import streamlit as st
+import pandas as pd
+import os
+from datetime import datetime
+from streamlit_option_menu import option_menu
+
 # File paths for user data
 USER_DATA_FILE = 'user_data.csv'
 
@@ -242,9 +248,8 @@ def login():
         submitted = st.form_submit_button("Login")
         
         if submitted:
-            user_data = st.session_state.user_data
-            if username in user_data["Username"].values:
-                user_row = user_data[user_data["Username"] == username]
+            if username in st.session_state.user_data["Username"].values:
+                user_row = st.session_state.user_data[st.session_state.user_data["Username"] == username]
                 if user_row["Password"].values[0] == password:
                     st.session_state.logged_in_user = username
                     st.session_state.user_role = user_row["Role"].values[0]
