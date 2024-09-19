@@ -73,9 +73,9 @@ def register(username, password, role='user'):
     
     # Append new user data
     new_user = pd.DataFrame({
-        "Username": ["Mira","anton","joko"],
-        "Password": ["123","456","789"],
-        "Role": ["user", "user", "user"]
+        "Username": [username],
+        "Password": [password],
+        "Role": [role]
     })
     user_data = pd.concat([user_data, new_user], ignore_index=True)
     user_data.to_csv(USER_DATA_FILE, index=False)
@@ -218,6 +218,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 # Function for Stock Barang page
 def halaman_stock_barang():
     st.markdown('<h1 style="text-align: center;">Stock Barang</h1>', unsafe_allow_html=True)
