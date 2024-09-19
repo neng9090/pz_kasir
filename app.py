@@ -9,6 +9,120 @@ import time
 from io import StringIO
 
 
+# Define file paths for user data
+USER_DATA_FILE = 'user_data.csv'
+
+# Define file paths for user-specific data
+def get_user_file_paths(username):
+    return {
+        'STOK_BARANG_FILE': f'{username}_stok_barang.csv',
+        'PENJUALAN_FILE': f'{username}_penjualan.csv',
+        'SUPPLIER_FILE': f'{username}_supplier.csv',
+        'PIUTANG_KONSUMEN_FILE': f'{username}_piutang_konsumen.csv',
+        'PENGELUARAN_FILE': f'{username}_pengeluaran.csv',
+        'HISTORIS_KEUANGAN_FILE': f'{username}_historis_analisis_keuangan.csv',
+        'HISTORIS_KEUNTUNGAN_FILE': f'{username}_historis_keuntungan_bersih.csv'
+    }
+
+# Initialize session state
+def initialize_session_state():
+    if 'logged_in_user' not in st.session_state:
+        st.session_state.logged_in_user = None
+    if 'user_access' not in st.session_state:
+        st.session_state.user_access = {}
+    # Initialize other session states if necessary
+    # ...
+
+# Load user data
+def load_user_data():
+    if os.path.exists(USER_DATA_FILE):
+        st.session_state.user_data = pd.read_csv(USER_DATA_FILE)
+    else:
+        st.session_state.user_data = pd.DataFrame(columns=["Username", "Password", "Role"])
+
+# Save user data
+def save_user_data():
+    if 'user_data' in st.session_state:
+        st.session_state.user_data.to_csv(USER_DATA_FILE, index=False)
+
+# Function to handle user login
+def login(username, password):
+    user_data = st.session_state.user_data
+    user = user_data[(user_data['Username'] == username) & (user_data['Password'] == password)]
+    if not user.empty:
+        st.session_state.logged_in_user = username
+        st.session_state.user_access = user.iloc[0]['Role']
+        load_data()  # Load user-specific data after login
+    else:
+        st.error("Invalid username or password")
+
+# Load data based on the logged-in user
+def load_data():
+    if st.session_state.logged_in_user:
+        file_paths = get_user_file_paths(st.session_state.logged_in_user)
+        for key, file_path in file_paths.items():
+            if os.path.exists(file_path):
+                df = pd.read_csv(file_path)
+                # Convert 'Waktu' column to datetime after loading if it exists
+                if 'Waktu' in df.columns:
+                    df['Waktu'] = pd.to_datetime(df['Waktu'])
+                # Store data in session state
+                setattr(st.session_state, key.lower(), df)
+
+# Save data for the logged-in user
+def save_data():
+    if st.session_state.logged_in_user:
+        file_paths = get_user_file_paths(st.session_state.logged_in_user)
+        for key, file_path in file_paths.items():
+            if hasattr(st.session_state, key.lower()):
+                df = getattr(st.session_state, key.lower())
+                df.to_csv(file_path, index=False)
+
+# Main app logic
+def main():
+    st.title("Multi-User Dashboard")
+    
+    if st.session_state.logged_in_user:
+        st.write(f"Welcome, {st.session_state.logged_in_user}!")
+        
+        if st.session_state.user_access == 'admin':
+            # Show admin dashboard
+            st.write("Admin Dashboard")
+            # Add functionality for admin role
+            
+            # Example: Display stock items
+            if 'stok_barang' in st.session_state:
+                st.dataframe(st.session_state.stok_barang)
+            
+        elif st.session_state.user_access == 'owner':
+            # Show owner dashboard
+            st.write("Owner Dashboard")
+            # Add functionality for owner role
+            
+            # Example: Display sales data
+            if 'penjualan' in st.session_state:
+                st.dataframe(st.session_state.penjualan)
+        
+        else:
+            st.write("No access or role not recognized")
+        
+        # Save data when the app is closed
+        st.session_state._on_shutdown(save_data)
+        
+    else:
+        # Login form
+        with st.form("login_form"):
+            username = st.text_input("Username")
+            password = st.text_input("Password", type="password")
+            submitted = st.form_submit_button("Login")
+            if submitted:
+                login(username, password)
+
+if __name__ == "__main__":
+    initialize_session_state()
+    load_user_data()
+    main()
+
 # Define file paths
 STOK_BARANG_FILE = 'stok_barang.csv'
 PENJUALAN_FILE = 'penjualan.csv'
