@@ -80,9 +80,9 @@ def save_data():
 
 # Main app logic
 def main():
-    st.title("Multi-User Dashboard")
-    
     if st.session_state.logged_in_user:
+        # Only show dashboard if the user is logged in
+        st.title("Multi-User Dashboard")
         st.write(f"Welcome, {st.session_state.logged_in_user}!")
         
         if st.session_state.user_access == 'admin':
@@ -110,14 +110,15 @@ def main():
         st.session_state._on_shutdown(save_data)
         
     else:
-        # Login form
+        # Login form if not logged in
+        st.title("Login")
         with st.form("login_form"):
             username = st.text_input("Username")
             password = st.text_input("Password", type="password")
             submitted = st.form_submit_button("Login")
             if submitted:
                 login(username, password)
-
+    
 if __name__ == "__main__":
     initialize_session_state()
     load_user_data()
