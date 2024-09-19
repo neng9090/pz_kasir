@@ -80,6 +80,9 @@ def save_data():
 
 # Main app logic
 def main():
+    initialize_session_state()
+    load_user_data()
+
     # Display login form if user is not logged in
     if not st.session_state.logged_in_user:
         st.title("Login")
@@ -90,38 +93,6 @@ def main():
             if submitted:
                 login(username, password)
         return
-
-    # Sidebar navigation only after login
-    st.sidebar.title("Menu")
-    menu = st.sidebar.radio(
-        "Pilih halaman:",
-        ["Dashboard"] if st.session_state.logged_in_user else []
-    )
-
-    # Display the appropriate dashboard based on user role
-    if menu == "Dashboard":
-        st.title("Multi-User Dashboard")
-        st.write(f"Selamat datang, {st.session_state.logged_in_user}!")
-        
-        # Show additional pages if the user is logged in
-        if st.session_state.user_access == 'admin':
-            with st.sidebar.expander("Admin Pages"):
-                st.sidebar.write("1. Stock Barang")
-                st.sidebar.write("2. Penjualan")
-                st.sidebar.write("3. Supplier")
-                st.sidebar.write("4. Owner")
-        
-        # Include further logic for showing other pages based on the role
-        # ...
-
-    # Ensure data is saved when the app is closed
-    st.session_state._on_shutdown(save_data)
-
-if __name__ == "__main__":
-    initialize_session_state()
-    load_user_data()
-    main()
-
 # Define file paths
 STOK_BARANG_FILE = 'stok_barang.csv'
 PENJUALAN_FILE = 'penjualan.csv'
@@ -1209,20 +1180,34 @@ with st.sidebar:
         default_index=0
     )
 
-# Page routing
-if selected_page == "Stock Barang":
-    initialize_session_state()
-    load_data()
-    halaman_stock_barang()
-elif selected_page == "Penjualan":
-    initialize_session_state()
-    load_data()
-    halaman_penjualan()  # Ensure this is called correctly
-elif selected_page == "Supplier":
-    initialize_session_state()
-    load_data()
-    halaman_supplier()
-elif selected_page == "Owner":
-    initialize_session_state()
-    load_data()
-    halaman_owner()
+    # Sidebar navigation only after login
+    if st.session_state.logged_in_user:
+        st.sidebar.title("Menu")
+        menu_options = ["Dashboard"]
+        if st.session_state.user_access == 'admin':
+            menu_options.extend(["Stock Barang", "Penjualan", "Supplier", "Owner"])
+        menu = st.sidebar.radio("Pilih halaman:", menu_options)
+
+        # Display the selected page based on menu selection
+        if menu == "Dashboard":
+            st.title("Multi-User Dashboard")
+            st.write(f"Selamat datang, {st.session_state.logged_in_user}!")
+            # Add more dashboard logic here
+        elif menu == "Stock Barang":
+            st.title("Stock Barang")
+            # Add Stock Barang page logic here
+        elif menu == "Penjualan":
+            st.title("Penjualan")
+            # Add Penjualan page logic here
+        elif menu == "Supplier":
+            st.title("Supplier")
+            # Add Supplier page logic here
+        elif menu == "Owner":
+            st.title("Owner")
+            # Add Owner page logic here
+
+    # Ensure data is saved when the app is closed
+    st.session_state._on_shutdown(save_data)
+
+if __name__ == "__main__":
+    main()
