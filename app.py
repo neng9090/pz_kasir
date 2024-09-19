@@ -8,12 +8,6 @@ import os
 import time
 from io import StringIO
 
-import streamlit as st
-import pandas as pd
-import os
-from datetime import datetime
-from streamlit_option_menu import option_menu
-
 # Function definitions
 def manage_stok_barang(username):
     st.title("Manajemen Stok Barang")
@@ -236,22 +230,25 @@ def main():
     initialize_session_state()
     load_user_data()
     
-    st.sidebar.title("Login")
-    username = st.sidebar.text_input("Username")
-    password = st.sidebar.text_input("Password", type="password")
-    
-    if st.sidebar.button("Login"):
-        if username in st.session_state.user_data['Username'].values:
-            user_data = st.session_state.user_data[st.session_state.user_data['Username'] == username]
-            if user_data['Password'].values[0] == password:
-                st.session_state.logged_in_user = username
-                st.session_state.user_role = user_data['Role'].values[0]
-                st.sidebar.success("Login successful!")
+    # Login form
+    if st.session_state.logged_in_user is None:
+        st.sidebar.title("Login")
+        username = st.sidebar.text_input("Username")
+        password = st.sidebar.text_input("Password", type="password")
+        
+        if st.sidebar.button("Login"):
+            if username in st.session_state.user_data['Username'].values:
+                user_data = st.session_state.user_data[st.session_state.user_data['Username'] == username]
+                if user_data['Password'].values[0] == password:
+                    st.session_state.logged_in_user = username
+                    st.session_state.user_role = user_data['Role'].values[0]
+                    st.sidebar.success("Login successful!")
+                else:
+                    st.sidebar.error("Incorrect password.")
             else:
-                st.sidebar.error("Incorrect password.")
-        else:
-            st.sidebar.error("Username not found.")
+                st.sidebar.error("Username not found.")
     
+    # Display app content based on login state
     if st.session_state.logged_in_user:
         with st.sidebar:
             choice = option_menu(
