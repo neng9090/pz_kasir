@@ -48,16 +48,68 @@ def get_file_path(file_type, username):
     os.makedirs(folder, exist_ok=True)
     return os.path.join(folder, f"{file_type}.csv")
 
-# Function to load data from CSV files for the logged-in user
-def load_user_data(username):
-    stok_barang_file = get_file_path('stok_barang', username)
-    penjualan_file = get_file_path('penjualan', username)
-    supplier_file = get_file_path('supplier', username)
-    owner_file = get_file_path('owner', username)
-    piutang_konsumen_file = get_file_path('piutang_konsumen', username)
-    pengeluaran_file = get_file_path('pengeluaran', username)
-    historis_keuangan_file = get_file_path('historis_analisis_keuangan', username)
-    historis_keuntungan_file = get_file_path('historis_keuntungan_bersih', username)
+def load_data():
+    # Load Stock Barang
+    if os.path.exists(STOK_BARANG_FILE):
+        try:
+            st.session_state.stok_barang = pd.read_csv(STOK_BARANG_FILE)
+            if 'Waktu Input' in st.session_state.stok_barang.columns:
+                st.session_state.stok_barang['Waktu Input'] = pd.to_datetime(st.session_state.stok_barang['Waktu Input'])
+        except Exception as e:
+            st.error(f"Error loading {STOK_BARANG_FILE}: {e}")
+    
+    # Load Penjualan
+    if os.path.exists(PENJUALAN_FILE):
+        try:
+            st.session_state.penjualan = pd.read_csv(PENJUALAN_FILE)
+            if 'Waktu' in st.session_state.penjualan.columns:
+                st.session_state.penjualan['Waktu'] = pd.to_datetime(st.session_state.penjualan['Waktu'])
+        except Exception as e:
+            st.error(f"Error loading {PENJUALAN_FILE}: {e}")
+
+    # Load Supplier
+    if os.path.exists(SUPPLIER_FILE):
+        try:
+            st.session_state.supplier = pd.read_csv(SUPPLIER_FILE)
+            if 'Waktu' in st.session_state.supplier.columns:
+                st.session_state.supplier['Waktu'] = pd.to_datetime(st.session_state.supplier['Waktu'])
+        except Exception as e:
+            st.error(f"Error loading {SUPPLIER_FILE}: {e}")
+
+    # Load Owner
+    if os.path.exists(OWNER_FILE):
+        try:
+            st.session_state.owner = pd.read_csv(OWNER_FILE)
+        except Exception as e:
+            st.error(f"Error loading {OWNER_FILE}: {e}")
+
+    # Load Piutang Konsumen
+    if os.path.exists(PIUTANG_KONSUMEN_FILE):
+        try:
+            st.session_state.piutang_konsumen = pd.read_csv(PIUTANG_KONSUMEN_FILE)
+        except Exception as e:
+            st.error(f"Error loading {PIUTANG_KONSUMEN_FILE}: {e}")
+
+    # Load Pengeluaran
+    if os.path.exists(PENGELUARAN_FILE):
+        try:
+            st.session_state.pengeluaran = pd.read_csv(PENGELUARAN_FILE)
+        except Exception as e:
+            st.error(f"Error loading {PENGELUARAN_FILE}: {e}")
+
+    # Load Historis Analisis Keuangan
+    if os.path.exists(HISTORIS_KEUANGAN_FILE):
+        try:
+            st.session_state.historis_analisis_keuangan = pd.read_csv(HISTORIS_KEUANGAN_FILE)
+        except Exception as e:
+            st.error(f"Error loading {HISTORIS_KEUANGAN_FILE}: {e}")
+
+    # Load Historis Keuntungan Bersih
+    if os.path.exists(HISTORIS_KEUNTUNGAN_FILE):
+        try:
+            st.session_state.historis_keuntungan_bersih = pd.read_csv(HISTORIS_KEUNTUNGAN_FILE)
+        except Exception as e:
+            st.error(f"Error loading {HISTORIS_KEUNTUNGAN_FILE}: {e}")
 
     if os.path.exists(stok_barang_file):
         st.session_state.stok_barang = pd.read_csv(stok_barang_file)
