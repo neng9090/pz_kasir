@@ -132,7 +132,7 @@ else:
     elif option == "Laporan Keuangan":
         update_historical_data(st.session_state.logged_in_user)
 
-# Function definition
+# Function definitions
 def manage_stok_barang(username):
     st.title("Manajemen Stok Barang")
     
@@ -165,24 +165,16 @@ def manage_stok_barang(username):
             else:
                 st.session_state.stok_barang = new_stock
             
-            file_path = f'{username}_stok_barang.csv'
+            file_path = get_user_file_paths(username)['STOK_BARANG_FILE']
             st.session_state.stok_barang.to_csv(file_path, index=False)
             st.success("Stok barang berhasil diperbarui.")
 
-# Simulate session state for testing
-if 'logged_in_user' not in st.session_state:
-    st.session_state.logged_in_user = 'mira'
-
-# Calling the function
-manage_stok_barang(st.session_state.logged_in_user)
 def manage_penjualan(username):
     st.title("Manajemen Penjualan")
     
-    # Display existing sales
     if 'penjualan' in st.session_state:
         st.dataframe(st.session_state.penjualan)
     
-    # Add new sales
     st.subheader("Tambah Penjualan")
     
     with st.form("sales_form"):
@@ -213,17 +205,16 @@ def manage_penjualan(username):
             else:
                 st.session_state.penjualan = new_sale
             
-            st.session_state.penjualan.to_csv(get_user_file_paths(username)['PENJUALAN_FILE'], index=False)
+            file_path = get_user_file_paths(username)['PENJUALAN_FILE']
+            st.session_state.penjualan.to_csv(file_path, index=False)
             st.success("Penjualan berhasil diperbarui.")
 
 def manage_supplier(username):
     st.title("Manajemen Supplier")
     
-    # Display existing suppliers
     if 'supplier' in st.session_state:
         st.dataframe(st.session_state.supplier)
     
-    # Add new supplier
     st.subheader("Tambah Supplier")
     
     with st.form("supplier_form"):
@@ -246,28 +237,27 @@ def manage_supplier(username):
             else:
                 st.session_state.supplier = new_supplier
             
-            st.session_state.supplier.to_csv(get_user_file_paths(username)['SUPPLIER_FILE'], index=False)
+            file_path = get_user_file_paths(username)['SUPPLIER_FILE']
+            st.session_state.supplier.to_csv(file_path, index=False)
             st.success("Supplier berhasil diperbarui.")
 
 def manage_piutang_konsum(username):
     st.title("Manajemen Piutang Konsumen")
     
-    # Display existing receivables
     if 'piutang_konsum' in st.session_state:
         st.dataframe(st.session_state.piutang_konsum)
     
-    # Add new receivable
     st.subheader("Tambah Piutang Konsumen")
     
-    with st.form("receivable_form"):
+    with st.form("piutang_form"):
         nama_konsumen = st.text_input("Nama Konsumen")
         jumlah_piutang = st.number_input("Jumlah Piutang", min_value=0.0)
-        tanggal = st.date_input("Tanggal")
+        tanggal = st.date_input("Tanggal", value=datetime.now())
         
         submitted = st.form_submit_button("Simpan")
         
         if submitted:
-            new_receivable = pd.DataFrame({
+            new_piutang = pd.DataFrame({
                 'Nama Konsumen': [nama_konsumen],
                 'Jumlah Piutang': [jumlah_piutang],
                 'Tanggal': [tanggal],
@@ -275,81 +265,52 @@ def manage_piutang_konsum(username):
             })
             
             if 'piutang_konsum' in st.session_state:
-                st.session_state.piutang_konsum = pd.concat([st.session_state.piutang_konsum, new_receivable], ignore_index=True)
+                st.session_state.piutang_konsum = pd.concat([st.session_state.piutang_konsum, new_piutang], ignore_index=True)
             else:
-                st.session_state.piutang_konsum = new_receivable
+                st.session_state.piutang_konsum = new_piutang
             
-            st.session_state.piutang_konsum.to_csv(get_user_file_paths(username)['PIUTANG_KONSUMEN_FILE'], index=False)
+            file_path = get_user_file_paths(username)['PIUTANG_KONSUMEN_FILE']
+            st.session_state.piutang_konsum.to_csv(file_path, index=False)
             st.success("Piutang konsumen berhasil diperbarui.")
 
 def manage_pengeluaran(username):
     st.title("Manajemen Pengeluaran")
     
-    # Display existing expenses
     if 'pengeluaran' in st.session_state:
         st.dataframe(st.session_state.pengeluaran)
     
-    # Add new expense
     st.subheader("Tambah Pengeluaran")
     
-    with st.form("expense_form"):
-        nama_pengeluaran = st.text_input("Nama Pengeluaran")
-        jumlah_pengeluaran = st.number_input("Jumlah Pengeluaran", min_value=0.0)
+    with st.form("pengeluaran_form"):
+        nama_penerima_dana = st.text_input("Nama Penerima Dana")
         keterangan = st.text_input("Keterangan")
+        total_biaya = st.number_input("Total Biaya", min_value=0.0)
         
         submitted = st.form_submit_button("Simpan")
         
         if submitted:
-            new_expense = pd.DataFrame({
-                'Nama Pengeluaran': [nama_pengeluaran],
-                'Jumlah Pengeluaran': [jumlah_pengeluaran],
+            new_pengeluaran = pd.DataFrame({
+                'Nama Penerima Dana': [nama_penerima_dana],
                 'Keterangan': [keterangan],
+                'Total Biaya': [total_biaya],
                 'Waktu Input': [datetime.now()]
             })
             
             if 'pengeluaran' in st.session_state:
-                st.session_state.pengeluaran = pd.concat([st.session_state.pengeluaran, new_expense], ignore_index=True)
+                st.session_state.pengeluaran = pd.concat([st.session_state.pengeluaran, new_pengeluaran], ignore_index=True)
             else:
-                st.session_state.pengeluaran = new_expense
+                st.session_state.pengeluaran = new_pengeluaran
             
-            st.session_state.pengeluaran.to_csv(get_user_file_paths(username)['PENGELUARAN_FILE'], index=False)
+            file_path = get_user_file_paths(username)['PENGELUARAN_FILE']
+            st.session_state.pengeluaran.to_csv(file_path, index=False)
             st.success("Pengeluaran berhasil diperbarui.")
 
 def update_historical_data(username):
     st.title("Laporan Keuangan")
     
-    # Display historical data
-    if 'historis_analisis_keuangan' in st.session_state:
-        st.dataframe(st.session_state.historis_analisis_keuangan)
-    
-    # Historical data analysis
-    st.subheader("Analisis Keuangan")
-    
-    # Example calculation
-    if 'pengeluaran' in st.session_state:
-        total_pengeluaran = st.session_state.pengeluaran['Jumlah Pengeluaran'].sum()
-    else:
-        total_pengeluaran = 0
-    
-    if 'penjualan' in st.session_state:
-        total_penjualan = st.session_state.penjualan['Total Harga'].sum()
-    else:
-        total_penjualan = 0
-    
-    st.write(f"**Total Penjualan:** Rp{total_penjualan:,.2f}")
-    st.write(f"**Total Pengeluaran:** Rp{total_pengeluaran:,.2f}")
+    # Aggregate and display historical data here
+    st.write("Fitur ini sedang dalam pengembangan.")
 
-    # Save to historical data file
-    historis_data = pd.DataFrame({
-        'Tanggal': [datetime.now().strftime('%Y-%m-%d')],
-        'Total Penjualan': [total_penjualan],
-        'Total Pengeluaran': [total_pengeluaran]
-    })
-    
-    if 'historis_analisis_keuangan' in st.session_state:
-        st.session_state.historis_analisis_keuangan = pd.concat([st.session_state.historis_analisis_keuangan, historis_data], ignore_index=True)
-    else:
-        st.session_state.historis_analisis_keuangan = historis_data
-    
-    st.session_state.historis_analisis_keuangan.to_csv(get_user_file_paths(username)['HISTORIS_KEUANGAN_FILE'], index=False)
-    st.success("Laporan keuangan berhasil diperbarui.")
+# Placeholder functions for user roles, permissions, and other features
+def user_role_permissions():
+    st.write("Pengaturan hak akses pengguna dan fitur lainnya akan ditambahkan di sini.")
