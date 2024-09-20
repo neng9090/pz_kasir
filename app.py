@@ -131,14 +131,14 @@ def manage_penjualan(username):
             # Add 'ID Penjualan' column if it doesn't exist
             if 'ID Penjualan' not in st.session_state.penjualan.columns:
                 st.session_state.penjualan['ID Penjualan'] = range(1, len(st.session_state.penjualan) + 1)
-                st.session_state.penjualan.to_csv(file_path, index=False)
+                st.session_state.penjualan.to_csv(file_path, index=False)  # Save changes to file
                 st.success("Kolom 'ID Penjualan' berhasil ditambahkan.")
         
         except Exception as e:
             st.error(f"Error loading penjualan file: {str(e)}")
             return
     else:
-        # Initialize empty sales DataFrame
+        # Initialize empty sales table with 'ID Penjualan' column
         st.session_state.penjualan = pd.DataFrame(columns=[
             'ID Penjualan', 'Nama Pelanggan', 'Nomor Telepon', 'Alamat', 
             'Nama Barang', 'Merk', 'Ukuran/Kemasan', 
@@ -148,7 +148,10 @@ def manage_penjualan(username):
         st.warning("Tidak ada data penjualan yang ditemukan, menginisialisasi data penjualan kosong.")
 
     # Generate a new unique ID for the next sale
-    new_sale_id = st.session_state.penjualan['ID Penjualan'].max() + 1 if not st.session_state.penjualan.empty else 1
+    if not st.session_state.penjualan.empty:
+        new_sale_id = st.session_state.penjualan['ID Penjualan'].max() + 1  # Auto increment ID Penjualan
+    else:
+        new_sale_id = 1  # If no previous data, start from 1
 
     # Customer search functionality
     st.subheader("Cari Pelanggan")
@@ -160,9 +163,9 @@ def manage_penjualan(username):
         else:
             st.dataframe(filtered_penjualan)
 
-    # Display current sales data
+    # Display current sales data without the 'Harga' column
     st.subheader("Data Penjualan Saat Ini")
-    st.dataframe(st.session_state.penjualan)
+    st.dataframe(st.session_state.penjualan.drop(columns=['Harga'], errors='ignore'))
 
     st.subheader("Tambah Penjualan")
 
@@ -188,8 +191,7 @@ def manage_penjualan(username):
     if search_item:
         filtered_stok_barang = filtered_stok_barang[filtered_stok_barang['Nama Barang'].str.contains(search_item, case=False)]
     
-    # Show stock items without the 'Harga Jual' column
-    st.dataframe(filtered_stok_barang.drop(columns=['Harga Jual'], errors='ignore'))
+    st.dataframe(filtered_stok_barang)
 
     with st.form("sales_form"):
         # Customer details input
@@ -271,7 +273,7 @@ def manage_penjualan(username):
                 if selected_sale.empty:
                     st.error(f"Penjualan dengan ID {sale_id_to_download} tidak ditemukan.")
                 else:
-                    selected_sale = selected_sale.iloc[0]
+                    selected_sale = selected_sale.iloc[0]  # Get the first matching row as a Series
                     
                     # Safely access selected sale details
                     nama_pelanggan = selected_sale.get('Nama Pelanggan', 'Tidak Diketahui')
