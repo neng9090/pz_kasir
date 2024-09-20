@@ -576,7 +576,6 @@ def halaman_penjualan(username):
             mime="text/plain"
         )
 
-
 def main():
     st.title("Aplikasi Penjualan")
     
