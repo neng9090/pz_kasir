@@ -255,7 +255,7 @@ def manage_penjualan(username):
                     st.error(f"Penjualan dengan ID {sale_id_to_download} tidak ditemukan.")
                 else:
                     selected_sale = selected_sale.iloc[0]  # Get the first matching row as a Series
-                    
+    
                     # Safely access selected sale details
                     nama_pelanggan = selected_sale.get('Nama Pelanggan', 'Tidak Diketahui')
                     nomor_telepon = str(selected_sale.get('Nomor Telepon', 'Tidak Diketahui'))
