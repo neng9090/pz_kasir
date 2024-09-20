@@ -49,7 +49,6 @@ def initialize_users():
     })
     new_users.to_csv(USER_DATA_FILE, index=False)
 
-# Function to manage stock items
 def manage_stok_barang(username):
     st.title("Manajemen Stok Barang")
     
@@ -58,7 +57,7 @@ def manage_stok_barang(username):
     if os.path.exists(file_path):
         st.session_state.stok_barang = pd.read_csv(file_path)
     else:
-        st.session_state.stok_barang = pd.DataFrame(columns=['Nama Barang', 'Merk', 'Ukuran/Kemasan', 'Jumlah', 'Harga', 'Waktu Input'])
+        st.session_state.stok_barang = pd.DataFrame(columns=['Nama Barang', 'Merk', 'Ukuran/Kemasan', 'Jumlah', 'Harga', 'Harga Jual', 'Waktu Input'])
 
     if 'stok_barang' in st.session_state:
         st.dataframe(st.session_state.stok_barang)
@@ -71,6 +70,11 @@ def manage_stok_barang(username):
         ukuran_kemasan = st.text_input("Ukuran/Kemasan")
         jumlah = st.number_input("Jumlah", min_value=0)
         harga = st.number_input("Harga", min_value=0.0)
+
+        # Calculate selling price (15% more than the base price)
+        harga_jual = harga * 1.15
+        
+        st.write(f"Harga Jual: {harga_jual:.2f}")  # Display the calculated selling price
         
         submitted = st.form_submit_button("Simpan")
         
@@ -81,6 +85,7 @@ def manage_stok_barang(username):
                 'Ukuran/Kemasan': [ukuran_kemasan],
                 'Jumlah': [jumlah],
                 'Harga': [harga],
+                'Harga Jual': [harga_jual],  # Include selling price
                 'Waktu Input': [datetime.now()]
             })
             
