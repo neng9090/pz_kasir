@@ -276,6 +276,7 @@ def manage_owner():
                 else:
                     all_data[key] = pd.DataFrame(columns=['Data'])  # Placeholder for no data
             
+            # Displaying all data tables
             st.subheader("Data Stok Barang")
             st.dataframe(all_data['STOK_BARANG_FILE'])
             st.subheader("Data Penjualan")
@@ -286,6 +287,27 @@ def manage_owner():
             st.dataframe(all_data['PIUTANG_KONSUMEN_FILE'])
             st.subheader("Data Pengeluaran")
             st.dataframe(all_data['PENGELUARAN_FILE'])
+            
+            # Financial Report
+            st.subheader("Laporan Keuangan")
+            try:
+                penjualan = pd.read_csv(file_paths['PENJUALAN_FILE'])
+                pengeluaran = pd.read_csv(file_paths['PENGELUARAN_FILE'])
+                
+                total_pendapatan = penjualan['Total Harga'].sum()
+                total_pengeluaran = pengeluaran['Total Biaya'].sum()
+                laba_bersih = total_pendapatan - total_pengeluaran
+                
+                # Create a DataFrame for the financial report
+                financial_report_data = pd.DataFrame({
+                    'Keterangan': ['Total Pendapatan', 'Total Pengeluaran', 'Laba Bersih'],
+                    'Jumlah': [total_pendapatan, total_pengeluaran, laba_bersih]
+                })
+                
+                st.dataframe(financial_report_data)
+                
+            except Exception as e:
+                st.error("Error loading financial data: {}".format(e))
             
             # Export option
             if st.button("Ekspor Semua Data ke Excel"):
