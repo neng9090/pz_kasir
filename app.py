@@ -93,6 +93,11 @@ def manage_stok_barang(username):
             st.session_state.stok_barang.to_csv(file_path, index=False)
             st.success("Stok barang berhasil diperbarui.")
 
+import pandas as pd
+import streamlit as st
+from datetime import datetime
+import os
+
 # Function to manage sales
 def manage_penjualan(username):
     st.title("Manajemen Penjualan")
@@ -113,15 +118,26 @@ def manage_penjualan(username):
         st.session_state.stok_barang = pd.DataFrame(columns=['ID Barang', 'Nama Barang', 'Merk', 'Ukuran/Kemasan', 'Jumlah', 'Kode Warna/Base', 'Harga Jual', 'Waktu Input'])
     
     # Display sales data
+    st.subheader("Daftar Penjualan")
     if 'penjualan' in st.session_state:
-        st.subheader("Daftar Penjualan")
         st.dataframe(st.session_state.penjualan)
+    
+    # Search for customers
+    search_customer = st.text_input("Cari Pelanggan", "")
+    
+    if search_customer:
+        customer_data = st.session_state.penjualan[st.session_state.penjualan['Nama Pelanggan'].str.contains(search_customer, case=False)]
+        if not customer_data.empty:
+            st.subheader("Hasil Pencarian Pelanggan")
+            st.dataframe(customer_data)
+        else:
+            st.error("Tidak ada pelanggan yang ditemukan.")
     
     st.subheader("Tambah Penjualan")
     
     with st.form("sales_form"):
         # Customer information
-        nama_pelanggan = st.text_input("Nama Pelanggan")
+        nama_pelanggan = st.text_input("Nama Pelanggan (untuk penjualan)")
         nomor_telepon = st.text_input("Nomor Telepon")
         alamat = st.text_input("Alamat")
         
@@ -196,6 +212,7 @@ def manage_penjualan(username):
     st.subheader("Tabel Stok Barang")
     if 'stok_barang' in st.session_state:
         st.dataframe(st.session_state.stok_barang.drop(columns=['Harga Jual'], errors='ignore'))
+
 
 
 
