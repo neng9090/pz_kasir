@@ -468,8 +468,8 @@ def financial_report(username):
     
     # Date input for filtering
     st.subheader("Pilih Rentang Waktu")
-    start_date = st.date_input("Tanggal Mulai")
-    end_date = st.date_input("Tanggal Selesai")
+    start_date = st.date_input("Tanggal Mulai", pd.to_datetime('2023-01-01'))  # Default start date
+    end_date = st.date_input("Tanggal Selesai", pd.to_datetime('today'))      # Default end date
 
     # Initialize totals
     total_pendapatan = 0
@@ -481,13 +481,13 @@ def financial_report(username):
         # Load penjualan data
         if os.path.exists(file_paths['PENJUALAN_FILE']):
             penjualan = pd.read_csv(file_paths['PENJUALAN_FILE'])
-            
+
             # Check for 'Tanggal' column
             if 'Tanggal' in penjualan.columns:
                 penjualan['Tanggal'] = pd.to_datetime(penjualan['Tanggal'], errors='coerce')
-                
+
                 # Filter data based on date range
-                filtered_penjualan = penjualan[(penjualan['Tanggal'] >= pd.to_datetime(start_date)) & (penjualan['Tanggal'] <= pd.to_datetime(end_date))]
+                filtered_penjualan = penjualan[(penjualan['Tanggal'] >= start_date) & (penjualan['Tanggal'] <= end_date)]
                 
                 total_pendapatan = filtered_penjualan['Total Harga'].sum()
                 
@@ -505,13 +505,13 @@ def financial_report(username):
         # Load pengeluaran data
         if os.path.exists(file_paths['PENGELUARAN_FILE']):
             pengeluaran = pd.read_csv(file_paths['PENGELUARAN_FILE'])
-            
+
             # Check for 'Tanggal' column
             if 'Tanggal' in pengeluaran.columns:
                 pengeluaran['Tanggal'] = pd.to_datetime(pengeluaran['Tanggal'], errors='coerce')
-                
+
                 # Filter data based on date range
-                filtered_pengeluaran = pengeluaran[(pengeluaran['Tanggal'] >= pd.to_datetime(start_date)) & (pengeluaran['Tanggal'] <= pd.to_datetime(end_date))]
+                filtered_pengeluaran = pengeluaran[(pengeluaran['Tanggal'] >= start_date) & (pengeluaran['Tanggal'] <= end_date)]
                 
                 total_pengeluaran = filtered_pengeluaran['Total Biaya'].sum()
 
