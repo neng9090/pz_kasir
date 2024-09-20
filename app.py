@@ -267,13 +267,13 @@ def manage_penjualan(username):
                     jumlah = selected_sale.get('Jumlah', 0)
                     harga_jual = selected_sale.get('Harga Jual', 0)
                     total_harga = selected_sale.get('Total Harga', 0)
-                    waktu = selected_sale.get('Waktu', 'Tidak Diketahui')
+                    waktu = selected_sale.get('Waktu', 'Tidak Diketahui').split()[0]  # Only get the date part
     
-                    # Format receipt text for thermal printer
+                    # Format receipt text for thermal printer (58mm width)
                     receipt_text = (
-                        f"{'=' * 30}\n"
-                        f"{receipt_header.center(30)}\n"
-                        f"{'=' * 30}\n"
+                        f"{'=' * 20}\n"
+                        f"{receipt_header.center(20)}\n"
+                        f"{'=' * 20}\n"
                         f"Nama Pelanggan : {nama_pelanggan[:20].ljust(20)}\n"
                         f"Nomor Telepon  : {nomor_telepon[:15].ljust(15)}\n"
                         f"Alamat         : {alamat[:30].ljust(30)}\n"
@@ -285,9 +285,9 @@ def manage_penjualan(username):
                         f"Harga          : {str(harga_jual).rjust(15)}\n"
                         f"Total          : {str(total_harga).rjust(15)}\n"
                         f"Waktu          : {waktu.ljust(30)}\n"
-                        f"{'=' * 30}\n"
-                        f"{thank_you_message.center(30)}\n"
-                        f"{'=' * 30}\n"
+                        f"{'=' * 20}\n"
+                        f"{thank_you_message.center(20)}\n"
+                        f"{'=' * 20}\n"
                     )
     
                     # Prepare the receipt for download as .txt file
