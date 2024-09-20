@@ -576,25 +576,26 @@ def halaman_penjualan(username):
             mime="text/plain"
         )
 
+
 # Main function
 def main():
     st.title("Aplikasi Penjualan")
     
-    # Initialize session states if not already done
     if 'logged_in_user' not in st.session_state:
         st.session_state.logged_in_user = None
     if 'stok_barang' not in st.session_state:
         st.session_state.stok_barang = pd.DataFrame(columns=["ID", "Nama Barang", "Ukuran/Kemasan", "Merk", "Stok", "Harga Jual"])
     if 'penjualan' not in st.session_state:
         st.session_state.penjualan = pd.DataFrame(columns=["ID", "Nama Pelanggan", "Nomor Telepon", "Alamat", "Nama Barang", "Ukuran/Kemasan", "Merk", "Kode Warna/Base", "Jumlah", "Total Harga", "Waktu"])
-    
-    # Simulated login for demonstration (replace with actual login logic)
+
+    # Simulated login for demonstration
     if st.button("Login"):
-        st.session_state.logged_in_user = "User"  # Example user login
+        st.session_state.logged_in_user = "User"
+        load_data(st.session_state.logged_in_user)  # Load data after login
 
     if st.session_state.logged_in_user:
-        halaman_penjualan(st.session_state.logged_in_user)
-import streamlit as st
+        halaman_penjualan(st.session_state.logged_in_user)  # Change here to call the correct function
+
 import pandas as pd
 import os
 from datetime import datetime
