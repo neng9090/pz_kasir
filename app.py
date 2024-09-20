@@ -104,6 +104,10 @@ def manage_penjualan(username):
         st.error("Data stok barang tidak ditemukan.")
         return
 
+    if 'ID Barang' not in stok_barang.columns:
+        st.error("Kolom 'ID Barang' tidak ditemukan dalam data stok barang.")
+        return
+
     with st.form("add_sale_form"):
         nama_pelanggan = st.text_input("Nama Pelanggan")
         nomor_telepon = st.text_input("Nomor Telepon")
@@ -156,6 +160,7 @@ def manage_penjualan(username):
                     st.error("Jumlah melebihi stok yang tersedia.")
         else:
             st.error("Barang tidak ditemukan.")
+
 
 
 # Function to manage suppliers
