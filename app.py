@@ -18,8 +18,6 @@ def get_user_file_paths(username):
         'SUPPLIER_FILE': f'{username}_supplier.csv',
         'PIUTANG_KONSUMEN_FILE': f'{username}_piutang_konsum.csv',
         'PENGELUARAN_FILE': f'{username}_pengeluaran.csv',
-        'HISTORIS_KEUANGAN_FILE': f'{username}_historis_analisis_keuangan.csv',
-        'HISTORIS_KEUNTUNGAN_FILE': f'{username}_historis_keuntungan_bersih.csv',
         'OWNER_DATA_FILE': f'{username}_owner_data.csv'
     }
 
@@ -28,8 +26,6 @@ USER_DATA_FILE = 'user_data.csv'
 def initialize_session_state():
     if 'logged_in_user' not in st.session_state:
         st.session_state.logged_in_user = None
-    if 'user_role' not in st.session_state:
-        st.session_state.user_role = None
     if 'user_data' not in st.session_state:
         load_user_data()
 
@@ -37,8 +33,7 @@ def load_user_data():
     if os.path.exists(USER_DATA_FILE):
         st.session_state.user_data = pd.read_csv(USER_DATA_FILE)
     else:
-        st.session_state.user_data = pd.DataFrame(columns=["Username", "Password", "Role"])
-        initialize_users()
+        st.session_state.user_data = initialize_users()
 
 def initialize_users():
     new_users = pd.DataFrame({
@@ -47,6 +42,30 @@ def initialize_users():
         "Role": ["user", "user", "admin"]
     })
     new_users.to_csv(USER_DATA_FILE, index=False)
+    return new_users
+
+# Authentication function
+def login(username, password):
+    if st.session_state.user_data.empty:
+        st.error("User data is not loaded.")
+        return False
+
+    user = st.session_state.user_data[st.session_state.user_data['Username'] == username]
+    
+    if not user.empty:
+        if user['Password'].values[0] == password:
+            st.session_state.logged_in_user = username
+            return True
+        else:
+            st.error("Incorrect password.")
+    else:
+        st.error("Username not found.")
+    
+    return False
+
+def logout():
+    st.session_state.logged_in_user = None
+    st.success("You have been logged out.")
 
 def manage_stok_barang(username):
     st.title("Manajemen Stok Barang")
@@ -487,35 +506,6 @@ def manage_owner():
         else:
             st.error("Password salah.")
 
-# Function to initialize session state
-def initialize_session_state():
-    if 'logged_in_user' not in st.session_state:
-        st.session_state.logged_in_user = None
-    if 'user_data' not in st.session_state:
-        st.session_state.user_data = pd.DataFrame()  # Initialize as empty DataFrame
-    if 'user_role' not in st.session_state:
-        st.session_state.user_role = None
-
-# Authentication function
-def login(username, password):
-    if st.session_state.user_data.empty:
-        st.error("User data is not loaded.")
-        return False
-
-    user = st.session_state.user_data[st.session_state.user_data['Username'] == username]
-    
-    if not user.empty:
-        if user['Password'].values[0] == password:
-            st.session_state.logged_in_user = username
-            st.session_state.user_role = user['Role'].values[0]
-            return True
-        else:
-            st.error("Incorrect password.")
-    else:
-        st.error("Username not found.")
-    
-    return False
-
 # Main app logic
 def main():
     initialize_session_state()
@@ -528,10 +518,13 @@ def main():
                                 "Manajemen Supplier", 
                                 "Manajemen Piutang Konsumen", 
                                 "Manajemen Pengeluaran", 
-                                "Laporan Keuangan", 
                                 "Manajemen Pemilik"],
-                               icons=['box', 'cash-coin', 'person-check', 'wallet', 'arrow-down-circle', 'bar-chart-line', 'shield-lock'], 
+                               icons=['box', 'cash-coin', 'person-check', 'wallet', 'arrow-down-circle', 'shield-lock'], 
                                menu_icon="cast", default_index=0)
+
+        if st.session_state.logged_in_user:
+            if st.sidebar.button("Logout"):
+                logout()
 
     if st.session_state.logged_in_user:
         st.sidebar.title(f"Hello, {st.session_state.logged_in_user}")
@@ -546,8 +539,6 @@ def main():
             manage_piutang_konsum(st.session_state.logged_in_user)
         elif selected == "Manajemen Pengeluaran":
             manage_pengeluaran(st.session_state.logged_in_user)
-        elif selected == "Laporan Keuangan":
-            financial_report(st.session_state.logged_in_user)
         elif selected == "Manajemen Pemilik":
             manage_owner()
     else:
