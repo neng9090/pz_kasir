@@ -201,17 +201,18 @@ def manage_penjualan(username):
             stok_barang.to_csv(stok_barang_path, index=False)
             st.success("Stok berhasil diperbarui.")
 
-        # Receipt Options
-        st.subheader("Review Struk")
-        receipt_title = st.text_input("Judul Struk", "Struk Penjualan")
-        thank_you_message = st.text_input("Ucapan Terima Kasih", "Terima kasih atas pembelian Anda!")
-        
-        # Receipt Options
-        st.subheader("Download Struk Penjualan")
-        sale_id_to_download = st.number_input("ID Penjualan", min_value=1, max_value=len(st.session_state.penjualan), step=1)
+    # Receipt Options
+    st.subheader("Review Struk")
+    receipt_title = st.text_input("Judul Struk", "Struk Penjualan")
+    thank_you_message = st.text_input("Ucapan Terima Kasih", "Terima kasih atas pembelian Anda!")
     
-        if st.button("Download Struk"):
-            if sale_id_to_download and not st.session_state.penjualan.empty:
+    # Receipt Download
+    st.subheader("Download Struk Penjualan")
+    sale_id_to_download = st.number_input("ID Penjualan", min_value=1, max_value=len(st.session_state.penjualan), step=1)
+    
+    if st.button("Generate Struk"):
+        if not st.session_state.penjualan.empty:
+            try:
                 selected_sale = st.session_state.penjualan[st.session_state.penjualan['ID Penjualan'] == sale_id_to_download].iloc[0]
                 receipt_text = f"""
                 {receipt_title}
@@ -237,8 +238,10 @@ def manage_penjualan(username):
     
                 # Create a download button for the receipt
                 st.download_button(label="Download Struk Penjualan", data=receipt_output, file_name=f'struk_penjualan_{sale_id_to_download}.txt', mime='text/plain')
-            else:
-                st.warning("ID penjualan tidak valid.")
+            except IndexError:
+                st.error("Penjualan dengan ID tersebut tidak ditemukan.")
+        else:
+            st.warning("Tidak ada data penjualan.")
 
         
 # Function to manage suppliers
