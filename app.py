@@ -246,7 +246,7 @@ def manage_penjualan(username):
         thank_you_message = st.text_area("Pesan Terima Kasih", "Terima Kasih atas Pembelian Anda!")
         sale_id_to_download = st.number_input("Masukkan ID Penjualan", min_value=1, max_value=len(st.session_state.penjualan), step=1)
     
-      if st.button("Download Struk"):
+     if st.button("Download Struk"):
         if not st.session_state.penjualan.empty:
             try:
                 selected_sale = st.session_state.penjualan[st.session_state.penjualan['ID Penjualan'] == sale_id_to_download]
