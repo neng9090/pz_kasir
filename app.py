@@ -520,7 +520,8 @@ def main():
                                 "Manajemen Penjualan", 
                                 "Manajemen Supplier", 
                                 "Manajemen Piutang Konsumen", 
-                                "Manajemen Pengeluaran", 
+                                "Manajemen Pengeluaran",
+                                "Manajemen Laporan Keuangan",
                                 "Manajemen Pemilik"],
                                icons=['box', 'cash-coin', 'person-check', 'wallet', 'arrow-down-circle', 'shield-lock'], 
                                menu_icon="cast", default_index=0)
