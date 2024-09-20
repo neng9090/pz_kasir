@@ -211,11 +211,11 @@ def manage_penjualan(username):
         if filtered_penjualan.empty:
             st.warning(f"Pelanggan dengan nama '{search_customer}' tidak ditemukan.")
         else:
-            st.dataframe(filtered_penjualan)
+            st.dataframe(filtered_penjualan.drop(columns=['Harga', 'Total Harga'], errors='ignore'))
 
-    # Display current sales data without the 'Harga' column
+    # Display current sales data without price columns
     st.subheader("Data Penjualan Saat Ini")
-    st.dataframe(st.session_state.penjualan)
+    st.dataframe(st.session_state.penjualan.drop(columns=['Harga', 'Total Harga'], errors='ignore'))
 
     # Load stock data (stok_barang.csv)
     stok_barang_path = get_user_file_paths(username)['STOK_BARANG_FILE']
@@ -240,12 +240,12 @@ def manage_penjualan(username):
         filtered_stok_barang = filtered_stok_barang[filtered_stok_barang['Nama Barang'].str.contains(search_item, case=False)]
     
     # Display stock data without the 'Harga' column
-    st.dataframe(filtered_stok_barang)
+    st.dataframe(filtered_stok_barang.drop(columns=['Harga'], errors='ignore'))
 
     with st.form("sales_form"):
         # Customer details input
         nama_pelanggan = st.text_input("Nama Pelanggan", max_chars=50)
-        nomor_telepon = st.text_input("Nomor Telepon", max_chars=15)  # Format as text
+        nomor_telepon = st.text_input("Nomor Telepon", max_chars=15, type="text")  # Format as text
         alamat = st.text_area("Alamat", height=50)
 
         if not filtered_stok_barang.empty:
@@ -356,7 +356,6 @@ def manage_penjualan(username):
                 st.error(f"Error generating receipt: {str(e)}")
         else:
             st.error("Tidak ada data penjualan yang tersedia untuk diunduh.")
-
 
         
 # Function to manage suppliers
