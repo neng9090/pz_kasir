@@ -432,31 +432,63 @@ def financial_report(username):
     
     file_paths = get_user_file_paths(username)
     
+    # Initialize totals
     total_pendapatan = 0
     total_pengeluaran = 0
-    
+    monthly_data = []
+
     # Load and display financial data
     try:
+        # Load penjualan data
         if os.path.exists(file_paths['PENJUALAN_FILE']):
             penjualan = pd.read_csv(file_paths['PENJUALAN_FILE'])
             total_pendapatan = penjualan['Total Harga'].sum()
+
+            # Calculate monthly data
+            penjualan['Tanggal'] = pd.to_datetime(penjualan['Tanggal'])
+            monthly_income = penjualan.groupby(penjualan['Tanggal'].dt.to_period('M'))['Total Harga'].sum()
+            monthly_data.append(('Pendapatan', monthly_income))
+
         else:
             st.warning("File penjualan tidak ditemukan.")
         
+        # Load pengeluaran data
         if os.path.exists(file_paths['PENGELUARAN_FILE']):
             pengeluaran = pd.read_csv(file_paths['PENGELUARAN_FILE'])
             total_pengeluaran = pengeluaran['Total Biaya'].sum()
+
+            # Calculate monthly data
+            pengeluaran['Tanggal'] = pd.to_datetime(pengeluaran['Tanggal'])
+            monthly_expense = pengeluaran.groupby(pengeluaran['Tanggal'].dt.to_period('M'))['Total Biaya'].sum()
+            monthly_data.append(('Pengeluaran', monthly_expense))
+
         else:
             st.warning("File pengeluaran tidak ditemukan.")
         
         laba_bersih = total_pendapatan - total_pengeluaran
         
-        st.subheader("Total Pendapatan: {}".format(total_pendapatan))
-        st.subheader("Total Pengeluaran: {}".format(total_pengeluaran))
-        st.subheader("Laba Bersih: {}".format(laba_bersih))
-        
+        # Summary Table
+        st.subheader("Ringkasan Laporan Keuangan")
+        summary_data = {
+            'Keterangan': ['Total Pendapatan', 'Total Pengeluaran', 'Laba Bersih'],
+            'Jumlah': [total_pendapatan, total_pengeluaran, laba_bersih]
+        }
+        summary_df = pd.DataFrame(summary_data)
+        st.dataframe(summary_df)
+
+        # Monthly Report Table
+        st.subheader("Laporan Bulanan")
+        if monthly_data:
+            monthly_report = pd.DataFrame()
+            for label, data in monthly_data:
+                monthly_report[label] = data
+            
+            monthly_report.index = monthly_report.index.astype(str)  # Convert PeriodIndex to string for display
+            st.dataframe(monthly_report)
+
     except Exception as e:
         st.error("Error loading financial data: {}".format(e))
+
         
 # Owner management function
 def manage_owner():
