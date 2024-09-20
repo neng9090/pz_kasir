@@ -117,14 +117,17 @@ def get_user_file_paths(username):
 def manage_penjualan(username):
     st.title("Manajemen Penjualan")
 
-    # Load sales data if available
+    # Load sales data (penjualan.csv)
     file_path = get_user_file_paths(username)['PENJUALAN_FILE']
     if os.path.exists(file_path):
-        st.session_state.penjualan = pd.read_csv(file_path)
-        # Check the column names
-        st.write("Columns in penjualan file:", st.session_state.penjualan.columns.tolist())
-        if 'ID Penjualan' not in st.session_state.penjualan.columns:
-            st.error("'ID Penjualan' column not found!")
+        try:
+            st.session_state.penjualan = pd.read_csv(file_path)
+            # Ensure the required columns exist
+            if 'ID Penjualan' not in st.session_state.penjualan.columns:
+                st.error("'ID Penjualan' column not found in penjualan file.")
+                return
+        except Exception as e:
+            st.error(f"Error loading penjualan file: {str(e)}")
             return
     else:
         st.session_state.penjualan = pd.DataFrame(columns=[
@@ -133,28 +136,38 @@ def manage_penjualan(username):
             'Kode Warna/Base', 'Jumlah', 'Harga Jual', 
             'Total Harga', 'Waktu'
         ])
+        st.warning("No sales data found, initializing empty sales data.")
 
     # Customer search functionality
     st.subheader("Cari Pelanggan")
     search_customer = st.text_input("Nama Pelanggan")
     if search_customer:
         filtered_penjualan = st.session_state.penjualan[st.session_state.penjualan['Nama Pelanggan'].str.contains(search_customer, case=False)]
-        st.dataframe(filtered_penjualan)
+        if filtered_penjualan.empty:
+            st.warning(f"Pelanggan dengan nama '{search_customer}' tidak ditemukan.")
+        else:
+            st.dataframe(filtered_penjualan)
 
-    # Display the sales data
+    # Display current sales data
+    st.subheader("Data Penjualan Saat Ini")
     st.dataframe(st.session_state.penjualan)
 
     st.subheader("Tambah Penjualan")
 
-    # Load stock data
+    # Load stock data (stok_barang.csv)
     stok_barang_path = get_user_file_paths(username)['STOK_BARANG_FILE']
     if os.path.exists(stok_barang_path):
-        st.session_state.stok_barang = pd.read_csv(stok_barang_path)
+        try:
+            st.session_state.stok_barang = pd.read_csv(stok_barang_path)
+        except Exception as e:
+            st.error(f"Error loading stok_barang file: {str(e)}")
+            return
     else:
         st.session_state.stok_barang = pd.DataFrame(columns=[
             'ID Barang', 'Nama Barang', 'Merk', 'Ukuran/Kemasan', 
             'Kode Warna/Base', 'Jumlah', 'Harga Jual'
         ])
+        st.warning("No stock data found, initializing empty stock data.")
 
     # Search functionality for stock items
     st.subheader("Cari Stok Barang")
@@ -166,16 +179,17 @@ def manage_penjualan(username):
     st.dataframe(filtered_stok_barang)
 
     with st.form("sales_form"):
-        nama_pelanggan = st.text_input("Nama Pelanggan")
-        nomor_telepon = st.text_input("Nomor Telepon")
-        alamat = st.text_input("Alamat")
-        
-        # Dropdown for selecting available stock items
+        # Customer details input
+        nama_pelanggan = st.text_input("Nama Pelanggan", max_chars=50)
+        nomor_telepon = st.text_input("Nomor Telepon", max_chars=15)
+        alamat = st.text_area("Alamat", height=50)
+
         if not filtered_stok_barang.empty:
+            # Stock selection dropdown
             id_barang = st.selectbox("Pilih Barang", range(len(filtered_stok_barang)), format_func=lambda x: filtered_stok_barang['Nama Barang'].iloc[x])
             selected_item = filtered_stok_barang.iloc[id_barang]
 
-            # Dropdown for selecting Merk, Ukuran/Kemasan, Kode Warna/Base
+            # Dropdown for additional item attributes
             merk_options = filtered_stok_barang['Merk'].unique()
             merk_selected = st.selectbox("Pilih Merk", merk_options)
 
@@ -185,89 +199,96 @@ def manage_penjualan(username):
             warna_options = filtered_stok_barang['Kode Warna/Base'].dropna().unique()
             warna_selected = st.selectbox("Pilih Kode Warna/Base", [""] + list(warna_options))
 
+            # Quantity input with validation against available stock
             max_jumlah = int(selected_item['Jumlah'])
-            jumlah = st.number_input("Jumlah", min_value=1, max_value=max_jumlah)
+            jumlah = st.number_input("Jumlah", min_value=1, max_value=max_jumlah, step=1)
 
             harga_jual = selected_item['Harga Jual']
         else:
             st.warning("Tidak ada barang tersedia untuk dijual.")
             return
 
+        # Submit button for saving sales
         submitted = st.form_submit_button("Simpan")
         
         if submitted:
-            total_harga = jumlah * harga_jual
-            new_sale_id = len(st.session_state.penjualan) + 1  # Generate a new ID
-            new_sale = pd.DataFrame({
-                'ID Penjualan': [new_sale_id],
-                'Nama Pelanggan': [nama_pelanggan],
-                'Nomor Telepon': [nomor_telepon],
-                'Alamat': [alamat],
-                'Nama Barang': [selected_item['Nama Barang']],
-                'Merk': [merk_selected],
-                'Ukuran/Kemasan': [ukuran_selected],
-                'Kode Warna/Base': [warna_selected],
-                'Jumlah': [jumlah],
-                'Harga Jual': [harga_jual],
-                'Total Harga': [total_harga],
-                'Waktu': [datetime.now()]
-            })
-            
-            st.session_state.penjualan = pd.concat([st.session_state.penjualan, new_sale], ignore_index=True)
-            st.session_state.penjualan.to_csv(file_path, index=False)
-            st.success("Penjualan berhasil diperbarui.")
+            if not nama_pelanggan or not alamat:
+                st.error("Nama pelanggan dan alamat harus diisi.")
+            else:
+                # Calculate total price
+                total_harga = jumlah * harga_jual
+                new_sale_id = len(st.session_state.penjualan) + 1  # Generate new sale ID
+                new_sale = pd.DataFrame({
+                    'ID Penjualan': [new_sale_id],
+                    'Nama Pelanggan': [nama_pelanggan],
+                    'Nomor Telepon': [nomor_telepon],
+                    'Alamat': [alamat],
+                    'Nama Barang': [selected_item['Nama Barang']],
+                    'Merk': [merk_selected],
+                    'Ukuran/Kemasan': [ukuran_selected],
+                    'Kode Warna/Base': [warna_selected],
+                    'Jumlah': [jumlah],
+                    'Harga Jual': [harga_jual],
+                    'Total Harga': [total_harga],
+                    'Waktu': [datetime.now().strftime('%Y-%m-%d %H:%M:%S')]
+                })
 
-            # Update stock quantity
-            stok_barang.loc[selected_item.name, 'Jumlah'] -= jumlah
-            stok_barang.to_csv(stok_barang_path, index=False)
-            st.success("Stok berhasil diperbarui.")
+                # Append new sale and save to CSV
+                st.session_state.penjualan = pd.concat([st.session_state.penjualan, new_sale], ignore_index=True)
+                st.session_state.penjualan.to_csv(file_path, index=False)
+                st.success("Penjualan berhasil disimpan.")
 
-        # Receipt Options
-        st.subheader("Review Struk")
-        receipt_title = st.text_input("Judul Struk", "Struk Penjualan")
-        thank_you_message = st.text_input("Ucapan Terima Kasih", "Terima kasih atas pembelian Anda!")
-        
-    # Receipt Download Section
+                # Update stock quantity
+                st.session_state.stok_barang.loc[selected_item.name, 'Jumlah'] -= jumlah
+                st.session_state.stok_barang.to_csv(stok_barang_path, index=False)
+                st.success("Stok barang berhasil diperbarui.")
+
+    # Sales receipt generation section
     st.subheader("Download Struk Penjualan")
-    sale_id_to_download = st.number_input("ID Penjualan", min_value=1, max_value=len(st.session_state.penjualan), step=1)
+    sale_id_to_download = st.number_input("Masukkan ID Penjualan", min_value=1, max_value=len(st.session_state.penjualan), step=1)
 
     if st.button("Download Struk"):
         if not st.session_state.penjualan.empty:
             try:
-                # Ensure that the ID is valid and found
+                # Find the sale by ID
                 selected_sale = st.session_state.penjualan[st.session_state.penjualan['ID Penjualan'] == sale_id_to_download]
                 if selected_sale.empty:
                     st.error(f"Penjualan dengan ID {sale_id_to_download} tidak ditemukan.")
                 else:
-                    selected_sale = selected_sale.iloc[0]  # Get the first row as a Series
+                    selected_sale = selected_sale.iloc[0]  # Get the first matching row as a Series
                     receipt_text = f"""
-                    {receipt_title}
-                    {'-' * 30}
-                    Nama Pelanggan      : {selected_sale['Nama Pelanggan']}
-                    Nomor Telepon       : {selected_sale['Nomor Telepon']}
-                    Alamat              : {selected_sale['Alamat']}
-                    Nama Barang         : {selected_sale['Nama Barang']}
-                    Merk                : {selected_sale['Merk']}
-                    Ukuran/Kemasan      : {selected_sale['Ukuran/Kemasan']}
-                    Kode Warna/Base     : {selected_sale['Kode Warna/Base']}
-                    Jumlah              : {selected_sale['Jumlah']}
-                    Harga Jual          : {selected_sale['Harga Jual']}
-                    Total Harga         : {selected_sale['Total Harga']}
-                    Waktu               : {selected_sale['Waktu']}
-                    {'-' * 30}
-                    {thank_you_message}
+                    ==============================
+                    {st.text_input("Judul Struk", "Struk Penjualan")}
+                    ==============================
+                    Nama Pelanggan:   {selected_sale['Nama Pelanggan']}
+                    Nomor Telepon:    {selected_sale['Nomor Telepon']}
+                    Alamat:           {selected_sale['Alamat']}
+                    Nama Barang:      {selected_sale['Nama Barang']}
+                    Merk:             {selected_sale['Merk']}
+                    Ukuran/Kemasan:   {selected_sale['Ukuran/Kemasan']}
+                    Kode Warna/Base:  {selected_sale['Kode Warna/Base']}
+                    Jumlah:           {selected_sale['Jumlah']}
+                    Harga Jual:       {selected_sale['Harga Jual']}
+                    Total Harga:      {selected_sale['Total Harga']}
+                    Waktu:            {selected_sale['Waktu']}
+                    ==============================
+                    {st.text_input("Ucapan Terima Kasih", "Terima kasih atas pembelian Anda!")}
+                    ==============================
                     """
-                    # Save the receipt as a .txt file
+
+                    # Prepare the receipt for download as .txt file
                     receipt_output = BytesIO()
                     receipt_output.write(receipt_text.encode('utf-8'))
                     receipt_output.seek(0)
-    
-                    # Create a download button for the receipt
+
+                    # Download button for the receipt
                     st.download_button(label="Download Struk Penjualan", data=receipt_output, file_name=f'struk_penjualan_{sale_id_to_download}.txt', mime='text/plain')
             except KeyError as e:
-                st.error(f"Error accessing column: {str(e)}")
+                st.error(f"Error saat mengakses kolom data: {str(e)}")
         else:
-            st.warning("Tidak ada data penjualan.")
+            st.warning("Data penjualan kosong.")
+
+
 
         
 # Function to manage suppliers
