@@ -487,24 +487,54 @@ def manage_owner():
         else:
             st.error("Password salah.")
 
+# Function to initialize session state
+def initialize_session_state():
+    if 'logged_in_user' not in st.session_state:
+        st.session_state.logged_in_user = None
+    if 'user_data' not in st.session_state:
+        st.session_state.user_data = pd.DataFrame()  # Initialize as empty DataFrame
+    if 'user_role' not in st.session_state:
+        st.session_state.user_role = None
+
 # Authentication function
 def login(username, password):
+    if st.session_state.user_data.empty:
+        st.error("User data is not loaded.")
+        return False
+
     user = st.session_state.user_data[st.session_state.user_data['Username'] == username]
-    if not user.empty and user['Password'].values[0] == password:
-        st.session_state.logged_in_user = username
-        st.session_state.user_role = user['Role'].values[0]
-        return True
+    
+    if not user.empty:
+        if user['Password'].values[0] == password:
+            st.session_state.logged_in_user = username
+            st.session_state.user_role = user['Role'].values[0]
+            return True
+        else:
+            st.error("Incorrect password.")
+    else:
+        st.error("Username not found.")
+    
     return False
 
 # Main app logic
 def main():
     initialize_session_state()
     
-    if st.session_state.logged_in_user:
-        st.sidebar.title(f"Hello, {st.session_state.logged_in_user}")
-        selected = option_menu("Menu", ["Manajemen Stok Barang", "Manajemen Penjualan", "Manajemen Supplier", "Manajemen Piutang Konsumen", "Manajemen Pengeluaran", "Laporan Keuangan", "Manajemen Pemilik"],
+    # Sidebar for menu
+    with st.sidebar:
+        selected = option_menu("Menu", 
+                               ["Manajemen Stok Barang", 
+                                "Manajemen Penjualan", 
+                                "Manajemen Supplier", 
+                                "Manajemen Piutang Konsumen", 
+                                "Manajemen Pengeluaran", 
+                                "Laporan Keuangan", 
+                                "Manajemen Pemilik"],
                                icons=['box', 'cash-coin', 'person-check', 'wallet', 'arrow-down-circle', 'bar-chart-line', 'shield-lock'], 
                                menu_icon="cast", default_index=0)
+
+    if st.session_state.logged_in_user:
+        st.sidebar.title(f"Hello, {st.session_state.logged_in_user}")
 
         if selected == "Manajemen Stok Barang":
             manage_stok_barang(st.session_state.logged_in_user)
