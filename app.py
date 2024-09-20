@@ -255,38 +255,56 @@ def manage_penjualan(username):
                     st.error(f"Penjualan dengan ID {sale_id_to_download} tidak ditemukan.")
                 else:
                     selected_sale = selected_sale.iloc[0]  # Get the first matching row as a Series
-                    receipt_text = f"""
-                    ==============================
-                    {receipt_header}
-                    ==============================
-                    Nama Pelanggan:   {selected_sale['Nama Pelanggan']}
-                    Nomor Telepon:    {selected_sale['Nomor Telepon']}
-                    Alamat:           {selected_sale['Alamat']}
-                    Nama Barang:      {selected_sale['Nama Barang']}
-                    Merk:             {selected_sale['Merk']}
-                    Ukuran/Kemasan:   {selected_sale['Ukuran/Kemasan']}
-                    Kode Warna/Base:  {selected_sale['Kode Warna/Base']}
-                    Jumlah:           {selected_sale['Jumlah']}
-                    Harga Jual:       {selected_sale['Harga Jual']}
-                    Total Harga:      {selected_sale['Total Harga']}
-                    Waktu:            {selected_sale['Waktu']}
-                    ==============================
-                    {thank_you_message}
-                    ==============================
+                    receipt_html = f"""
+                    <html>
+                    <head>
+                        <style>
+                            body {{
+                                font-size: 12px; /* Atur ukuran font sesuai kebutuhan */
+                                width: 58mm; /* Lebar kertas */
+                                margin: 0;
+                                padding: 0;
+                            }}
+                            h1 {{
+                                font-size: 16px;
+                                text-align: center;
+                            }}
+                        </style>
+                    </head>
+                    <body>
+                        <h1>{receipt_header}</h1>
+                        <pre>
+                        ==============================
+                        Nama Pelanggan:   {selected_sale['Nama Pelanggan']}
+                        Nomor Telepon:    {selected_sale['Nomor Telepon']}
+                        Alamat:           {selected_sale['Alamat']}
+                        Nama Barang:      {selected_sale['Nama Barang']}
+                        Merk:             {selected_sale['Merk']}
+                        Ukuran/Kemasan:   {selected_sale['Ukuran/Kemasan']}
+                        Kode Warna/Base:  {selected_sale['Kode Warna/Base']}
+                        Jumlah:           {selected_sale['Jumlah']}
+                        Harga Jual:       {selected_sale['Harga Jual']}
+                        Total Harga:      {selected_sale['Total Harga']}
+                        Waktu:            {selected_sale['Waktu']}
+                        ==============================
+                        {thank_you_message}
+                        ==============================
+                        </pre>
+                    </body>
+                    </html>
                     """
 
-                    # Prepare the receipt for download as .txt file
+                    # Prepare the receipt for download as .html file
                     receipt_output = BytesIO()
-                    receipt_output.write(receipt_text.encode('utf-8'))
+                    receipt_output.write(receipt_html.encode('utf-8'))
                     receipt_output.seek(0)
 
                     # Download button for the receipt
-                    st.download_button(label="Download Struk Penjualan", data=receipt_output, file_name=f'struk_penjualan_{sale_id_to_download}.txt', mime='text/plain')
+                    st.download_button(label="Download Struk Penjualan", data=receipt_output, file_name=f'struk_penjualan_{sale_id_to_download}.html', mime='text/html')
             except KeyError as e:
                 st.error(f"Error saat mengakses kolom data: {str(e)}")
         else:
             st.warning("Data penjualan kosong.")
-
 
 
         
