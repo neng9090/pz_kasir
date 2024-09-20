@@ -542,6 +542,8 @@ def main():
             manage_piutang_konsum(st.session_state.logged_in_user)
         elif selected == "Manajemen Pengeluaran":
             manage_pengeluaran(st.session_state.logged_in_user)
+        elif selected == "Manajemen Laporan Keuangan":
+            manage_laporan_keuangan(st.session_state.logged_in_user)
         elif selected == "Manajemen Pemilik":
             manage_owner()
     else:
