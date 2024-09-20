@@ -51,18 +51,17 @@ def manage_stok_barang(username):
     
     file_path = get_user_file_paths(username)['STOK_BARANG_FILE']
     
+    # Load or initialize stock data
     if os.path.exists(file_path):
         stok_barang = pd.read_csv(file_path)
     else:
         stok_barang = pd.DataFrame(columns=['ID Barang', 'Nama Barang', 'Merk', 'Ukuran/Kemasan', 'Jumlah', 'Harga', 'Kode Warna/Base', 'Waktu Input'])
     
+    # Ensure 'ID Barang' exists
     if 'ID Barang' not in stok_barang.columns:
         stok_barang['ID Barang'] = range(1, len(stok_barang) + 1)
 
-    if not stok_barang.empty:
-        next_id = stok_barang['ID Barang'].max() + 1
-    else:
-        next_id = 1
+    next_id = stok_barang['ID Barang'].max() + 1 if not stok_barang.empty else 1
 
     st.session_state.stok_barang = stok_barang
 
@@ -159,6 +158,7 @@ def manage_penjualan(username):
                             penjualan.to_csv(file_path, index=False)
                             st.success("Penjualan berhasil ditambahkan.")
 
+                            # Update stock quantity
                             stok_barang.loc[stok_barang['ID Barang'] == id_barang, 'Jumlah'] -= jumlah
                             stok_barang.to_csv(stock_file_path, index=False)
                         else:
@@ -169,7 +169,7 @@ def manage_penjualan(username):
                 st.error("Kolom 'ID Barang' tidak ditemukan di stok barang.")
     else:
         st.error("Data stok barang kosong.")
-
+        
 # Function to manage suppliers
 def manage_supplier(username):
     st.title("Manajemen Supplier")
