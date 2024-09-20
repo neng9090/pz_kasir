@@ -134,10 +134,15 @@ def manage_penjualan(username):
             id_barang = st.selectbox("Pilih Barang", range(len(filtered_stok_barang)), format_func=lambda x: filtered_stok_barang['Nama Barang'].iloc[x])
             selected_item = filtered_stok_barang.iloc[id_barang]
 
-            # Display additional item details
-            st.write(f"**Merk:** {selected_item['Merk']}")
-            st.write(f"**Ukuran/Kemasan:** {selected_item['Ukuran/Kemasan']}")
-            st.write(f"**Kode Warna/Base:** {selected_item['Kode Warna/Base'] if pd.notna(selected_item['Kode Warna/Base']) else 'Tidak ada'}")
+            # Dropdown for selecting Merk, Ukuran/Kemasan, Kode Warna/Base
+            merk_options = filtered_stok_barang['Merk'].unique()
+            merk_selected = st.selectbox("Pilih Merk", merk_options)
+
+            ukuran_options = filtered_stok_barang['Ukuran/Kemasan'].unique()
+            ukuran_selected = st.selectbox("Pilih Ukuran/Kemasan", ukuran_options)
+
+            warna_options = filtered_stok_barang['Kode Warna/Base'].dropna().unique()
+            warna_selected = st.selectbox("Pilih Kode Warna/Base", [""] + list(warna_options))
 
             max_jumlah = int(selected_item['Jumlah'])
             jumlah = st.number_input("Jumlah", min_value=1, max_value=max_jumlah)
@@ -156,9 +161,9 @@ def manage_penjualan(username):
                 'Nomor Telepon': [nomor_telepon],
                 'Alamat': [alamat],
                 'Nama Barang': [selected_item['Nama Barang']],
-                'Merk': [selected_item['Merk']],
-                'Ukuran/Kemasan': [selected_item['Ukuran/Kemasan']],
-                'Kode Warna/Base': [selected_item['Kode Warna/Base']],
+                'Merk': [merk_selected],
+                'Ukuran/Kemasan': [ukuran_selected],
+                'Kode Warna/Base': [warna_selected],
                 'Jumlah': [jumlah],
                 'Harga Jual': [harga_jual],
                 'Total Harga': [total_harga],
@@ -179,6 +184,7 @@ def manage_penjualan(username):
             stok_barang.loc[selected_item.name, 'Jumlah'] -= jumlah
             stok_barang.to_csv(stok_barang_path, index=False)
             st.success("Stok berhasil diperbarui.")
+
         
 # Function to manage suppliers
 def manage_supplier(username):
