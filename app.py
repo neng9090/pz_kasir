@@ -496,43 +496,9 @@ def login(username, password):
         return True
     return False
 
-# Define your functions here (initialize_session_state, login, manage functions, etc.)
-
 def initialize_session_state():
-    # Your initialization code here
-    pass
-
-def login(username, password):
-    # Your login logic here
-    pass
-
-def manage_stok_barang(user):
-    # Your stock management logic here
-    pass
-
-def manage_penjualan(user):
-    # Your sales management logic here
-    pass
-
-def manage_supplier(user):
-    # Your supplier management logic here
-    pass
-
-def manage_piutang_konsum(user):
-    # Your consumer debt management logic here
-    pass
-
-def manage_pengeluaran(user):
-    # Your expense management logic here
-    pass
-
-def financial_report(user):
-    # Your financial report logic here
-    pass
-
-def manage_owner():
-    # Your owner management logic here
-    pass
+    if 'logged_in_user' not in st.session_state:
+        st.session_state.logged_in_user = None  # Or set to a default value if needed
 
 # Main app logic
 def main():
@@ -546,6 +512,7 @@ def main():
                                icons=['box', 'cash-coin', 'person-check', 'wallet', 'arrow-down-circle', 'bar-chart-line', 'shield-lock'], 
                                menu_icon="cast", default_index=0)
 
+        # Call the respective management functions based on the selected menu
         if selected == "Manajemen Stok Barang":
             manage_stok_barang(st.session_state.logged_in_user)
         elif selected == "Manajemen Penjualan":
@@ -567,6 +534,7 @@ def main():
         
         if st.sidebar.button("Login"):
             if login(username, password):
+                st.session_state.logged_in_user = username  # Store the logged-in user
                 st.success("Login berhasil!")
             else:
                 st.error("Login gagal. Username atau password salah.")
