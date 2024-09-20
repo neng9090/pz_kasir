@@ -500,19 +500,22 @@ def initialize_session_state():
     if 'logged_in_user' not in st.session_state:
         st.session_state.logged_in_user = None  # Or set to a default value if needed
 
+def initialize_session_state():
+    if 'logged_in_user' not in st.session_state:
+        st.session_state.logged_in_user = None  # Initialize logged-in user
+    if 'user_data' not in st.session_state:
+        st.session_state.user_data = pd.DataFrame()  # Initialize user data as an empty DataFrame
+
 # Main app logic
 def main():
     initialize_session_state()
     
     if st.session_state.logged_in_user:
         st.sidebar.title(f"Hello, {st.session_state.logged_in_user}")
-
-        # Move the menu to the sidebar
         selected = option_menu("Menu", ["Manajemen Stok Barang", "Manajemen Penjualan", "Manajemen Supplier", "Manajemen Piutang Konsumen", "Manajemen Pengeluaran", "Laporan Keuangan", "Manajemen Pemilik"],
                                icons=['box', 'cash-coin', 'person-check', 'wallet', 'arrow-down-circle', 'bar-chart-line', 'shield-lock'], 
                                menu_icon="cast", default_index=0)
 
-        # Call the respective management functions based on the selected menu
         if selected == "Manajemen Stok Barang":
             manage_stok_barang(st.session_state.logged_in_user)
         elif selected == "Manajemen Penjualan":
@@ -541,4 +544,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
