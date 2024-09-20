@@ -108,27 +108,31 @@ def manage_penjualan(username):
     if os.path.exists(file_path):
         try:
             st.session_state.penjualan = pd.read_csv(file_path)
-            # Ensure the required columns exist
+
+            # Tambahkan kolom ID Penjualan jika belum ada
             if 'ID Penjualan' not in st.session_state.penjualan.columns:
-                st.error("'ID Penjualan' column not found in penjualan file.")
-                return
+                st.session_state.penjualan['ID Penjualan'] = range(1, len(st.session_state.penjualan) + 1)
+                st.session_state.penjualan.to_csv(file_path, index=False)  # Simpan perubahan ke file
+                st.success("Kolom 'ID Penjualan' berhasil ditambahkan.")
+        
         except Exception as e:
             st.error(f"Error loading penjualan file: {str(e)}")
             return
     else:
+        # Inisialisasi tabel penjualan kosong dengan kolom ID Penjualan
         st.session_state.penjualan = pd.DataFrame(columns=[
             'ID Penjualan', 'Nama Pelanggan', 'Nomor Telepon', 'Alamat', 
             'Nama Barang', 'Merk', 'Ukuran/Kemasan', 
             'Kode Warna/Base', 'Jumlah', 'Harga Jual', 
             'Total Harga', 'Waktu'
         ])
-        st.warning("No sales data found, initializing empty sales data.")
+        st.warning("Tidak ada data penjualan yang ditemukan, menginisialisasi data penjualan kosong.")
 
     # Generate a new unique ID for the next sale
     if not st.session_state.penjualan.empty:
-        new_sale_id = st.session_state.penjualan['ID Penjualan'].max() + 1  # Auto increment
+        new_sale_id = st.session_state.penjualan['ID Penjualan'].max() + 1  # Auto increment ID Penjualan
     else:
-        new_sale_id = 1  # Start ID if no previous sales exist
+        new_sale_id = 1  # Jika tidak ada data sebelumnya, mulai dari 1
 
     # Customer search functionality
     st.subheader("Cari Pelanggan")
@@ -159,7 +163,7 @@ def manage_penjualan(username):
             'ID Barang', 'Nama Barang', 'Merk', 'Ukuran/Kemasan', 
             'Kode Warna/Base', 'Jumlah', 'Harga Jual'
         ])
-        st.warning("No stock data found, initializing empty stock data.")
+        st.warning("Tidak ada data stok barang yang ditemukan, menginisialisasi data stok kosong.")
 
     # Search functionality for stock items
     st.subheader("Cari Stok Barang")
@@ -210,7 +214,7 @@ def manage_penjualan(username):
                 # Calculate total price
                 total_harga = jumlah * harga_jual
 
-                # Create new sale record
+                # Create new sale record with auto-generated 'ID Penjualan'
                 new_sale = pd.DataFrame({
                     'ID Penjualan': [new_sale_id],
                     'Nama Pelanggan': [nama_pelanggan],
@@ -238,6 +242,8 @@ def manage_penjualan(username):
 
     # Sales receipt generation section
     st.subheader("Download Struk Penjualan")
+    receipt_header = st.text_input("Judul Struk", "STRUK PENJUALAN")
+    thank_you_message = st.text_area("Pesan Terima Kasih", "Terima Kasih atas Pembelian Anda!")
     sale_id_to_download = st.number_input("Masukkan ID Penjualan", min_value=1, max_value=len(st.session_state.penjualan), step=1)
 
     if st.button("Download Struk"):
@@ -251,7 +257,7 @@ def manage_penjualan(username):
                     selected_sale = selected_sale.iloc[0]  # Get the first matching row as a Series
                     receipt_text = f"""
                     ==============================
-                    {st.text_input("Judul Struk", "Struk Penjualan")}
+                    {receipt_header}
                     ==============================
                     Nama Pelanggan:   {selected_sale['Nama Pelanggan']}
                     Nomor Telepon:    {selected_sale['Nomor Telepon']}
@@ -265,7 +271,7 @@ def manage_penjualan(username):
                     Total Harga:      {selected_sale['Total Harga']}
                     Waktu:            {selected_sale['Waktu']}
                     ==============================
-                    {st.text_input("Ucapan Terima Kasih", "Terima kasih atas pembelian Anda!")}
+                    {thank_you_message}
                     ==============================
                     """
 
