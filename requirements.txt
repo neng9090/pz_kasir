@@ -3,3 +3,4 @@ streamlit
 pandas
 matplotlib
 streamlit_option_menu
+fpdf
