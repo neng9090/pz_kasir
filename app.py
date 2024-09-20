@@ -432,35 +432,23 @@ def financial_report(username):
     
     file_paths = get_user_file_paths(username)
     
-    # Load and display financial data
-    try:
-        penjualan = pd.read_csv(file_paths['PENJUALAN_FILE'])
-        pengeluaran = pd.read_csv(file_paths['PENGELUARAN_FILE'])
-        
-        total_pendapatan = penjualan['Total Harga'].sum()
-        total_pengeluaran = pengeluaran['Total Biaya'].sum()
-        laba_bersih = total_pendapatan - total_pengeluaran
-        
-        st.subheader("Total Pendapatan: {}".format(total_pendapatan))
-        st.subheader("Total Pengeluaran: {}".format(total_pengeluaran))
-        st.subheader("Laba Bersih: {}".format(laba_bersih))
-        
-    except Exception as e:
-        st.error("Error loading financial data: {}".format(e))
-
-# Financial report function
-def financial_report(username):
-    st.title("Laporan Keuangan")
-    
-    file_paths = get_user_file_paths(username)
+    total_pendapatan = 0
+    total_pengeluaran = 0
     
     # Load and display financial data
     try:
-        penjualan = pd.read_csv(file_paths['PENJUALAN_FILE'])
-        pengeluaran = pd.read_csv(file_paths['PENGELUARAN_FILE'])
+        if os.path.exists(file_paths['PENJUALAN_FILE']):
+            penjualan = pd.read_csv(file_paths['PENJUALAN_FILE'])
+            total_pendapatan = penjualan['Total Harga'].sum()
+        else:
+            st.warning("File penjualan tidak ditemukan.")
         
-        total_pendapatan = penjualan['Total Harga'].sum()
-        total_pengeluaran = pengeluaran['Total Biaya'].sum()
+        if os.path.exists(file_paths['PENGELUARAN_FILE']):
+            pengeluaran = pd.read_csv(file_paths['PENGELUARAN_FILE'])
+            total_pengeluaran = pengeluaran['Total Biaya'].sum()
+        else:
+            st.warning("File pengeluaran tidak ditemukan.")
+        
         laba_bersih = total_pendapatan - total_pengeluaran
         
         st.subheader("Total Pendapatan: {}".format(total_pendapatan))
