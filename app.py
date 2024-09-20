@@ -23,6 +23,60 @@ def get_user_file_paths(username):
 
 USER_DATA_FILE = 'user_data.csv'
 
+def upgrade_csv(file_path):
+    # Check if the CSV file exists
+    if os.path.exists(file_path):
+        # Load the existing CSV file
+        df = pd.read_csv(file_path)
+
+        # Check if 'Tanggal' column exists
+        if 'Tanggal' not in df.columns:
+            print("Kolom 'Tanggal' tidak ditemukan. Menambahkan kolom 'Tanggal'.")
+
+            # Add a 'Tanggal' column with the current date if it doesn't exist
+            df['Tanggal'] = pd.to_datetime('today').date()
+
+            # Save the updated DataFrame back to CSV
+            df.to_csv(file_path, index=False)
+            print("Kolom 'Tanggal' telah ditambahkan dan file diperbarui.")
+        else:
+            # Ensure 'Tanggal' is in the correct datetime format
+            df['Tanggal'] = pd.to_datetime(df['Tanggal'], errors='coerce')
+
+            # Check for any NaT values and fill them if necessary
+            if df['Tanggal'].isnull().any():
+                print("Ada nilai yang tidak valid di kolom 'Tanggal'. Silakan periksa file.")
+            else:
+                print("Kolom 'Tanggal' sudah terformat dengan benar.")
+    else:
+        # Create a new DataFrame with the correct structure
+        print("File tidak ditemukan. Membuat file baru.")
+        data = {
+            'ID Penjualan': [],
+            'Nama Pelanggan': [],
+            'Nomor Telepon': [],
+            'Alamat': [],
+            'Nama Barang': [],
+            'Merk': [],
+            'Ukuran/Kemasan': [],
+            'Kode Warna/Base': [],
+            'Jumlah': [],
+            'Harga': [],
+            'Total Harga': [],
+            'Waktu': [],
+            'Tanggal': []
+        }
+        
+        df = pd.DataFrame(data)
+        
+        # Save the new DataFrame to CSV
+        df.to_csv(file_path, index=False)
+        print("File baru telah dibuat dengan kolom yang benar.")
+
+# Example usage
+file_path = 'penjualan.csv'  # Replace with your actual file path
+upgrade_csv(file_path)
+
 def initialize_session_state():
     if 'logged_in_user' not in st.session_state:
         st.session_state.logged_in_user = None
