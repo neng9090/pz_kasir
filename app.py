@@ -335,9 +335,7 @@ def manage_penjualan(username):
                         f"Jumlah         : {str(selected_sale.get('Jumlah', 0)).rjust(15)}\n"
                         f"Harga          : {str(selected_sale.get('Harga', 0)).rjust(15)}\n"
                         f"Total          : {str(selected_sale.get('Total Harga', 0)).rjust(15)}\n"
-                        f"Waktu          : {selected_sale.get('Waktu', 'Tidak Diketahui')}\n"
-                        f"Tanggal        : {selected_sale.get('Tanggal', 'Tidak Diketahui')}\n"
-                        f"{thank_you_message}\n"
+                        f"{thank_you_message.center(30)}\n"
                         f"{'=' * 30}"
                     )
 
