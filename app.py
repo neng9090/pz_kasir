@@ -100,6 +100,12 @@ def manage_stok_barang(username):
             st.session_state.stok_barang.to_csv(file_path, index=False)
             st.success("Stok barang berhasil diperbarui.")
 
+import streamlit as st
+import pandas as pd
+from io import BytesIO
+from datetime import datetime
+import os
+
 def manage_penjualan(username):
     st.title("Manajemen Penjualan")
 
@@ -233,6 +239,7 @@ def manage_penjualan(username):
                 st.download_button(label="Download Struk Penjualan", data=receipt_output, file_name=f'struk_penjualan_{sale_id_to_download}.txt', mime='text/plain')
             else:
                 st.warning("ID penjualan tidak valid.")
+
         
 # Function to manage suppliers
 def manage_supplier(username):
