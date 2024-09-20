@@ -245,7 +245,7 @@ def manage_penjualan(username):
     with st.form("sales_form"):
         # Customer details input
         nama_pelanggan = st.text_input("Nama Pelanggan", max_chars=50)
-        nomor_telepon = st.text_input("Nomor Telepon", max_chars=15, type="text")  # Format as text
+        nomor_telepon = st.text_input("Nomor Telepon", max_chars=15, type="text")
         alamat = st.text_area("Alamat", height=50)
 
         if not filtered_stok_barang.empty:
@@ -262,14 +262,14 @@ def manage_penjualan(username):
             max_jumlah = int(selected_item['Jumlah'])
             jumlah = st.number_input("Jumlah", min_value=1, max_value=max_jumlah, step=1)
 
-            harga = selected_item['Harga']  # Using 'Harga' from stock data
+            harga = selected_item['Harga']
         else:
             st.warning("Tidak ada barang tersedia untuk dijual.")
             return
 
         # Submit button for saving sales
         submitted = st.form_submit_button("Simpan")
-        
+
         if submitted:
             if not nama_pelanggan or not alamat:
                 st.error("Nama pelanggan dan alamat harus diisi.")
@@ -304,17 +304,17 @@ def manage_penjualan(username):
                 st.session_state.stok_barang.to_csv(stok_barang_path, index=False)
                 st.success("Stok barang berhasil diperbarui.")
 
-        # Sales receipt generation section
-        st.subheader("Download Struk Penjualan")
-        receipt_header = st.text_input("Judul Struk", "STRUK PENJUALAN")
-        thank_you_message = st.text_area("Pesan Terima Kasih", "Terima Kasih atas Pembelian Anda!")
-        sale_id_to_download = st.number_input("Masukkan ID Penjualan", min_value=1, max_value=len(st.session_state.penjualan), step=1)
-    
+    # Sales receipt generation section
+    st.subheader("Download Struk Penjualan")
+    receipt_header = st.text_input("Judul Struk", "STRUK PENJUALAN")
+    thank_you_message = st.text_area("Pesan Terima Kasih", "Terima Kasih atas Pembelian Anda!")
+    sale_id_to_download = st.number_input("Masukkan ID Penjualan", min_value=1, max_value=len(st.session_state.penjualan), step=1)
+
     if st.button("Download Struk"):
         if not st.session_state.penjualan.empty:
             try:
                 selected_sale = st.session_state.penjualan[st.session_state.penjualan['ID Penjualan'] == sale_id_to_download]
-    
+
                 if selected_sale.empty:
                     st.error(f"Penjualan dengan ID {sale_id_to_download} tidak ditemukan.")
                 else:
@@ -338,24 +338,17 @@ def manage_penjualan(username):
                         f"Waktu          : {selected_sale.get('Waktu', 'Tidak Diketahui')}\n"
                         f"Tanggal        : {selected_sale.get('Tanggal', 'Tidak Diketahui')}\n"
                         f"{thank_you_message}\n"
-                        f"{'=' * 30}\n"
+                        f"{'=' * 30}"
                     )
-        
-                    # Save to file and offer download
-                    buffer = BytesIO()
-                    buffer.write(receipt_text.encode())
-                    buffer.seek(0)
 
-                    st.download_button(
-                        label="Download Struk",
-                        data=buffer,
-                        file_name=f"struk_penjualan_{sale_id_to_download}.txt",
-                        mime="text/plain"
-                    )
+                    # Generate download link
+                    buf = BytesIO()
+                    buf.write(receipt_text.encode())
+                    buf.seek(0)
+                    st.download_button("Download Struk", buf, "receipt.txt", "text/plain")
+                    st.success("Struk berhasil dibuat.")
             except Exception as e:
                 st.error(f"Error generating receipt: {str(e)}")
-        else:
-            st.error("Tidak ada data penjualan yang tersedia untuk diunduh.")
 
         
 # Function to manage suppliers
