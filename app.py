@@ -45,48 +45,125 @@ def initialize_users():
     })
     new_users.to_csv(USER_DATA_FILE, index=False)
 
-# Function to manage stock items
-def manage_stok_barang(username):
-    st.title("Manajemen Stok Barang")
-    
-    # Load stock data if available
-    file_path = get_user_file_paths(username)['STOK_BARANG_FILE']
+# Function for Stock Management Page with Advanced Features
+def halaman_stock_barang():
+    st.markdown('<h1 style="text-align: center;">Stock Barang</h1>', unsafe_allow_html=True)
+
+    # Load stock data from session or file
+    file_path = get_user_file_paths(st.session_state.username)['STOK_BARANG_FILE']
     if os.path.exists(file_path):
         st.session_state.stok_barang = pd.read_csv(file_path)
     else:
-        st.session_state.stok_barang = pd.DataFrame(columns=['Nama Barang', 'Merk', 'Ukuran/Kemasan', 'Jumlah', 'Harga', 'Waktu Input'])
+        st.session_state.stok_barang = pd.DataFrame(columns=['ID', 'Nama Barang', 'Merk', 'Ukuran/Kemasan', 'Harga', 'Stok', 'Kode Warna/Base', 'Harga Jual', 'Waktu Input'])
 
-    if 'stok_barang' in st.session_state:
-        st.dataframe(st.session_state.stok_barang)
+    # Search and filter options
+    st.sidebar.markdown("### Cari/Filter Barang")
+    search_keyword = st.sidebar.text_input("Cari Nama Barang/Merk", "")
+    filter_merk = st.sidebar.multiselect("Filter Berdasarkan Merk", st.session_state.stok_barang['Merk'].unique())
     
-    st.subheader("Tambah/Update Stok Barang")
+    # Apply search and filter
+    filtered_data = st.session_state.stok_barang[
+        (st.session_state.stok_barang['Nama Barang'].str.contains(search_keyword, case=False)) &
+        (st.session_state.stok_barang['Merk'].isin(filter_merk) if filter_merk else True)
+    ]
     
-    with st.form("stock_form"):
-        nama_barang = st.text_input("Nama Barang")
-        merk = st.text_input("Merk")
-        ukuran_kemasan = st.text_input("Ukuran/Kemasan")
-        jumlah = st.number_input("Jumlah", min_value=0)
-        harga = st.number_input("Harga", min_value=0.0)
-        
-        submitted = st.form_submit_button("Simpan")
-        
-        if submitted:
-            new_stock = pd.DataFrame({
-                'Nama Barang': [nama_barang],
-                'Merk': [merk],
-                'Ukuran/Kemasan': [ukuran_kemasan],
-                'Jumlah': [jumlah],
-                'Harga': [harga],
-                'Waktu Input': [datetime.now()]
-            })
-            
-            if 'stok_barang' in st.session_state:
-                st.session_state.stok_barang = pd.concat([st.session_state.stok_barang, new_stock], ignore_index=True)
+    # Display stock table with filtering
+    st.dataframe(filtered_data)
+
+    # Stock alerts for low quantities
+    st.markdown('<h2>Notifikasi Stok Rendah</h2>', unsafe_allow_html=True)
+    low_stock_items = filtered_data[filtered_data['Stok'] < 10]  # Customize threshold for low stock
+    if not low_stock_items.empty:
+        st.error(f"Item dengan stok rendah:\n{low_stock_items[['Nama Barang', 'Merk', 'Stok']].to_string(index=False)}")
+    
+    # Form input for adding/updating stock
+    st.markdown('<h2 style="text-align: center;">Tambah/Edit Barang</h2>', unsafe_allow_html=True)
+    
+    # Batch update or delete options
+    batch_options = st.sidebar.selectbox("Batch Aksi", ["None", "Hapus Barang", "Update Harga", "Update Stok"])
+    
+    if batch_options == "Hapus Barang":
+        selected_ids = st.multiselect("Pilih ID Barang untuk Dihapus", filtered_data["ID"].tolist())
+        if st.button("Hapus"):
+            st.session_state.stok_barang = st.session_state.stok_barang[~st.session_state.stok_barang["ID"].isin(selected_ids)]
+            save_data()
+            st.success("Barang berhasil dihapus!")
+    
+    elif batch_options in ["Update Harga", "Update Stok"]:
+        selected_ids = st.multiselect(f"Pilih ID Barang untuk {batch_options}", filtered_data["ID"].tolist())
+        if selected_ids:
+            new_value = st.number_input(f"Nilai Baru {batch_options}", min_value=0.0 if batch_options == "Update Harga" else 0, value=0)
+            if st.button("Update"):
+                if batch_options == "Update Harga":
+                    st.session_state.stok_barang.loc[st.session_state.stok_barang["ID"].isin(selected_ids), "Harga"] = new_value
+                else:
+                    st.session_state.stok_barang.loc[st.session_state.stok_barang["ID"].isin(selected_ids), "Stok"] = new_value
+                save_data()
+                st.success(f"{batch_options} berhasil diperbarui!")
+
+    # Form for adding or editing stock
+    with st.form("input_barang"):
+        selected_action = st.selectbox("Pilih Aksi", ["Tambah Barang", "Edit Barang"])
+        if selected_action == "Edit Barang":
+            selected_id = st.selectbox("Pilih ID Barang untuk Diedit", filtered_data["ID"].tolist())
+            barang_dipilih = st.session_state.stok_barang[st.session_state.stok_barang["ID"] == selected_id].iloc[0]
+        else:
+            selected_id = None
+            barang_dipilih = pd.Series(default_values)
+
+        nama_barang = st.text_input("Nama Barang", value=barang_dipilih["Nama Barang"])
+        merk = st.text_input("Merk", value=barang_dipilih["Merk"])
+        ukuran = st.text_input("Ukuran/Kemasan", value=barang_dipilih["Ukuran/Kemasan"])
+        harga = st.number_input("Harga", min_value=0, value=int(barang_dipilih["Harga"]))
+        stok = st.number_input("Stok Barang", min_value=0, value=int(barang_dipilih["Stok"]))
+        kode_warna = st.text_input("Kode Warna/Base", value=barang_dipilih["Kode Warna/Base"], placeholder="Opsional")
+
+        # Calculate selling price
+        selling_price = harga * 1.15
+
+        submit = st.form_submit_button("Simpan Barang")
+        if submit:
+            if selected_action == "Edit Barang":
+                st.session_state.stok_barang.loc[st.session_state.stok_barang["ID"] == selected_id, ["Nama Barang", "Merk", "Ukuran/Kemasan", "Harga", "Stok", "Kode Warna/Base", "Harga Jual"]] = [nama_barang, merk, ukuran, harga, stok, kode_warna, selling_price]
             else:
-                st.session_state.stok_barang = new_stock
-            
-            st.session_state.stok_barang.to_csv(file_path, index=False)
-            st.success("Stok barang berhasil diperbarui.")
+                new_id = st.session_state.stok_barang["ID"].max() + 1 if not st.session_state.stok_barang.empty else 1
+                new_data = pd.DataFrame({
+                    "ID": [new_id],
+                    "Nama Barang": [nama_barang],
+                    "Merk": [merk],
+                    "Ukuran/Kemasan": [ukuran],
+                    "Harga": [harga],
+                    "Stok": [stok],
+                    "Kode Warna/Base": [kode_warna],
+                    "Harga Jual": [selling_price],
+                    "Waktu Input": [datetime.now()]
+                })
+                st.session_state.stok_barang = pd.concat([st.session_state.stok_barang, new_data], ignore_index=True)
+
+            save_data()
+            st.success(f"Barang berhasil {'diedit' if selected_action == 'Edit Barang' else 'ditambahkan'}!")
+
+    # Export/Import options
+    st.sidebar.markdown("### Export/Import Data")
+    export_format = st.sidebar.selectbox("Pilih Format Ekspor", ["CSV", "Excel"])
+    
+    if st.sidebar.button("Export Data"):
+        export_file_path = f"stock_barang_export.{export_format.lower()}"
+        if export_format == "CSV":
+            st.session_state.stok_barang.to_csv(export_file_path, index=False)
+        else:
+            st.session_state.stok_barang.to_excel(export_file_path, index=False)
+        st.sidebar.success(f"Data berhasil diexport sebagai {export_format}!")
+
+    uploaded_file = st.sidebar.file_uploader("Import Data", type=["csv", "xlsx"])
+    if uploaded_file:
+        if uploaded_file.name.endswith("csv"):
+            imported_data = pd.read_csv(uploaded_file)
+        else:
+            imported_data = pd.read_excel(uploaded_file)
+        st.session_state.stok_barang = pd.concat([st.session_state.stok_barang, imported_data], ignore_index=True)
+        save_data()
+        st.sidebar.success("Data berhasil diimpor!")
 
 # Function to manage sales
 def manage_penjualan(username):
