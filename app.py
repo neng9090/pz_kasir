@@ -119,7 +119,6 @@ def manage_stok_barang(username):
             st.session_state.stok_barang.to_csv(file_path, index=False)
             st.success("Stok barang berhasil diperbarui.")
 
-# Function to manage sales
 def manage_penjualan(username):
     st.title("Manajemen Penjualan")
 
@@ -142,7 +141,7 @@ def manage_penjualan(username):
         st.session_state.penjualan = pd.DataFrame(columns=[
             'ID Penjualan', 'Nama Pelanggan', 'Nomor Telepon', 'Alamat', 
             'Nama Barang', 'Merk', 'Ukuran/Kemasan', 
-            'Kode Warna/Base', 'Jumlah', 'Harga Jual', 
+            'Kode Warna/Base', 'Jumlah', 'Harga', 
             'Total Harga', 'Waktu', 'Tanggal'
         ])
         st.warning("Tidak ada data penjualan yang ditemukan, menginisialisasi data penjualan kosong.")
@@ -162,7 +161,7 @@ def manage_penjualan(username):
 
     # Display current sales data without the 'Harga' column
     st.subheader("Data Penjualan Saat Ini")
-    st.dataframe(st.session_state.penjualan.drop(columns=['Harga Jual'], errors='ignore'))
+    st.dataframe(st.session_state.penjualan.drop(columns=['Harga'], errors='ignore'))
 
     # Load stock data (stok_barang.csv)
     stok_barang_path = get_user_file_paths(username)['STOK_BARANG_FILE']
@@ -303,7 +302,6 @@ def manage_penjualan(username):
                 st.error(f"Error generating receipt: {str(e)}")
         else:
             st.error("Tidak ada data penjualan yang tersedia untuk diunduh.")
-
 
 
         
