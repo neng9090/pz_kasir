@@ -478,7 +478,6 @@ def financial_report(username):
     except Exception as e:
         st.error(f"Error loading financial data: {str(e)}")
 
-
         
 # Owner management function
 def manage_owner():
