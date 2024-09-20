@@ -53,15 +53,17 @@ def manage_stok_barang(username):
     st.title("Manajemen Stok Barang")
     
     file_path = get_user_file_paths(username)['STOK_BARANG_FILE']
+    
     if os.path.exists(file_path):
         stok_barang = pd.read_csv(file_path)
     else:
         stok_barang = pd.DataFrame(columns=['ID Barang', 'Nama Barang', 'Merk', 'Ukuran/Kemasan', 'Jumlah', 'Harga', 'Kode Warna/Base', 'Waktu Input'])
     
-    if stok_barang.empty:
-        next_id = 1
-    else:
+    # Check if 'ID Barang' exists
+    if 'ID Barang' in stok_barang.columns and not stok_barang.empty:
         next_id = stok_barang['ID Barang'].max() + 1
+    else:
+        next_id = 1  # Start from 1 if no stock exists
 
     st.session_state.stok_barang = stok_barang
 
