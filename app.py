@@ -110,57 +110,65 @@ def manage_penjualan(username):
         st.error("Data stok barang tidak ditemukan.")
         return
 
-    if not stok_barang.empty:
-        with st.form("add_sale_form"):
-            nama_pelanggan = st.text_input("Nama Pelanggan")
-            nomor_telepon = st.text_input("Nomor Telepon")
-            alamat = st.text_input("Alamat")
-            
-            st.subheader("Pilih Barang")
-            id_barang = st.selectbox("Pilih Barang", range(len(stok_barang)), format_func=lambda x: stok_barang['Nama Barang'].iloc[x])
-
-            selected_item = stok_barang.iloc[id_barang]
-            st.write(f"Nama Barang: {selected_item['Nama Barang']}")
-            st.write(f"Merk: {selected_item['Merk']}")
-            st.write(f"Ukuran/Kemasan: {selected_item['Ukuran/Kemasan']}")
-            st.write(f"Kode Warna/Base: {selected_item['Kode Warna/Base']}")
-            
-            max_jumlah = int(selected_item['Jumlah']) if 'Jumlah' in selected_item else 0
-            jumlah = st.number_input("Jumlah Orderan", min_value=1, max_value=max_jumlah)
-
-            submitted = st.form_submit_button("Simpan")
-            
-            if submitted:
-                if jumlah <= max_jumlah:
-                    new_sale = pd.DataFrame({
-                        'Nama Pelanggan': [nama_pelanggan],
-                        'Nomor Telepon': [nomor_telepon],
-                        'Alamat': [alamat],
-                        'ID Barang': [selected_item.name],  # Using the index as ID
-                        'Nama Barang': [selected_item['Nama Barang']],
-                        'Merk': [selected_item['Merk']],
-                        'Ukuran/Kemasan': [selected_item['Ukuran/Kemasan']],
-                        'Kode Warna/Base': [selected_item['Kode Warna/Base']],
-                        'Jumlah': [jumlah],
-                        'Waktu': [datetime.now()]
-                    })
-
-                    if os.path.exists(file_path):
-                        penjualan = pd.read_csv(file_path)
-                    else:
-                        penjualan = pd.DataFrame(columns=new_sale.columns)
-
-                    penjualan = pd.concat([penjualan, new_sale], ignore_index=True)
-                    penjualan.to_csv(file_path, index=False)
-                    st.success("Penjualan berhasil ditambahkan.")
-
-                    # Update stock quantity
-                    stok_barang.loc[selected_item.name, 'Jumlah'] -= jumlah
-                    stok_barang.to_csv(stock_file_path, index=False)
-                else:
-                    st.error("Jumlah melebihi stok yang tersedia.")
-    else:
+    if stok_barang.empty:
         st.error("Data stok barang kosong.")
+        return
+
+    with st.form("add_sale_form"):
+        # Input fields for customer details
+        nama_pelanggan = st.text_input("Nama Pelanggan")
+        nomor_telepon = st.text_input("Nomor Telepon")
+        alamat = st.text_input("Alamat")
+        
+        st.subheader("Pilih Barang")
+        
+        # Dropdown to select stock item by index
+        id_barang = st.selectbox("Pilih Barang", range(len(stok_barang)), format_func=lambda x: stok_barang['Nama Barang'].iloc[x])
+
+        # Get selected item details
+        selected_item = stok_barang.iloc[id_barang]
+        st.write(f"Nama Barang: {selected_item['Nama Barang']}")
+        st.write(f"Merk: {selected_item['Merk']}")
+        st.write(f"Ukuran/Kemasan: {selected_item['Ukuran/Kemasan']}")
+        st.write(f"Kode Warna/Base (Opsional): {selected_item['Kode Warna/Base']}")
+
+        # Input for order quantity
+        max_jumlah = int(selected_item['Jumlah'])
+        jumlah = st.number_input("Jumlah Orderan", min_value=1, max_value=max_jumlah)
+
+        # Submit button
+        submitted = st.form_submit_button("Simpan")
+        
+        if submitted:
+            if jumlah <= max_jumlah:
+                new_sale = pd.DataFrame({
+                    'Nama Pelanggan': [nama_pelanggan],
+                    'Nomor Telepon': [nomor_telepon],
+                    'Alamat': [alamat],
+                    'ID Barang': [selected_item.name],  # Use index as ID
+                    'Nama Barang': [selected_item['Nama Barang']],
+                    'Merk': [selected_item['Merk']],
+                    'Ukuran/Kemasan': [selected_item['Ukuran/Kemasan']],
+                    'Kode Warna/Base': [selected_item['Kode Warna/Base']],
+                    'Jumlah': [jumlah],
+                    'Waktu': [datetime.now()]
+                })
+
+                if os.path.exists(file_path):
+                    penjualan = pd.read_csv(file_path)
+                else:
+                    penjualan = pd.DataFrame(columns=new_sale.columns)
+
+                penjualan = pd.concat([penjualan, new_sale], ignore_index=True)
+                penjualan.to_csv(file_path, index=False)
+                st.success("Penjualan berhasil ditambahkan.")
+
+                # Update stock quantity
+                stok_barang.loc[selected_item.name, 'Jumlah'] -= jumlah
+                stok_barang.to_csv(stock_file_path, index=False)
+                st.success("Stok berhasil diperbarui.")
+            else:
+                st.error("Jumlah melebihi stok yang tersedia.")
         
 # Function to manage suppliers
 def manage_supplier(username):
