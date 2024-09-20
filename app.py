@@ -165,7 +165,7 @@ def manage_penjualan(username):
 
     # Display current sales data without the 'Harga' column
     st.subheader("Data Penjualan Saat Ini")
-    st.dataframe(st.session_state.penjualan.drop(columns=['Harga'], errors='ignore'))
+    st.dataframe(st.session_state.penjualan.drop(columns=['Harga Jual'], errors='ignore'))
 
     st.subheader("Tambah Penjualan")
 
@@ -180,7 +180,7 @@ def manage_penjualan(username):
     else:
         st.session_state.stok_barang = pd.DataFrame(columns=[
             'ID Barang', 'Nama Barang', 'Merk', 'Ukuran/Kemasan', 
-            'Kode Warna/Base', 'Jumlah', 'Harga Jual'
+            'Kode Warna/Base', 'Jumlah', 'Harga'  # Hiding this column
         ])
         st.warning("Tidak ada data stok barang yang ditemukan, menginisialisasi data stok kosong.")
 
@@ -191,7 +191,8 @@ def manage_penjualan(username):
     if search_item:
         filtered_stok_barang = filtered_stok_barang[filtered_stok_barang['Nama Barang'].str.contains(search_item, case=False)]
     
-    st.dataframe(filtered_stok_barang)
+    # Display stock data without the 'Harga' column
+    st.dataframe(filtered_stok_barang.drop(columns=['Harga'], errors='ignore'))
 
     with st.form("sales_form"):
         # Customer details input
@@ -218,7 +219,7 @@ def manage_penjualan(username):
             max_jumlah = int(selected_item['Jumlah'])
             jumlah = st.number_input("Jumlah", min_value=1, max_value=max_jumlah, step=1)
 
-            harga_jual = selected_item['Harga Jual']
+            harga = selected_item['Harga']  # Using 'Harga' from stock data
         else:
             st.warning("Tidak ada barang tersedia untuk dijual.")
             return
@@ -231,7 +232,7 @@ def manage_penjualan(username):
                 st.error("Nama pelanggan dan alamat harus diisi.")
             else:
                 # Calculate total price
-                total_harga = jumlah * harga_jual
+                total_harga = jumlah * harga
 
                 # Create new sale record with auto-generated 'ID Penjualan'
                 new_sale = pd.DataFrame({
@@ -244,7 +245,7 @@ def manage_penjualan(username):
                     'Ukuran/Kemasan': [ukuran_selected],
                     'Kode Warna/Base': [warna_selected],
                     'Jumlah': [jumlah],
-                    'Harga Jual': [harga_jual],
+                    'Harga': [harga],  # Keeping the 'Harga' column for sales data
                     'Total Harga': [total_harga],
                     'Waktu': [datetime.now().strftime('%Y-%m-%d %H:%M:%S')]
                 })
@@ -284,7 +285,7 @@ def manage_penjualan(username):
                     ukuran = selected_sale.get('Ukuran/Kemasan', 'Tidak Diketahui')
                     warna = selected_sale.get('Kode Warna/Base', 'Tidak Diketahui')
                     jumlah = selected_sale.get('Jumlah', 0)
-                    harga_jual = selected_sale.get('Harga Jual', 0)
+                    harga = selected_sale.get('Harga', 0)
                     total_harga = selected_sale.get('Total Harga', 0)
                     waktu = selected_sale.get('Waktu', 'Tidak Diketahui')
     
@@ -301,7 +302,7 @@ def manage_penjualan(username):
                         f"Ukuran         : {ukuran[:15].ljust(15)}\n"
                         f"Warna          : {warna[:15].ljust(15)}\n"
                         f"Jumlah         : {str(jumlah).rjust(15)}\n"
-                        f"Harga          : {str(harga_jual).rjust(15)}\n"
+                        f"Harga          : {str(harga).rjust(15)}\n"
                         f"Total          : {str(total_harga).rjust(15)}\n"
                         f"Waktu          : {waktu.ljust(30)}\n"
                         f"{'=' * 30}\n"
@@ -320,6 +321,7 @@ def manage_penjualan(username):
                 st.error(f"Error saat mengakses kolom data: {str(e)}")
         else:
             st.warning("Data penjualan kosong.")
+
 
         
 # Function to manage suppliers
