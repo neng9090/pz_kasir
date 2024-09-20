@@ -496,16 +496,6 @@ def login(username, password):
         return True
     return False
 
-def initialize_session_state():
-    if 'logged_in_user' not in st.session_state:
-        st.session_state.logged_in_user = None  # Or set to a default value if needed
-
-def initialize_session_state():
-    if 'logged_in_user' not in st.session_state:
-        st.session_state.logged_in_user = None  # Initialize logged-in user
-    if 'user_data' not in st.session_state:
-        st.session_state.user_data = pd.DataFrame()  # Initialize user data as an empty DataFrame
-
 # Main app logic
 def main():
     initialize_session_state()
@@ -537,7 +527,6 @@ def main():
         
         if st.sidebar.button("Login"):
             if login(username, password):
-                st.session_state.logged_in_user = username  # Store the logged-in user
                 st.success("Login berhasil!")
             else:
                 st.error("Login gagal. Username atau password salah.")
