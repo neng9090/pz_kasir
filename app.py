@@ -339,12 +339,11 @@ def get_user_file_paths(username):
         'STOK_FILE': f"{username}_stok.csv"
     }
 
-# Function to save data (assumes you have defined this elsewhere)
+# Function to save data (placeholder, implement your own logic)
 def save_data():
-    # Implement your saving logic here, e.g., saving the penjualan DataFrame
     pass
 
-# Function for managing sales page
+# Function for the sales page
 def halaman_penjualan(username):
     st.header("Penjualan")
 
@@ -359,7 +358,6 @@ def halaman_penjualan(username):
     else:
         filtered_stok_barang = st.session_state.stok_barang
 
-    # Drop price columns if they exist
     if "Harga" in filtered_stok_barang.columns:
         filtered_stok_barang = filtered_stok_barang.drop(columns=["Harga"])
     if "Persentase Keuntungan" in filtered_stok_barang.columns:
@@ -387,6 +385,7 @@ def halaman_penjualan(username):
     }
 
     if selected_action == "Edit Penjualan":
+        # Select the sale to edit
         sale_id = st.selectbox("Pilih ID Penjualan untuk Diedit", st.session_state.penjualan["ID"].tolist() + ["Tambah Baru"], key='sale_id_select')
         
         if sale_id != "Tambah Baru":
@@ -404,23 +403,29 @@ def halaman_penjualan(username):
             })
     
     with st.form("input_penjualan"):
-        # Form fields
         nama_pelanggan = st.text_input("Nama Pelanggan", value=default_values["Nama Pelanggan"])
         nomor_telpon = st.text_input("Nomor Telepon", value=default_values["Nomor Telepon"])
         alamat = st.text_area("Alamat", value=default_values["Alamat"])
+
         nama_barang_options = st.session_state.stok_barang["Nama Barang"].tolist()
         nama_barang = st.selectbox("Pilih Barang", nama_barang_options, index=nama_barang_options.index(default_values["Nama Barang"]) if default_values["Nama Barang"] in nama_barang_options else 0)
 
-        ukuran_options = st.session_state.stok_barang[st.session_state.stok_barang["Nama Barang"] == nama_barang]["Ukuran/Kemasan"].tolist()
+        ukuran_options = st.session_state.stok_barang[
+            st.session_state.stok_barang["Nama Barang"] == nama_barang
+        ]["Ukuran/Kemasan"].tolist()
         ukuran = st.selectbox("Ukuran/Kemasan", ukuran_options, index=ukuran_options.index(default_values["Ukuran/Kemasan"]) if default_values["Ukuran/Kemasan"] in ukuran_options else 0)
 
-        merk_options = st.session_state.stok_barang[(st.session_state.stok_barang["Nama Barang"] == nama_barang) & (st.session_state.stok_barang["Ukuran/Kemasan"] == ukuran)]["Merk"].tolist()
+        merk_options = st.session_state.stok_barang[
+            (st.session_state.stok_barang["Nama Barang"] == nama_barang) & 
+            (st.session_state.stok_barang["Ukuran/Kemasan"] == ukuran)
+        ]["Merk"].tolist()
         merk = st.selectbox("Merk", merk_options, index=merk_options.index(default_values["Merk"]) if default_values["Merk"] in merk_options else 0)
+
         kode_warna = st.text_input("Kode Warna/Base (Opsional)", value=default_values["Kode Warna/Base"])
 
         # Query to get stock IDs based on selected criteria
-        stock_query = st.session_state.stok_barang[
-            (st.session_state.stok_barang["Nama Barang"] == nama_barang) &
+        stock_query = st.session_state.stok_barang[(
+            st.session_state.stok_barang["Nama Barang"] == nama_barang) &
             (st.session_state.stok_barang["Ukuran/Kemasan"] == ukuran) &
             (st.session_state.stok_barang["Merk"] == merk)
         ]
@@ -466,6 +471,7 @@ def halaman_penjualan(username):
                         st.session_state.stok_barang.loc[st.session_state.stok_barang["ID"] == stock_id, "Stok"] -= jumlah
 
                         st.success(f"Penjualan untuk {nama_pelanggan} berhasil disimpan!")
+                        
                         save_data()  # Save data after successful transaction
                     else:
                         st.error("Stok tidak cukup untuk memenuhi pesanan.")
@@ -473,6 +479,7 @@ def halaman_penjualan(username):
                     st.error("ID Stok tidak ditemukan di stok.")
             
             elif selected_action == "Edit Penjualan":
+                # Get old sale data to see previous quantity
                 penjualan_lama = st.session_state.penjualan.loc[st.session_state.penjualan["ID"] == sale_id].iloc[0]
                 jumlah_lama = penjualan_lama["Jumlah"]
 
@@ -495,8 +502,9 @@ def halaman_penjualan(username):
                     st.session_state.stok_barang.loc[st.session_state.stok_barang["ID"] == stock_id, "Stok"] += abs(selisih)
 
                 st.success(f"Penjualan dengan ID {sale_id} berhasil diperbarui!")
-                save_data()  # Save data after successful transaction
-
+                
+                save_data()  # Save data after successful update
+                
     # Customer search section
     st.subheader("Pencarian Pelanggan")
     search_pelanggan = st.text_input("Cari Pelanggan (Nama atau Nomor Telepon)", "")
