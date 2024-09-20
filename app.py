@@ -100,20 +100,6 @@ def manage_stok_barang(username):
             st.session_state.stok_barang.to_csv(file_path, index=False)
             st.success("Stok barang berhasil diperbarui.")
 
-import streamlit as st
-import pandas as pd
-from io import BytesIO
-from datetime import datetime
-import os
-
-# Helper function to get file paths for the user (you'll need to define this properly in your app)
-def get_user_file_paths(username):
-    base_path = f"./data/{username}/"
-    return {
-        'PENJUALAN_FILE': os.path.join(base_path, 'penjualan.csv'),
-        'STOK_BARANG_FILE': os.path.join(base_path, 'stok_barang.csv')
-    }
-
 def manage_penjualan(username):
     st.title("Manajemen Penjualan")
 
