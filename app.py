@@ -55,10 +55,10 @@ def manage_stok_barang(username):
         stok_barang = pd.read_csv(file_path)
     else:
         stok_barang = pd.DataFrame(columns=['ID Barang', 'Nama Barang', 'Merk', 'Ukuran/Kemasan', 'Jumlah', 'Harga', 'Kode Warna/Base', 'Waktu Input'])
-
+    
     if 'ID Barang' not in stok_barang.columns:
         stok_barang['ID Barang'] = range(1, len(stok_barang) + 1)
-    
+
     if not stok_barang.empty:
         next_id = stok_barang['ID Barang'].max() + 1
     else:
