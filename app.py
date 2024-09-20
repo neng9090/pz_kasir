@@ -448,6 +448,28 @@ def financial_report(username):
     except Exception as e:
         st.error("Error loading financial data: {}".format(e))
 
+# Financial report function
+def financial_report(username):
+    st.title("Laporan Keuangan")
+    
+    file_paths = get_user_file_paths(username)
+    
+    # Load and display financial data
+    try:
+        penjualan = pd.read_csv(file_paths['PENJUALAN_FILE'])
+        pengeluaran = pd.read_csv(file_paths['PENGELUARAN_FILE'])
+        
+        total_pendapatan = penjualan['Total Harga'].sum()
+        total_pengeluaran = pengeluaran['Total Biaya'].sum()
+        laba_bersih = total_pendapatan - total_pengeluaran
+        
+        st.subheader("Total Pendapatan: {}".format(total_pendapatan))
+        st.subheader("Total Pengeluaran: {}".format(total_pengeluaran))
+        st.subheader("Laba Bersih: {}".format(laba_bersih))
+        
+    except Exception as e:
+        st.error("Error loading financial data: {}".format(e))
+        
 # Owner management function
 def manage_owner():
     st.title("Manajemen Pemilik")
@@ -479,33 +501,18 @@ def manage_owner():
             st.dataframe(all_data['PENGELUARAN_FILE'])
             
             # Financial Report
-            st.subheader("Laporan Keuangan")
-            try:
-                penjualan = pd.read_csv(file_paths['PENJUALAN_FILE'])
-                pengeluaran = pd.read_csv(file_paths['PENGELUARAN_FILE'])
-                
-                total_pendapatan = penjualan['Total Harga'].sum()
-                total_pengeluaran = pengeluaran['Total Biaya'].sum()
-                laba_bersih = total_pendapatan - total_pengeluaran
-                
-                # Create a DataFrame for the financial report
-                financial_report_data = pd.DataFrame({
-                    'Keterangan': ['Total Pendapatan', 'Total Pengeluaran', 'Laba Bersih'],
-                    'Jumlah': [total_pendapatan, total_pengeluaran, laba_bersih]
-                })
-                
-                st.dataframe(financial_report_data)
-                
-            except Exception as e:
-                st.error("Error loading financial data: {}".format(e))
+            financial_report(st.session_state.logged_in_user)  # Call financial report function
             
             # Export option
             if st.button("Ekspor Semua Data ke Excel"):
-                for key in file_paths.keys():
-                    if os.path.exists(file_paths[key]):
-                        df = pd.read_csv(file_paths[key])
-                        df.to_excel(f"{key.replace('_FILE', '')}.xlsx", index=False)
-                st.success("Data berhasil diekspor ke Excel.")
+                try:
+                    for key in file_paths.keys():
+                        if os.path.exists(file_paths[key]):
+                            df = pd.read_csv(file_paths[key])
+                            df.to_excel(f"{key.replace('_FILE', '')}.xlsx", index=False)
+                    st.success("Data berhasil diekspor ke Excel.")
+                except Exception as e:
+                    st.error("Error exporting data: {}".format(e))
         else:
             st.error("Password salah.")
 
@@ -544,7 +551,7 @@ def main():
         elif selected == "Manajemen Pengeluaran":
             manage_pengeluaran(st.session_state.logged_in_user)
         elif selected == "Manajemen Laporan Keuangan":
-            manage_laporan_keuangan(st.session_state.logged_in_user)
+            financial_report(st.session_state.logged_in_user)  # Show financial report
         elif selected == "Manajemen Pemilik":
             manage_owner()
     else:
