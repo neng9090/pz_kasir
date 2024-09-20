@@ -8,6 +8,7 @@ import os
 import time
 from io import StringIO
 from io import BytesIO
+from fpdf import FPDF 
 
 # Define file paths for user-specific data
 def get_user_file_paths(username):
