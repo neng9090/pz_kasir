@@ -409,7 +409,6 @@ def manage_pengeluaran(username):
             st.session_state.pengeluaran.to_csv(file_path, index=False)
             st.success("Pengeluaran berhasil diperbarui.")
 
-# Financial report function
 def financial_report(username):
     st.title("Laporan Keuangan")
     
@@ -433,9 +432,9 @@ def financial_report(username):
                 monthly_income = penjualan.groupby(penjualan['Tanggal'].dt.to_period('M'))['Total Harga'].sum()
                 monthly_data.append(('Pendapatan', monthly_income))
             else:
-                st.warning("Kolom 'Tanggal' tidak ditemukan di file penjualan.")
+                st.warning("Kolom 'Tanggal' tidak ditemukan di file penjualan. Pastikan file CSV memiliki kolom ini.")
         else:
-            st.warning("File penjualan tidak ditemukan.")
+            st.warning("File penjualan tidak ditemukan. Pastikan file berada di lokasi yang benar.")
         
         # Load pengeluaran data
         if os.path.exists(file_paths['PENGELUARAN_FILE']):
@@ -448,9 +447,9 @@ def financial_report(username):
                 monthly_expense = pengeluaran.groupby(pengeluaran['Tanggal'].dt.to_period('M'))['Total Biaya'].sum()
                 monthly_data.append(('Pengeluaran', monthly_expense))
             else:
-                st.warning("Kolom 'Tanggal' tidak ditemukan di file pengeluaran.")
+                st.warning("Kolom 'Tanggal' tidak ditemukan di file pengeluaran. Pastikan file CSV memiliki kolom ini.")
         else:
-            st.warning("File pengeluaran tidak ditemukan.")
+            st.warning("File pengeluaran tidak ditemukan. Pastikan file berada di lokasi yang benar.")
         
         laba_bersih = total_pendapatan - total_pengeluaran
         
@@ -476,8 +475,7 @@ def financial_report(username):
             st.warning("Tidak ada data bulanan untuk ditampilkan.")
 
     except Exception as e:
-        st.error(f"Error loading financial data: {str(e)}")
-
+        st.error(f"Terjadi kesalahan saat memuat data keuangan: {str(e)}")
         
 # Owner management function
 def manage_owner():
