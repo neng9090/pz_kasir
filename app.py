@@ -412,6 +412,11 @@ def financial_report(username):
     
     file_paths = get_user_file_paths(username)
     
+    # Date input for filtering
+    st.subheader("Pilih Rentang Waktu")
+    start_date = st.date_input("Tanggal Mulai")
+    end_date = st.date_input("Tanggal Selesai")
+
     # Initialize totals
     total_pendapatan = 0
     total_pengeluaran = 0
@@ -424,11 +429,16 @@ def financial_report(username):
             penjualan = pd.read_csv(file_paths['PENJUALAN_FILE'])
             if 'Tanggal' in penjualan.columns:
                 penjualan['Tanggal'] = pd.to_datetime(penjualan['Tanggal'], errors='coerce')
-                total_pendapatan = penjualan['Total Harga'].sum()
+                
+                # Filter data based on date range
+                filtered_penjualan = penjualan[(penjualan['Tanggal'] >= pd.to_datetime(start_date)) & (penjualan['Tanggal'] <= pd.to_datetime(end_date))]
+                
+                total_pendapatan = filtered_penjualan['Total Harga'].sum()
                 
                 # Calculate monthly data
-                monthly_income = penjualan.groupby(penjualan['Tanggal'].dt.to_period('M'))['Total Harga'].sum()
-                monthly_data.append(('Pendapatan', monthly_income))
+                if not filtered_penjualan.empty:
+                    monthly_income = filtered_penjualan.groupby(filtered_penjualan['Tanggal'].dt.to_period('M'))['Total Harga'].sum()
+                    monthly_data.append(('Pendapatan', monthly_income))
             else:
                 st.warning("Kolom 'Tanggal' tidak ditemukan di file penjualan.")
         else:
@@ -439,11 +449,16 @@ def financial_report(username):
             pengeluaran = pd.read_csv(file_paths['PENGELUARAN_FILE'])
             if 'Tanggal' in pengeluaran.columns:
                 pengeluaran['Tanggal'] = pd.to_datetime(pengeluaran['Tanggal'], errors='coerce')
-                total_pengeluaran = pengeluaran['Total Biaya'].sum()
+                
+                # Filter data based on date range
+                filtered_pengeluaran = pengeluaran[(pengeluaran['Tanggal'] >= pd.to_datetime(start_date)) & (pengeluaran['Tanggal'] <= pd.to_datetime(end_date))]
+                
+                total_pengeluaran = filtered_pengeluaran['Total Biaya'].sum()
 
                 # Calculate monthly data
-                monthly_expense = pengeluaran.groupby(pengeluaran['Tanggal'].dt.to_period('M'))['Total Biaya'].sum()
-                monthly_data.append(('Pengeluaran', monthly_expense))
+                if not filtered_pengeluaran.empty:
+                    monthly_expense = filtered_pengeluaran.groupby(filtered_pengeluaran['Tanggal'].dt.to_period('M'))['Total Biaya'].sum()
+                    monthly_data.append(('Pengeluaran', monthly_expense))
             else:
                 st.warning("Kolom 'Tanggal' tidak ditemukan di file pengeluaran.")
         else:
@@ -474,7 +489,6 @@ def financial_report(username):
 
     except Exception as e:
         st.error(f"Error loading financial data: {str(e)}")
-
         
 # Owner management function
 def manage_owner():
