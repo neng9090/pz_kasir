@@ -8,12 +8,6 @@ import os
 import time
 from io import StringIO
 
-import streamlit as st
-from streamlit_option_menu import option_menu
-import pandas as pd
-import os
-from datetime import datetime
-
 # Define file paths for user-specific data
 def get_user_file_paths(username):
     return {
@@ -131,17 +125,27 @@ def manage_penjualan(username):
         
         # Dropdown to select item by ID
         id_barang = st.selectbox("ID Barang", st.session_state.stok_barang['ID Barang'].unique())
-        selected_stock = st.session_state.stok_barang.loc[st.session_state.stok_barang['ID Barang'] == id_barang].iloc[0]
         
-        nama_barang = selected_stock['Nama Barang']
-        merk = selected_stock['Merk']
-        ukuran_kemasan = selected_stock['Ukuran/Kemasan']
-        kode_warna_base = selected_stock['Kode Warna/Base']
-        
-        jumlah = st.number_input("Jumlah", min_value=1, max_value=selected_stock['Jumlah'])
+        # Ensure the selected stock exists
+        if id_barang:
+            selected_stock = st.session_state.stok_barang.loc[st.session_state.stok_barang['ID Barang'] == id_barang]
+            if not selected_stock.empty:
+                selected_stock = selected_stock.iloc[0]
+                nama_barang = selected_stock['Nama Barang']
+                merk = selected_stock['Merk']
+                ukuran_kemasan = selected_stock['Ukuran/Kemasan']
+                kode_warna_base = selected_stock['Kode Warna/Base']
+                max_jumlah = selected_stock['Jumlah']
+            else:
+                st.error("Barang tidak ditemukan.")
+                return
+        else:
+            st.warning("Silakan pilih barang.")
+
+        jumlah = st.number_input("Jumlah", min_value=1, max_value=max_jumlah if 'max_jumlah' in locals() else 0)
         
         # Fetch selling price from stock data
-        harga_jual = selected_stock['Harga Jual']
+        harga_jual = selected_stock['Harga Jual'] if 'selected_stock' in locals() else 0
         total_harga = jumlah * harga_jual
         
         submitted = st.form_submit_button("Simpan")
@@ -174,6 +178,7 @@ def manage_penjualan(username):
     st.subheader("Tabel Stok Barang")
     if 'stok_barang' in st.session_state:
         st.dataframe(st.session_state.stok_barang.drop(columns=['Harga'], errors='ignore'))
+
 
 # Function to manage suppliers
 def manage_supplier(username):
