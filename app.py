@@ -59,7 +59,7 @@ def manage_stok_barang(username):
     else:
         stok_barang = pd.DataFrame(columns=['ID Barang', 'Nama Barang', 'Merk', 'Ukuran/Kemasan', 'Jumlah', 'Harga', 'Kode Warna/Base', 'Waktu Input'])
     
-    # Check if 'ID Barang' exists
+    # Ensure 'ID Barang' exists and handle empty DataFrame
     if 'ID Barang' in stok_barang.columns and not stok_barang.empty:
         next_id = stok_barang['ID Barang'].max() + 1
     else:
@@ -119,56 +119,58 @@ def manage_penjualan(username):
             nomor_telepon = st.text_input("Nomor Telepon")
             alamat = st.text_input("Alamat")
             
-            st.subheader("Pilih Barang")
-            id_barang = st.selectbox("Pilih ID Stok", stok_barang['ID Barang'].unique())
-            
-            selected_item = stok_barang[stok_barang['ID Barang'] == id_barang]
-            
-            if not selected_item.empty:
-                selected_item = selected_item.iloc[0]
-                st.write(f"Nama Barang: {selected_item['Nama Barang']}")
-                st.write(f"Merk: {selected_item['Merk']}")
-                st.write(f"Ukuran/Kemasan: {selected_item['Ukuran/Kemasan']}")
-                st.write(f"Kode Warna/Base: {selected_item['Kode Warna/Base']}")
+            if 'ID Barang' in stok_barang.columns:
+                st.subheader("Pilih Barang")
+                id_barang = st.selectbox("Pilih ID Stok", stok_barang['ID Barang'].unique())
                 
-                max_jumlah = int(selected_item['Jumlah']) if 'Jumlah' in selected_item else 0
-                jumlah = st.number_input("Jumlah Orderan", min_value=1, max_value=max_jumlah)
-
-                submitted = st.form_submit_button("Simpan")
+                selected_item = stok_barang[stok_barang['ID Barang'] == id_barang]
                 
-                if submitted:
-                    if jumlah <= max_jumlah:
-                        new_sale = pd.DataFrame({
-                            'Nama Pelanggan': [nama_pelanggan],
-                            'Nomor Telepon': [nomor_telepon],
-                            'Alamat': [alamat],
-                            'ID Barang': [id_barang],
-                            'Nama Barang': [selected_item['Nama Barang']],
-                            'Merk': [selected_item['Merk']],
-                            'Ukuran/Kemasan': [selected_item['Ukuran/Kemasan']],
-                            'Kode Warna/Base': [selected_item['Kode Warna/Base']],
-                            'Jumlah': [jumlah],
-                            'Waktu': [datetime.now()]
-                        })
+                if not selected_item.empty:
+                    selected_item = selected_item.iloc[0]
+                    st.write(f"Nama Barang: {selected_item['Nama Barang']}")
+                    st.write(f"Merk: {selected_item['Merk']}")
+                    st.write(f"Ukuran/Kemasan: {selected_item['Ukuran/Kemasan']}")
+                    st.write(f"Kode Warna/Base: {selected_item['Kode Warna/Base']}")
+                    
+                    max_jumlah = int(selected_item['Jumlah']) if 'Jumlah' in selected_item else 0
+                    jumlah = st.number_input("Jumlah Orderan", min_value=1, max_value=max_jumlah)
 
-                        if os.path.exists(file_path):
-                            penjualan = pd.read_csv(file_path)
+                    submitted = st.form_submit_button("Simpan")
+                    
+                    if submitted:
+                        if jumlah <= max_jumlah:
+                            new_sale = pd.DataFrame({
+                                'Nama Pelanggan': [nama_pelanggan],
+                                'Nomor Telepon': [nomor_telepon],
+                                'Alamat': [alamat],
+                                'ID Barang': [id_barang],
+                                'Nama Barang': [selected_item['Nama Barang']],
+                                'Merk': [selected_item['Merk']],
+                                'Ukuran/Kemasan': [selected_item['Ukuran/Kemasan']],
+                                'Kode Warna/Base': [selected_item['Kode Warna/Base']],
+                                'Jumlah': [jumlah],
+                                'Waktu': [datetime.now()]
+                            })
+
+                            if os.path.exists(file_path):
+                                penjualan = pd.read_csv(file_path)
+                            else:
+                                penjualan = pd.DataFrame(columns=new_sale.columns)
+
+                            penjualan = pd.concat([penjualan, new_sale], ignore_index=True)
+                            penjualan.to_csv(file_path, index=False)
+                            st.success("Penjualan berhasil ditambahkan.")
+
+                            stok_barang.loc[stok_barang['ID Barang'] == id_barang, 'Jumlah'] -= jumlah
+                            stok_barang.to_csv(stock_file_path, index=False)
                         else:
-                            penjualan = pd.DataFrame(columns=new_sale.columns)
-
-                        penjualan = pd.concat([penjualan, new_sale], ignore_index=True)
-                        penjualan.to_csv(file_path, index=False)
-                        st.success("Penjualan berhasil ditambahkan.")
-
-                        stok_barang.loc[stok_barang['ID Barang'] == id_barang, 'Jumlah'] -= jumlah
-                        stok_barang.to_csv(stock_file_path, index=False)
-                    else:
-                        st.error("Jumlah melebihi stok yang tersedia.")
+                            st.error("Jumlah melebihi stok yang tersedia.")
+                else:
+                    st.error("Barang tidak ditemukan.")
             else:
-                st.error("Barang tidak ditemukan.")
+                st.error("Kolom 'ID Barang' tidak ditemukan di stok barang.")
     else:
         st.error("Data stok barang kosong.")
-
 
 # Function to manage suppliers
 def manage_supplier(username):
