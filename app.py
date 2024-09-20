@@ -213,9 +213,9 @@ def manage_penjualan(username):
         else:
             st.dataframe(filtered_penjualan)
 
-    # Display current sales data without the 'Harga' column
+    # Display current sales data including the 'Harga' column
     st.subheader("Data Penjualan Saat Ini")
-    st.dataframe(st.session_state.penjualan.drop(columns=['Harga'], errors='ignore'))
+    st.dataframe(st.session_state.penjualan)  # Now includes 'Harga'
 
     # Load stock data (stok_barang.csv)
     stok_barang_path = get_user_file_paths(username)['STOK_BARANG_FILE']
@@ -245,7 +245,7 @@ def manage_penjualan(username):
     with st.form("sales_form"):
         # Customer details input
         nama_pelanggan = st.text_input("Nama Pelanggan", max_chars=50)
-        nomor_telepon = st.text_input("Nomor Telepon", max_chars=15)
+        nomor_telepon = st.text_input("Nomor Telepon", max_chars=15, type="text")  # Format as text
         alamat = st.text_area("Alamat", height=50)
 
         if not filtered_stok_barang.empty:
@@ -356,6 +356,7 @@ def manage_penjualan(username):
                 st.error(f"Error generating receipt: {str(e)}")
         else:
             st.error("Tidak ada data penjualan yang tersedia untuk diunduh.")
+
 
 
         
