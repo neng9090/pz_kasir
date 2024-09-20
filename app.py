@@ -107,7 +107,7 @@ def manage_penjualan(username):
     if os.path.exists(file_path):
         st.session_state.penjualan = pd.read_csv(file_path)
     else:
-        st.session_state.penjualan = pd.DataFrame(columns=['Nama Pelanggan', 'Nomor Telepon', 'Alamat', 'Nama Barang', 'Jumlah', 'Harga Jual', 'Total Harga', 'Waktu'])
+        st.session_state.penjualan = pd.DataFrame(columns=['Nama Pelanggan', 'Nomor Telepon', 'Alamat', 'Nama Barang', 'Merk', 'Ukuran/Kemasan', 'Kode Warna/Base', 'Jumlah', 'Harga Jual', 'Total Harga', 'Waktu'])
 
     # Display the sales data
     if 'penjualan' in st.session_state:
@@ -134,6 +134,11 @@ def manage_penjualan(username):
             id_barang = st.selectbox("Pilih Barang", range(len(filtered_stok_barang)), format_func=lambda x: filtered_stok_barang['Nama Barang'].iloc[x])
             selected_item = filtered_stok_barang.iloc[id_barang]
 
+            # Display additional item details
+            st.write(f"**Merk:** {selected_item['Merk']}")
+            st.write(f"**Ukuran/Kemasan:** {selected_item['Ukuran/Kemasan']}")
+            st.write(f"**Kode Warna/Base:** {selected_item['Kode Warna/Base'] if pd.notna(selected_item['Kode Warna/Base']) else 'Tidak ada'}")
+
             max_jumlah = int(selected_item['Jumlah'])
             jumlah = st.number_input("Jumlah", min_value=1, max_value=max_jumlah)
 
@@ -151,6 +156,9 @@ def manage_penjualan(username):
                 'Nomor Telepon': [nomor_telepon],
                 'Alamat': [alamat],
                 'Nama Barang': [selected_item['Nama Barang']],
+                'Merk': [selected_item['Merk']],
+                'Ukuran/Kemasan': [selected_item['Ukuran/Kemasan']],
+                'Kode Warna/Base': [selected_item['Kode Warna/Base']],
                 'Jumlah': [jumlah],
                 'Harga Jual': [harga_jual],
                 'Total Harga': [total_harga],
