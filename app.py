@@ -21,7 +21,6 @@ def get_user_file_paths(username):
         'OWNER_DATA_FILE': f'{username}_owner_data.csv'
     }
 
-# File path for user data
 USER_DATA_FILE = 'user_data.csv'
 
 def initialize_session_state():
@@ -32,7 +31,6 @@ def initialize_session_state():
     if 'user_data' not in st.session_state:
         load_user_data()
 
-# Load user data from CSV
 def load_user_data():
     if os.path.exists(USER_DATA_FILE):
         st.session_state.user_data = pd.read_csv(USER_DATA_FILE)
@@ -48,7 +46,6 @@ def initialize_users():
     })
     new_users.to_csv(USER_DATA_FILE, index=False)
 
-# Function to manage stock items
 def manage_stok_barang(username):
     st.title("Manajemen Stok Barang")
     
@@ -58,12 +55,14 @@ def manage_stok_barang(username):
         stok_barang = pd.read_csv(file_path)
     else:
         stok_barang = pd.DataFrame(columns=['ID Barang', 'Nama Barang', 'Merk', 'Ukuran/Kemasan', 'Jumlah', 'Harga', 'Kode Warna/Base', 'Waktu Input'])
+
+    if 'ID Barang' not in stok_barang.columns:
+        stok_barang['ID Barang'] = range(1, len(stok_barang) + 1)
     
-    # Ensure 'ID Barang' exists and handle empty DataFrame
-    if 'ID Barang' in stok_barang.columns and not stok_barang.empty:
+    if not stok_barang.empty:
         next_id = stok_barang['ID Barang'].max() + 1
     else:
-        next_id = 1  # Start from 1 if no stock exists
+        next_id = 1
 
     st.session_state.stok_barang = stok_barang
 
@@ -100,7 +99,6 @@ def manage_stok_barang(username):
             st.session_state.stok_barang.to_csv(file_path, index=False)
             st.success("Stok barang berhasil diperbarui.")
 
-# Function to manage sales
 def manage_penjualan(username):
     st.title("Tambah Penjualan")
     
