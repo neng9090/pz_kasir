@@ -442,26 +442,30 @@ def financial_report(username):
         # Load penjualan data
         if os.path.exists(file_paths['PENJUALAN_FILE']):
             penjualan = pd.read_csv(file_paths['PENJUALAN_FILE'])
-            total_pendapatan = penjualan['Total Harga'].sum()
+            if 'Tanggal' in penjualan.columns:
+                total_pendapatan = penjualan['Total Harga'].sum()
 
-            # Calculate monthly data
-            penjualan['Tanggal'] = pd.to_datetime(penjualan['Tanggal'])
-            monthly_income = penjualan.groupby(penjualan['Tanggal'].dt.to_period('M'))['Total Harga'].sum()
-            monthly_data.append(('Pendapatan', monthly_income))
-
+                # Calculate monthly data
+                penjualan['Tanggal'] = pd.to_datetime(penjualan['Tanggal'])
+                monthly_income = penjualan.groupby(penjualan['Tanggal'].dt.to_period('M'))['Total Harga'].sum()
+                monthly_data.append(('Pendapatan', monthly_income))
+            else:
+                st.warning("Kolom 'Tanggal' tidak ditemukan di file penjualan.")
         else:
             st.warning("File penjualan tidak ditemukan.")
         
         # Load pengeluaran data
         if os.path.exists(file_paths['PENGELUARAN_FILE']):
             pengeluaran = pd.read_csv(file_paths['PENGELUARAN_FILE'])
-            total_pengeluaran = pengeluaran['Total Biaya'].sum()
+            if 'Tanggal' in pengeluaran.columns:
+                total_pengeluaran = pengeluaran['Total Biaya'].sum()
 
-            # Calculate monthly data
-            pengeluaran['Tanggal'] = pd.to_datetime(pengeluaran['Tanggal'])
-            monthly_expense = pengeluaran.groupby(pengeluaran['Tanggal'].dt.to_period('M'))['Total Biaya'].sum()
-            monthly_data.append(('Pengeluaran', monthly_expense))
-
+                # Calculate monthly data
+                pengeluaran['Tanggal'] = pd.to_datetime(pengeluaran['Tanggal'])
+                monthly_expense = pengeluaran.groupby(pengeluaran['Tanggal'].dt.to_period('M'))['Total Biaya'].sum()
+                monthly_data.append(('Pengeluaran', monthly_expense))
+            else:
+                st.warning("Kolom 'Tanggal' tidak ditemukan di file pengeluaran.")
         else:
             st.warning("File pengeluaran tidak ditemukan.")
         
@@ -488,6 +492,7 @@ def financial_report(username):
 
     except Exception as e:
         st.error("Error loading financial data: {}".format(e))
+
 
         
 # Owner management function
