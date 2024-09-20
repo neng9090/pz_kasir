@@ -119,22 +119,25 @@ def manage_penjualan(username):
         
         # Dropdown for selecting stock item
         st.subheader("Pilih Barang")
-        if 'ID Barang' in stok_barang.columns:
-            id_barang = st.selectbox("Pilih ID Stok", stok_barang['ID Barang'].unique())
-            selected_item = stok_barang[stok_barang['ID Barang'] == id_barang].iloc[0]
-            
-            # Display selected item details
-            st.write(f"Nama Barang: {selected_item['Nama Barang']}")
-            st.write(f"Merk: {selected_item['Merk']}")
-            st.write(f"Ukuran/Kemasan: {selected_item['Ukuran/Kemasan']}")
-            st.write(f"Kode Warna/Base: {selected_item['Kode Warna/Base']}")
+        id_barang = st.selectbox("Pilih ID Stok", stok_barang['ID Barang'].unique())
         
-        jumlah = st.number_input("Jumlah Orderan", min_value=1, max_value=int(selected_item['Jumlah'] if 'Jumlah' in selected_item else 0))
+        # Get selected item details
+        selected_item = stok_barang[stok_barang['ID Barang'] == id_barang].iloc[0]
+        
+        # Display selected item details
+        st.write(f"Nama Barang: {selected_item['Nama Barang']}")
+        st.write(f"Merk: {selected_item['Merk']}")
+        st.write(f"Ukuran/Kemasan: {selected_item['Ukuran/Kemasan']}")
+        st.write(f"Kode Warna/Base: {selected_item['Kode Warna/Base']}")
+        
+        # Get the maximum quantity available for the selected item
+        max_jumlah = int(selected_item['Jumlah']) if 'Jumlah' in selected_item else 0
+        jumlah = st.number_input("Jumlah Orderan", min_value=1, max_value=max_jumlah)
 
         submitted = st.form_submit_button("Simpan")
         
         if submitted:
-            if jumlah <= selected_item['Jumlah']:
+            if jumlah <= max_jumlah:
                 new_sale = pd.DataFrame({
                     'Nama Pelanggan': [nama_pelanggan],
                     'Nomor Telepon': [nomor_telepon],
@@ -163,6 +166,7 @@ def manage_penjualan(username):
                 stok_barang.to_csv(stock_file_path, index=False)
             else:
                 st.error("Jumlah melebihi stok yang tersedia.")
+
 
 
 # Function to manage suppliers
