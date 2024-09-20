@@ -100,6 +100,7 @@ def manage_stok_barang(username):
             st.session_state.stok_barang.to_csv(file_path, index=False)
             st.success("Stok barang berhasil diperbarui.")
 
+# Function to manage sales
 def manage_penjualan(username):
     st.title("Manajemen Penjualan")
     
@@ -129,6 +130,13 @@ def manage_penjualan(username):
         filtered_stok_barang = filtered_stok_barang[filtered_stok_barang['Nama Barang'].str.contains(search_item, case=False)]
     
     st.dataframe(filtered_stok_barang)
+
+    # Customer search functionality
+    st.subheader("Cari Pelanggan")
+    search_customer = st.text_input("Nama Pelanggan")
+    if search_customer:
+        filtered_penjualan = st.session_state.penjualan[st.session_state.penjualan['Nama Pelanggan'].str.contains(search_customer, case=False)]
+        st.dataframe(filtered_penjualan)
 
     with st.form("sales_form"):
         nama_pelanggan = st.text_input("Nama Pelanggan")
@@ -215,26 +223,35 @@ def manage_penjualan(username):
             st.text(receipt)
 
             # Option to download the receipt as a PDF
-            if st.button("Download Struk Pembelian"):
-                pdf = FPDF()
-                pdf.add_page()
-                pdf.set_font("Arial", 'B', 16)
-                pdf.cell(0, 10, receipt_title, 0, 1, 'C')
-                pdf.ln(10)
+            pdf = FPDF()
+            pdf.add_page()
+            pdf.set_font("Arial", 'B', 16)
+            pdf.cell(0, 10, receipt_title, 0, 1, 'C')
+            pdf.ln(10)
 
-                pdf.set_font("Arial", 'I', 12)
-                for line in receipt.strip().split('\n'):
-                    pdf.cell(0, 10, line.strip(), 0, 1)
+            pdf.set_font("Arial", 'I', 12)
+            for line in receipt.strip().split('\n'):
+                pdf.cell(0, 10, line.strip(), 0, 1)
 
-                # Save the PDF to a BytesIO object
-                pdf_output = BytesIO()
-                pdf.output(pdf_output)
-                pdf_output.seek(0)
+            # Save the PDF to a BytesIO object
+            pdf_output = BytesIO()
+            pdf.output(pdf_output)
+            pdf_output.seek(0)
 
-                # Create a download button
-                st.download_button(label="Download Struk Pembelian", data=pdf_output, file_name='struk_pembelian.pdf', mime='application/pdf')
+            # Create a download button for the receipt
+            st.download_button(label="Download Struk Pembelian", data=pdf_output, file_name='struk_pembelian.pdf', mime='application/pdf')
+
         else:
             st.warning("Tidak ada penjualan untuk direview.")
+
+    # Additional option to download sales data as CSV
+    st.subheader("Download Data Penjualan")
+    if st.button("Download Data Penjualan"):
+        if 'penjualan' in st.session_state and not st.session_state.penjualan.empty:
+            sales_data_csv = st.session_state.penjualan.to_csv(index=False).encode('utf-8')
+            st.download_button(label="Download Data Penjualan CSV", data=sales_data_csv, file_name='data_penjualan.csv', mime='text/csv')
+        else:
+            st.warning("Tidak ada data penjualan untuk diunduh.")
         
 # Function to manage suppliers
 def manage_supplier(username):
