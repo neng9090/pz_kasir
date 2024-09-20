@@ -299,7 +299,6 @@ def update_historical_data(username):
             st.session_state.historical_data.to_csv(file_path, index=False)
             st.success("Data keuangan berhasil diperbarui.")
 
-# Application
 def main():
     initialize_session_state()
     load_user_data()
@@ -317,12 +316,13 @@ def main():
                     st.session_state.logged_in_user = username
                     st.session_state.user_role = user_data['Role'].values[0]
                     st.sidebar.success("Login successful!")
-                    st.experimental_rerun()  # Refresh the page to reflect changes
+                    # Remove the experimental_rerun() call
                 else:
                     st.sidebar.error("Incorrect password.")
             else:
                 st.sidebar.error("Username not found.")
     else:
+        st.sidebar.write(f"Logged in as: {st.session_state.logged_in_user}")
         with st.sidebar:
             choice = option_menu(
                 menu_title="Main Menu",
