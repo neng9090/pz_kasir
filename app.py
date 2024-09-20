@@ -594,7 +594,7 @@ def main():
         load_data(st.session_state.logged_in_user)  # Load data after login
 
     if st.session_state.logged_in_user:
-        halaman_penjualan(st.session_state.logged_in_user)  # Change here to call the correct function
+        halaman_penjualan(st.session_state.logged_in_user)  # Correct function call here
 
 import pandas as pd
 import os
