@@ -176,6 +176,7 @@ def manage_penjualan(username):
         # Calculate total price based on quantity
         total_harga = jumlah * harga_jual
         
+        # Include the submit button
         submitted = st.form_submit_button("Simpan")
         
         if submitted:
