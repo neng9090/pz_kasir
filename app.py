@@ -8,12 +8,6 @@ import os
 import time
 from io import StringIO
 
-import streamlit as st
-from streamlit_option_menu import option_menu
-import pandas as pd
-import os
-from datetime import datetime
-
 # Define file paths for user-specific data
 def get_user_file_paths(username):
     return {
@@ -24,7 +18,7 @@ def get_user_file_paths(username):
         'PENGELUARAN_FILE': f'{username}_pengeluaran.csv',
         'HISTORIS_KEUANGAN_FILE': f'{username}_historis_analisis_keuangan.csv',
         'HISTORIS_KEUNTUNGAN_FILE': f'{username}_historis_keuntungan_bersih.csv',
-        'OWNER_FILE': f'{username}_owner_data.csv'  # Add owner data file
+        'OWNER_DATA_FILE': f'{username}_owner_data.csv'  # Owner data file
     }
 
 # File path for user data
@@ -44,14 +38,13 @@ def load_user_data():
         st.session_state.user_data = pd.read_csv(USER_DATA_FILE)
     else:
         st.session_state.user_data = pd.DataFrame(columns=["Username", "Password", "Role"])
-        initialize_users()  # Initialize with default users if file is missing
+        initialize_users()
 
-# Initialize new users if user_data.csv does not exist or is empty
 def initialize_users():
     new_users = pd.DataFrame({
         "Username": ["mira", "yono", "tini"],
         "Password": ["123oke", "456", "789"],
-        "Role": ["user", "user", "user"]
+        "Role": ["user", "user", "admin"]  # Example: one admin user
     })
     new_users.to_csv(USER_DATA_FILE, index=False)
 
@@ -59,7 +52,6 @@ def initialize_users():
 def manage_stok_barang(username):
     st.title("Manajemen Stok Barang")
     
-    # Load stock data if available
     file_path = get_user_file_paths(username)['STOK_BARANG_FILE']
     if os.path.exists(file_path):
         st.session_state.stok_barang = pd.read_csv(file_path)
@@ -90,11 +82,7 @@ def manage_stok_barang(username):
                 'Waktu Input': [datetime.now()]
             })
             
-            if 'stok_barang' in st.session_state:
-                st.session_state.stok_barang = pd.concat([st.session_state.stok_barang, new_stock], ignore_index=True)
-            else:
-                st.session_state.stok_barang = new_stock
-            
+            st.session_state.stok_barang = pd.concat([st.session_state.stok_barang, new_stock], ignore_index=True)
             st.session_state.stok_barang.to_csv(file_path, index=False)
             st.success("Stok barang berhasil diperbarui.")
 
@@ -102,7 +90,6 @@ def manage_stok_barang(username):
 def manage_penjualan(username):
     st.title("Manajemen Penjualan")
     
-    # Load sales data if available
     file_path = get_user_file_paths(username)['PENJUALAN_FILE']
     if os.path.exists(file_path):
         st.session_state.penjualan = pd.read_csv(file_path)
@@ -137,11 +124,7 @@ def manage_penjualan(username):
                 'Waktu': [datetime.now()]
             })
             
-            if 'penjualan' in st.session_state:
-                st.session_state.penjualan = pd.concat([st.session_state.penjualan, new_sale], ignore_index=True)
-            else:
-                st.session_state.penjualan = new_sale
-            
+            st.session_state.penjualan = pd.concat([st.session_state.penjualan, new_sale], ignore_index=True)
             st.session_state.penjualan.to_csv(file_path, index=False)
             st.success("Penjualan berhasil diperbarui.")
 
@@ -149,7 +132,6 @@ def manage_penjualan(username):
 def manage_supplier(username):
     st.title("Manajemen Supplier")
     
-    # Load supplier data if available
     file_path = get_user_file_paths(username)['SUPPLIER_FILE']
     if os.path.exists(file_path):
         st.session_state.supplier = pd.read_csv(file_path)
@@ -176,11 +158,7 @@ def manage_supplier(username):
                 'Waktu Input': [datetime.now()]
             })
             
-            if 'supplier' in st.session_state:
-                st.session_state.supplier = pd.concat([st.session_state.supplier, new_supplier], ignore_index=True)
-            else:
-                st.session_state.supplier = new_supplier
-            
+            st.session_state.supplier = pd.concat([st.session_state.supplier, new_supplier], ignore_index=True)
             st.session_state.supplier.to_csv(file_path, index=False)
             st.success("Supplier berhasil diperbarui.")
 
@@ -188,7 +166,6 @@ def manage_supplier(username):
 def manage_piutang_konsum(username):
     st.title("Manajemen Piutang Konsumen")
     
-    # Load consumer debt data if available
     file_path = get_user_file_paths(username)['PIUTANG_KONSUMEN_FILE']
     if os.path.exists(file_path):
         st.session_state.piutang_konsum = pd.read_csv(file_path)
@@ -215,11 +192,7 @@ def manage_piutang_konsum(username):
                 'Waktu Input': [datetime.now()]
             })
             
-            if 'piutang_konsum' in st.session_state:
-                st.session_state.piutang_konsum = pd.concat([st.session_state.piutang_konsum, new_piutang], ignore_index=True)
-            else:
-                st.session_state.piutang_konsum = new_piutang
-            
+            st.session_state.piutang_konsum = pd.concat([st.session_state.piutang_konsum, new_piutang], ignore_index=True)
             st.session_state.piutang_konsum.to_csv(file_path, index=False)
             st.success("Piutang konsumen berhasil diperbarui.")
 
@@ -227,159 +200,144 @@ def manage_piutang_konsum(username):
 def manage_pengeluaran(username):
     st.title("Manajemen Pengeluaran")
     
-    # Load expense data if available
     file_path = get_user_file_paths(username)['PENGELUARAN_FILE']
     if os.path.exists(file_path):
         st.session_state.pengeluaran = pd.read_csv(file_path)
     else:
-        st.session_state.pengeluaran = pd.DataFrame(columns=['Nama Pengeluaran', 'Jumlah', 'Tanggal', 'Waktu Input'])
+        st.session_state.pengeluaran = pd.DataFrame(columns=['Nama Penerima Dana', 'Keterangan', 'Total Biaya', 'Waktu Input'])
 
     if 'pengeluaran' in st.session_state:
         st.dataframe(st.session_state.pengeluaran)
     
     st.subheader("Tambah Pengeluaran")
     
-    with st.form("expense_form"):
-        nama_pengeluaran = st.text_input("Nama Pengeluaran")
-        jumlah = st.number_input("Jumlah", min_value=0.0)
-        tanggal = st.date_input("Tanggal", value=datetime.now())
+    with st.form("pengeluaran_form"):
+        nama_penerima = st.text_input("Nama Penerima Dana")
+        keterangan = st.text_input("Keterangan")
+        total_biaya = st.number_input("Total Biaya", min_value=0.0)
         
         submitted = st.form_submit_button("Simpan")
         
         if submitted:
-            new_expense = pd.DataFrame({
-                'Nama Pengeluaran': [nama_pengeluaran],
-                'Jumlah': [jumlah],
-                'Tanggal': [tanggal],
+            new_pengeluaran = pd.DataFrame({
+                'Nama Penerima Dana': [nama_penerima],
+                'Keterangan': [keterangan],
+                'Total Biaya': [total_biaya],
                 'Waktu Input': [datetime.now()]
             })
             
-            if 'pengeluaran' in st.session_state:
-                st.session_state.pengeluaran = pd.concat([st.session_state.pengeluaran, new_expense], ignore_index=True)
-            else:
-                st.session_state.pengeluaran = new_expense
-            
+            st.session_state.pengeluaran = pd.concat([st.session_state.pengeluaran, new_pengeluaran], ignore_index=True)
             st.session_state.pengeluaran.to_csv(file_path, index=False)
             st.success("Pengeluaran berhasil diperbarui.")
 
-# Function to update historical financial data
-def update_historical_data(username):
+# Financial report function
+def financial_report(username):
     st.title("Laporan Keuangan")
     
-    # Load financial data
-    historical_file = get_user_file_paths(username)['HISTORIS_KEUANGAN_FILE']
-    if os.path.exists(historical_file):
-        st.session_state.historical_data = pd.read_csv(historical_file)
-    else:
-        st.session_state.historical_data = pd.DataFrame(columns=['Bulan', 'Total Penjualan', 'Total Pengeluaran', 'Laba Bersih'])
-
-    if 'historical_data' in st.session_state:
-        st.dataframe(st.session_state.historical_data)
+    file_paths = get_user_file_paths(username)
     
-    st.subheader("Tambahkan Laporan Keuangan Bulanan")
-    
-    with st.form("financial_report_form"):
-        bulan = st.selectbox("Pilih Bulan", [datetime(2023, m, 1).strftime('%B') for m in range(1, 13)])
-        total_penjualan = st.number_input("Total Penjualan", min_value=0.0)
-        total_pengeluaran = st.number_input("Total Pengeluaran", min_value=0.0)
+    # Load and display financial data
+    try:
+        penjualan = pd.read_csv(file_paths['PENJUALAN_FILE'])
+        pengeluaran = pd.read_csv(file_paths['PENGELUARAN_FILE'])
         
-        submitted = st.form_submit_button("Simpan")
+        total_pendapatan = penjualan['Total Harga'].sum()
+        total_pengeluaran = pengeluaran['Total Biaya'].sum()
+        laba_bersih = total_pendapatan - total_pengeluaran
         
-        if submitted:
-            laba_bersih = total_penjualan - total_pengeluaran
-            new_report = pd.DataFrame({
-                'Bulan': [bulan],
-                'Total Penjualan': [total_penjualan],
-                'Total Pengeluaran': [total_pengeluaran],
-                'Laba Bersih': [laba_bersih]
-            })
-            
-            st.session_state.historical_data = pd.concat([st.session_state.historical_data, new_report], ignore_index=True)
-            st.session_state.historical_data.to_csv(historical_file, index=False)
-            st.success("Laporan keuangan berhasil diperbarui.")
+        st.subheader("Total Pendapatan: {}".format(total_pendapatan))
+        st.subheader("Total Pengeluaran: {}".format(total_pengeluaran))
+        st.subheader("Laba Bersih: {}".format(laba_bersih))
+        
+    except Exception as e:
+        st.error("Error loading financial data: {}".format(e))
 
-# Function to manage owner information
+# Owner management function
 def manage_owner(username):
     st.title("Manajemen Pemilik")
     
-    # Load owner data if available
-    file_path = get_user_file_paths(username)['OWNER_FILE']
+    # Check for access security
+    if st.session_state.user_role != 'admin':
+        st.warning("Hanya pemilik yang dapat mengakses halaman ini.")
+        return
+    
+    file_path = get_user_file_paths(username)['OWNER_DATA_FILE']
     if os.path.exists(file_path):
         st.session_state.owner_data = pd.read_csv(file_path)
     else:
-        st.session_state.owner_data = pd.DataFrame(columns=['Nama Pemilik', 'Alamat', 'Kontak', 'Waktu Input'])
-
+        st.session_state.owner_data = pd.DataFrame(columns=['Username', 'Email', 'Waktu Input'])
+    
     if 'owner_data' in st.session_state:
         st.dataframe(st.session_state.owner_data)
     
-    st.subheader("Tambah Pemilik")
+    st.subheader("Tambah Data Pemilik")
     
     with st.form("owner_form"):
-        nama_pemilik = st.text_input("Nama Pemilik")
-        alamat = st.text_input("Alamat")
-        kontak = st.text_input("Kontak")
+        username = st.text_input("Username")
+        email = st.text_input("Email")
         
         submitted = st.form_submit_button("Simpan")
         
         if submitted:
             new_owner = pd.DataFrame({
-                'Nama Pemilik': [nama_pemilik],
-                'Alamat': [alamat],
-                'Kontak': [kontak],
+                'Username': [username],
+                'Email': [email],
                 'Waktu Input': [datetime.now()]
             })
             
-            if 'owner_data' in st.session_state:
-                st.session_state.owner_data = pd.concat([st.session_state.owner_data, new_owner], ignore_index=True)
-            else:
-                st.session_state.owner_data = new_owner
-            
+            st.session_state.owner_data = pd.concat([st.session_state.owner_data, new_owner], ignore_index=True)
             st.session_state.owner_data.to_csv(file_path, index=False)
             st.success("Data pemilik berhasil diperbarui.")
+    
+    # Export option
+    if st.button("Ekspor Data Pemilik ke Excel"):
+        owner_data_path = f'{username}_owner_data.xlsx'
+        st.session_state.owner_data.to_excel(owner_data_path, index=False)
+        st.success("Data pemilik diekspor ke {}".format(owner_data_path))
 
-# Main application logic
+# Authentication function
+def login(username, password):
+    user = st.session_state.user_data[st.session_state.user_data['Username'] == username]
+    if not user.empty and user['Password'].values[0] == password:
+        st.session_state.logged_in_user = username
+        st.session_state.user_role = user['Role'].values[0]
+        return True
+    return False
+
+# Main app logic
 def main():
     initialize_session_state()
     
     if st.session_state.logged_in_user:
-        username = st.session_state.logged_in_user
-        
-        # Sidebar for navigation
-        with st.sidebar:
-            choice = option_menu("Menu", ["Manajemen Stok Barang", "Manajemen Penjualan", "Manajemen Supplier", 
-                                            "Manajemen Piutang Konsumen", "Manajemen Pengeluaran", 
-                                            "Laporan Keuangan", "Manajemen Pemilik"],
-                                 icons=['box', 'cart', 'people', 'money', 'cash-coin', 'file-earmark-text', 'person'],
-                                 menu_icon="cast", default_index=0)
-        
-        if choice == "Manajemen Stok Barang":
-            manage_stok_barang(username)
-        elif choice == "Manajemen Penjualan":
-            manage_penjualan(username)
-        elif choice == "Manajemen Supplier":
-            manage_supplier(username)
-        elif choice == "Manajemen Piutang Konsumen":
-            manage_piutang_konsum(username)
-        elif choice == "Manajemen Pengeluaran":
-            manage_pengeluaran(username)
-        elif choice == "Laporan Keuangan":
-            update_historical_data(username)
-        elif choice == "Manajemen Pemilik":
-            manage_owner(username)
+        st.sidebar.title(f"Hello, {st.session_state.logged_in_user}")
+        selected = option_menu("Menu", ["Manajemen Stok Barang", "Manajemen Penjualan", "Manajemen Supplier", "Manajemen Piutang Konsumen", "Manajemen Pengeluaran", "Laporan Keuangan", "Manajemen Pemilik"],
+                               icons=['box', 'cash-coin', 'person-check', 'wallet', 'arrow-down-circle', 'bar-chart-line', 'shield-lock'], 
+                               menu_icon="cast", default_index=0)
+
+        if selected == "Manajemen Stok Barang":
+            manage_stok_barang(st.session_state.logged_in_user)
+        elif selected == "Manajemen Penjualan":
+            manage_penjualan(st.session_state.logged_in_user)
+        elif selected == "Manajemen Supplier":
+            manage_supplier(st.session_state.logged_in_user)
+        elif selected == "Manajemen Piutang Konsumen":
+            manage_piutang_konsum(st.session_state.logged_in_user)
+        elif selected == "Manajemen Pengeluaran":
+            manage_pengeluaran(st.session_state.logged_in_user)
+        elif selected == "Laporan Keuangan":
+            financial_report(st.session_state.logged_in_user)
+        elif selected == "Manajemen Pemilik":
+            manage_owner(st.session_state.logged_in_user)
     else:
-        st.title("Login")
-        username = st.text_input("Username")
-        password = st.text_input("Password", type='password')
+        st.sidebar.title("Login")
+        username = st.sidebar.text_input("Username")
+        password = st.sidebar.text_input("Password", type="password")
         
-        if st.button("Login"):
-            user_data = st.session_state.user_data
-            user_row = user_data[(user_data['Username'] == username) & (user_data['Password'] == password)]
-            if not user_row.empty:
-                st.session_state.logged_in_user = username
-                st.session_state.user_role = user_row['Role'].values[0]
-                st.success(f"Selamat datang, {username}!")
+        if st.sidebar.button("Login"):
+            if login(username, password):
+                st.success("Login berhasil!")
             else:
-                st.error("Username atau password salah.")
+                st.error("Login gagal. Username atau password salah.")
 
 if __name__ == "__main__":
     main()
