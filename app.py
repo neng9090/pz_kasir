@@ -577,10 +577,10 @@ def halaman_penjualan(username):
         )
 
 
-# Main function
 def main():
     st.title("Aplikasi Penjualan")
     
+    # Initialize session state if not already present
     if 'logged_in_user' not in st.session_state:
         st.session_state.logged_in_user = None
     if 'stok_barang' not in st.session_state:
@@ -591,10 +591,12 @@ def main():
     # Simulated login for demonstration
     if st.button("Login"):
         st.session_state.logged_in_user = "User"
-        load_data(st.session_state.logged_in_user)  # Load data after login
+        load_data(st.session_state.logged_in_user)  # Load user data after login
 
+    # Check if user is logged in
     if st.session_state.logged_in_user:
         halaman_penjualan(st.session_state.logged_in_user)  # Correct function call here
+
 
 import pandas as pd
 import os
