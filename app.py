@@ -62,11 +62,14 @@ def manage_stok_barang(username):
     if os.path.exists(file_path):
         st.session_state.stok_barang = pd.read_csv(file_path)
     else:
-        st.session_state.stok_barang = pd.DataFrame(columns=['Nama Barang', 'Merk', 'Ukuran/Kemasan', 'Jumlah', 'Harga', 'Waktu Input'])
+        st.session_state.stok_barang = pd.DataFrame(columns=['Nama Barang', 'Merk', 'Ukuran/Kemasan', 'Jumlah', 'Harga', 'Kode Warna/Base', 'Waktu Input'])
 
     if 'stok_barang' in st.session_state:
-        st.dataframe(st.session_state.stok_barang)
-    
+        # Calculate selling price as 15% more than base price
+        st.session_state.stok_barang['Harga Jual'] = st.session_state.stok_barang['Harga'] * 1.15
+        # Display DataFrame excluding the 'Harga' column
+        st.dataframe(st.session_state.stok_barang.drop(columns=['Harga']))
+
     st.subheader("Tambah/Update Stok Barang")
     
     with st.form("stock_form"):
@@ -75,6 +78,7 @@ def manage_stok_barang(username):
         ukuran_kemasan = st.text_input("Ukuran/Kemasan")
         jumlah = st.number_input("Jumlah", min_value=0)
         harga = st.number_input("Harga", min_value=0.0)
+        kode_warna_base = st.text_input("Kode Warna/Base (Opsional)")  # New field for color/base code
         
         submitted = st.form_submit_button("Simpan")
         
@@ -85,10 +89,13 @@ def manage_stok_barang(username):
                 'Ukuran/Kemasan': [ukuran_kemasan],
                 'Jumlah': [jumlah],
                 'Harga': [harga],
+                'Kode Warna/Base': [kode_warna_base],  # Include the new field
                 'Waktu Input': [datetime.now()]
             })
             
             st.session_state.stok_barang = pd.concat([st.session_state.stok_barang, new_stock], ignore_index=True)
+            # Recalculate selling price and save data
+            st.session_state.stok_barang['Harga Jual'] = st.session_state.stok_barang['Harga'] * 1.15
             st.session_state.stok_barang.to_csv(file_path, index=False)
             st.success("Stok barang berhasil diperbarui.")
 
