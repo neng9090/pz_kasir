@@ -496,12 +496,52 @@ def login(username, password):
         return True
     return False
 
+# Define your functions here (initialize_session_state, login, manage functions, etc.)
+
+def initialize_session_state():
+    # Your initialization code here
+    pass
+
+def login(username, password):
+    # Your login logic here
+    pass
+
+def manage_stok_barang(user):
+    # Your stock management logic here
+    pass
+
+def manage_penjualan(user):
+    # Your sales management logic here
+    pass
+
+def manage_supplier(user):
+    # Your supplier management logic here
+    pass
+
+def manage_piutang_konsum(user):
+    # Your consumer debt management logic here
+    pass
+
+def manage_pengeluaran(user):
+    # Your expense management logic here
+    pass
+
+def financial_report(user):
+    # Your financial report logic here
+    pass
+
+def manage_owner():
+    # Your owner management logic here
+    pass
+
 # Main app logic
 def main():
     initialize_session_state()
     
     if st.session_state.logged_in_user:
         st.sidebar.title(f"Hello, {st.session_state.logged_in_user}")
+
+        # Move the menu to the sidebar
         selected = option_menu("Menu", ["Manajemen Stok Barang", "Manajemen Penjualan", "Manajemen Supplier", "Manajemen Piutang Konsumen", "Manajemen Pengeluaran", "Laporan Keuangan", "Manajemen Pemilik"],
                                icons=['box', 'cash-coin', 'person-check', 'wallet', 'arrow-down-circle', 'bar-chart-line', 'shield-lock'], 
                                menu_icon="cast", default_index=0)
@@ -533,3 +573,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
