@@ -427,6 +427,8 @@ def financial_report(username):
         # Load penjualan data
         if os.path.exists(file_paths['PENJUALAN_FILE']):
             penjualan = pd.read_csv(file_paths['PENJUALAN_FILE'])
+            
+            # Check for 'Tanggal' column
             if 'Tanggal' in penjualan.columns:
                 penjualan['Tanggal'] = pd.to_datetime(penjualan['Tanggal'], errors='coerce')
                 
@@ -440,13 +442,17 @@ def financial_report(username):
                     monthly_income = filtered_penjualan.groupby(filtered_penjualan['Tanggal'].dt.to_period('M'))['Total Harga'].sum()
                     monthly_data.append(('Pendapatan', monthly_income))
             else:
-                st.warning("Kolom 'Tanggal' tidak ditemukan di file penjualan.")
+                st.warning("Kolom 'Tanggal' tidak ditemukan di file penjualan. Silakan periksa format file CSV Anda.")
+                return  # Stop further processing if the column is missing
         else:
             st.warning("File penjualan tidak ditemukan.")
+            return
         
         # Load pengeluaran data
         if os.path.exists(file_paths['PENGELUARAN_FILE']):
             pengeluaran = pd.read_csv(file_paths['PENGELUARAN_FILE'])
+            
+            # Check for 'Tanggal' column
             if 'Tanggal' in pengeluaran.columns:
                 pengeluaran['Tanggal'] = pd.to_datetime(pengeluaran['Tanggal'], errors='coerce')
                 
@@ -460,9 +466,11 @@ def financial_report(username):
                     monthly_expense = filtered_pengeluaran.groupby(filtered_pengeluaran['Tanggal'].dt.to_period('M'))['Total Biaya'].sum()
                     monthly_data.append(('Pengeluaran', monthly_expense))
             else:
-                st.warning("Kolom 'Tanggal' tidak ditemukan di file pengeluaran.")
+                st.warning("Kolom 'Tanggal' tidak ditemukan di file pengeluaran. Silakan periksa format file CSV Anda.")
+                return  # Stop further processing if the column is missing
         else:
             st.warning("File pengeluaran tidak ditemukan.")
+            return
         
         laba_bersih = total_pendapatan - total_pengeluaran
         
