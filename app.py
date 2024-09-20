@@ -57,8 +57,8 @@ def initialize_users():
 # Function to manage stock items
 def manage_stok_barang(username):
     st.title("Manajemen Stok Barang")
-    file_path = get_user_file_paths(username)['STOK_BARANG_FILE']
     
+    file_path = get_user_file_paths(username)['STOK_BARANG_FILE']
     if os.path.exists(file_path):
         st.session_state.stok_barang = pd.read_csv(file_path)
     else:
@@ -66,18 +66,18 @@ def manage_stok_barang(username):
 
     if 'stok_barang' in st.session_state:
         st.dataframe(st.session_state.stok_barang)
-
+    
     st.subheader("Tambah/Update Stok Barang")
-
+    
     with st.form("stock_form"):
         nama_barang = st.text_input("Nama Barang")
         merk = st.text_input("Merk")
         ukuran_kemasan = st.text_input("Ukuran/Kemasan")
         jumlah = st.number_input("Jumlah", min_value=0)
         harga = st.number_input("Harga", min_value=0.0)
-
+        
         submitted = st.form_submit_button("Simpan")
-
+        
         if submitted:
             new_stock = pd.DataFrame({
                 'Nama Barang': [nama_barang],
@@ -87,6 +87,7 @@ def manage_stok_barang(username):
                 'Harga': [harga],
                 'Waktu Input': [datetime.now()]
             })
+            
             st.session_state.stok_barang = pd.concat([st.session_state.stok_barang, new_stock], ignore_index=True)
             st.session_state.stok_barang.to_csv(file_path, index=False)
             st.success("Stok barang berhasil diperbarui.")
@@ -94,8 +95,8 @@ def manage_stok_barang(username):
 # Function to manage sales
 def manage_penjualan(username):
     st.title("Manajemen Penjualan")
-    file_path = get_user_file_paths(username)['PENJUALAN_FILE']
     
+    file_path = get_user_file_paths(username)['PENJUALAN_FILE']
     if os.path.exists(file_path):
         st.session_state.penjualan = pd.read_csv(file_path)
     else:
@@ -103,9 +104,9 @@ def manage_penjualan(username):
 
     if 'penjualan' in st.session_state:
         st.dataframe(st.session_state.penjualan)
-
+    
     st.subheader("Tambah Penjualan")
-
+    
     with st.form("sales_form"):
         nama_pelanggan = st.text_input("Nama Pelanggan")
         nomor_telepon = st.text_input("Nomor Telepon")
@@ -113,9 +114,9 @@ def manage_penjualan(username):
         nama_barang = st.text_input("Nama Barang")
         jumlah = st.number_input("Jumlah", min_value=1)
         harga_jual = st.number_input("Harga Jual", min_value=0.0)
-
+        
         submitted = st.form_submit_button("Simpan")
-
+        
         if submitted:
             total_harga = jumlah * harga_jual
             new_sale = pd.DataFrame({
@@ -128,6 +129,7 @@ def manage_penjualan(username):
                 'Total Harga': [total_harga],
                 'Waktu': [datetime.now()]
             })
+            
             st.session_state.penjualan = pd.concat([st.session_state.penjualan, new_sale], ignore_index=True)
             st.session_state.penjualan.to_csv(file_path, index=False)
             st.success("Penjualan berhasil diperbarui.")
@@ -135,8 +137,8 @@ def manage_penjualan(username):
 # Function to manage suppliers
 def manage_supplier(username):
     st.title("Manajemen Supplier")
-    file_path = get_user_file_paths(username)['SUPPLIER_FILE']
     
+    file_path = get_user_file_paths(username)['SUPPLIER_FILE']
     if os.path.exists(file_path):
         st.session_state.supplier = pd.read_csv(file_path)
     else:
@@ -144,16 +146,16 @@ def manage_supplier(username):
 
     if 'supplier' in st.session_state:
         st.dataframe(st.session_state.supplier)
-
+    
     st.subheader("Tambah Supplier")
-
+    
     with st.form("supplier_form"):
         nama_supplier = st.text_input("Nama Supplier")
         alamat = st.text_input("Alamat")
         kontak = st.text_input("Kontak")
-
+        
         submitted = st.form_submit_button("Simpan")
-
+        
         if submitted:
             new_supplier = pd.DataFrame({
                 'Nama Supplier': [nama_supplier],
@@ -161,6 +163,7 @@ def manage_supplier(username):
                 'Kontak': [kontak],
                 'Waktu Input': [datetime.now()]
             })
+            
             st.session_state.supplier = pd.concat([st.session_state.supplier, new_supplier], ignore_index=True)
             st.session_state.supplier.to_csv(file_path, index=False)
             st.success("Supplier berhasil diperbarui.")
@@ -168,8 +171,8 @@ def manage_supplier(username):
 # Function to manage consumer debts
 def manage_piutang_konsum(username):
     st.title("Manajemen Piutang Konsumen")
-    file_path = get_user_file_paths(username)['PIUTANG_KONSUMEN_FILE']
     
+    file_path = get_user_file_paths(username)['PIUTANG_KONSUMEN_FILE']
     if os.path.exists(file_path):
         st.session_state.piutang_konsum = pd.read_csv(file_path)
     else:
@@ -177,16 +180,16 @@ def manage_piutang_konsum(username):
 
     if 'piutang_konsum' in st.session_state:
         st.dataframe(st.session_state.piutang_konsum)
-
+    
     st.subheader("Tambah Piutang Konsumen")
-
+    
     with st.form("piutang_form"):
         nama_konsumen = st.text_input("Nama Konsumen")
         jumlah_piutang = st.number_input("Jumlah Piutang", min_value=0.0)
         tanggal = st.date_input("Tanggal", value=datetime.now())
-
+        
         submitted = st.form_submit_button("Simpan")
-
+        
         if submitted:
             new_piutang = pd.DataFrame({
                 'Nama Konsumen': [nama_konsumen],
@@ -194,6 +197,7 @@ def manage_piutang_konsum(username):
                 'Tanggal': [tanggal],
                 'Waktu Input': [datetime.now()]
             })
+            
             st.session_state.piutang_konsum = pd.concat([st.session_state.piutang_konsum, new_piutang], ignore_index=True)
             st.session_state.piutang_konsum.to_csv(file_path, index=False)
             st.success("Piutang konsumen berhasil diperbarui.")
@@ -201,8 +205,8 @@ def manage_piutang_konsum(username):
 # Function to manage expenses
 def manage_pengeluaran(username):
     st.title("Manajemen Pengeluaran")
-    file_path = get_user_file_paths(username)['PENGELUARAN_FILE']
     
+    file_path = get_user_file_paths(username)['PENGELUARAN_FILE']
     if os.path.exists(file_path):
         st.session_state.pengeluaran = pd.read_csv(file_path)
     else:
@@ -210,16 +214,16 @@ def manage_pengeluaran(username):
 
     if 'pengeluaran' in st.session_state:
         st.dataframe(st.session_state.pengeluaran)
-
+    
     st.subheader("Tambah Pengeluaran")
-
+    
     with st.form("pengeluaran_form"):
         nama_penerima = st.text_input("Nama Penerima Dana")
         keterangan = st.text_input("Keterangan")
         total_biaya = st.number_input("Total Biaya", min_value=0.0)
-
+        
         submitted = st.form_submit_button("Simpan")
-
+        
         if submitted:
             new_pengeluaran = pd.DataFrame({
                 'Nama Penerima Dana': [nama_penerima],
@@ -227,6 +231,7 @@ def manage_pengeluaran(username):
                 'Total Biaya': [total_biaya],
                 'Waktu Input': [datetime.now()]
             })
+            
             st.session_state.pengeluaran = pd.concat([st.session_state.pengeluaran, new_pengeluaran], ignore_index=True)
             st.session_state.pengeluaran.to_csv(file_path, index=False)
             st.success("Pengeluaran berhasil diperbarui.")
@@ -236,7 +241,8 @@ def financial_report(username):
     st.title("Laporan Keuangan")
     
     file_paths = get_user_file_paths(username)
-
+    
+    # Load and display financial data
     try:
         penjualan = pd.read_csv(file_paths['PENJUALAN_FILE'])
         pengeluaran = pd.read_csv(file_paths['PENGELUARAN_FILE'])
@@ -253,36 +259,43 @@ def financial_report(username):
         st.error("Error loading financial data: {}".format(e))
 
 # Owner management function
-def manage_owner(username):
+def manage_owner():
     st.title("Manajemen Pemilik")
     
-    # Check for access security
     password = st.text_input("Masukkan Password untuk Akses Halaman Pemilik", type="password")
-    if st.button("Masuk"):
-        if password == "admin_password":  # Replace with your desired password
-            # Display data tables
-            st.subheader("Data Semua Sumber")
+    
+    if st.button("Masuk Halaman"):
+        if password == "9999":
+            st.success("Akses diterima!")
+            # Load data from all sources
+            file_paths = get_user_file_paths(st.session_state.logged_in_user)
             all_data = {}
-            for key in ['STOK_BARANG_FILE', 'PENJUALAN_FILE', 'SUPPLIER_FILE', 'PIUTANG_KONSUMEN_FILE', 'PENGELUARAN_FILE']:
-                file_path = get_user_file_paths(username)[key]
-                if os.path.exists(file_path):
-                    all_data[key] = pd.read_csv(file_path)
+            for key in file_paths.keys():
+                if os.path.exists(file_paths[key]):
+                    all_data[key] = pd.read_csv(file_paths[key])
                 else:
-                    all_data[key] = pd.DataFrame(columns=["Nama", "Keterangan", "Waktu Input"])  # Replace with actual columns
-                
-            for key, df in all_data.items():
-                st.subheader(key.replace("_", " ").title())
-                st.dataframe(df)
-
+                    all_data[key] = pd.DataFrame(columns=['Data'])  # Placeholder for no data
+            
+            st.subheader("Data Stok Barang")
+            st.dataframe(all_data['STOK_BARANG_FILE'])
+            st.subheader("Data Penjualan")
+            st.dataframe(all_data['PENJUALAN_FILE'])
+            st.subheader("Data Supplier")
+            st.dataframe(all_data['SUPPLIER_FILE'])
+            st.subheader("Data Piutang Konsumen")
+            st.dataframe(all_data['PIUTANG_KONSUMEN_FILE'])
+            st.subheader("Data Pengeluaran")
+            st.dataframe(all_data['PENGELUARAN_FILE'])
+            
             # Export option
             if st.button("Ekspor Semua Data ke Excel"):
-                export_data_path = f'{username}_semua_data.xlsx'
-                with pd.ExcelWriter(export_data_path) as writer:
-                    for key, df in all_data.items():
-                        df.to_excel(writer, sheet_name=key.replace("_", " "), index=False)
-                st.success(f"Data diekspor ke {export_data_path}")
+                for key in file_paths.keys():
+                    if os.path.exists(file_paths[key]):
+                        df = pd.read_csv(file_paths[key])
+                        df.to_excel(f"{key.replace('_FILE', '')}.xlsx", index=False)
+                st.success("Data berhasil diekspor ke Excel.")
         else:
-            st.error("Password salah!")
+            st.error("Password salah.")
 
 # Authentication function
 def login(username, password):
@@ -296,7 +309,7 @@ def login(username, password):
 # Main app logic
 def main():
     initialize_session_state()
-
+    
     if st.session_state.logged_in_user:
         st.sidebar.title(f"Hello, {st.session_state.logged_in_user}")
         selected = option_menu("Menu", ["Manajemen Stok Barang", "Manajemen Penjualan", "Manajemen Supplier", "Manajemen Piutang Konsumen", "Manajemen Pengeluaran", "Laporan Keuangan", "Manajemen Pemilik"],
@@ -316,12 +329,12 @@ def main():
         elif selected == "Laporan Keuangan":
             financial_report(st.session_state.logged_in_user)
         elif selected == "Manajemen Pemilik":
-            manage_owner(st.session_state.logged_in_user)
+            manage_owner()
     else:
         st.sidebar.title("Login")
         username = st.sidebar.text_input("Username")
         password = st.sidebar.text_input("Password", type="password")
-
+        
         if st.sidebar.button("Login"):
             if login(username, password):
                 st.success("Login berhasil!")
