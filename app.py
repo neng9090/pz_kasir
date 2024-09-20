@@ -170,11 +170,7 @@ def manage_penjualan(username):
                 'Waktu': [datetime.now()]
             })
             
-            if 'penjualan' in st.session_state:
-                st.session_state.penjualan = pd.concat([st.session_state.penjualan, new_sale], ignore_index=True)
-            else:
-                st.session_state.penjualan = new_sale
-            
+            st.session_state.penjualan = pd.concat([st.session_state.penjualan, new_sale], ignore_index=True)
             st.session_state.penjualan.to_csv(file_path, index=False)
             st.success("Penjualan berhasil diperbarui.")
 
@@ -185,6 +181,49 @@ def manage_penjualan(username):
             stok_barang.to_csv(stok_barang_path, index=False)
             st.success("Stok berhasil diperbarui.")
 
+    # Download Sales Data
+    st.subheader("Unduh Data Penjualan")
+    download_button = st.button("Download Data Penjualan")
+
+    if download_button:
+        def to_excel(df):
+            output = BytesIO()
+            with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+                df.to_excel(writer, sheet_name='Penjualan', index=False)
+            output.seek(0)
+            return output
+
+        sales_data_excel = to_excel(st.session_state.penjualan)
+        st.download_button(label="Download Penjualan Excel", data=sales_data_excel, file_name='data_penjualan.xlsx', mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+
+    # Receipt Options
+    st.subheader("Cetak Struk")
+    receipt_title = st.text_input("Judul Struk", "Struk Penjualan")
+    thank_you_message = st.text_input("Ucapan Terima Kasih", "Terima kasih atas pembelian Anda!")
+
+    if st.button("Cetak Struk"):
+        if 'penjualan' in st.session_state:
+            latest_sale = st.session_state.penjualan.iloc[-1]
+            receipt = f"""
+            {receipt_title}
+            ------------------------
+            Nama Pelanggan: {latest_sale['Nama Pelanggan']}
+            Nomor Telepon: {latest_sale['Nomor Telepon']}
+            Alamat: {latest_sale['Alamat']}
+            Nama Barang: {latest_sale['Nama Barang']}
+            Merk: {latest_sale['Merk']}
+            Ukuran/Kemasan: {latest_sale['Ukuran/Kemasan']}
+            Kode Warna/Base: {latest_sale['Kode Warna/Base']}
+            Jumlah: {latest_sale['Jumlah']}
+            Harga Jual: {latest_sale['Harga Jual']}
+            Total Harga: {latest_sale['Total Harga']}
+            Waktu: {latest_sale['Waktu']}
+            ------------------------
+            {thank_you_message}
+            """
+            st.text(receipt)
+        else:
+            st.warning("Tidak ada penjualan untuk dicetak.")
         
 # Function to manage suppliers
 def manage_supplier(username):
