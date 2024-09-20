@@ -453,10 +453,10 @@ def financial_report(username):
         if os.path.exists(file_paths['PENJUALAN_FILE']):
             penjualan = pd.read_csv(file_paths['PENJUALAN_FILE'])
             if 'Tanggal' in penjualan.columns:
+                penjualan['Tanggal'] = pd.to_datetime(penjualan['Tanggal'], errors='coerce')
                 total_pendapatan = penjualan['Total Harga'].sum()
-
+                
                 # Calculate monthly data
-                penjualan['Tanggal'] = pd.to_datetime(penjualan['Tanggal'])
                 monthly_income = penjualan.groupby(penjualan['Tanggal'].dt.to_period('M'))['Total Harga'].sum()
                 monthly_data.append(('Pendapatan', monthly_income))
             else:
@@ -468,10 +468,10 @@ def financial_report(username):
         if os.path.exists(file_paths['PENGELUARAN_FILE']):
             pengeluaran = pd.read_csv(file_paths['PENGELUARAN_FILE'])
             if 'Tanggal' in pengeluaran.columns:
+                pengeluaran['Tanggal'] = pd.to_datetime(pengeluaran['Tanggal'], errors='coerce')
                 total_pengeluaran = pengeluaran['Total Biaya'].sum()
 
                 # Calculate monthly data
-                pengeluaran['Tanggal'] = pd.to_datetime(pengeluaran['Tanggal'])
                 monthly_expense = pengeluaran.groupby(pengeluaran['Tanggal'].dt.to_period('M'))['Total Biaya'].sum()
                 monthly_data.append(('Pengeluaran', monthly_expense))
             else:
@@ -499,9 +499,11 @@ def financial_report(username):
             
             monthly_report.index = monthly_report.index.astype(str)  # Convert PeriodIndex to string for display
             st.dataframe(monthly_report)
+        else:
+            st.warning("Tidak ada data bulanan untuk ditampilkan.")
 
     except Exception as e:
-        st.error("Error loading financial data: {}".format(e))
+        st.error(f"Error loading financial data: {str(e)}")
 
 
         
