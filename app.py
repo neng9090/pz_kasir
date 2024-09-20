@@ -106,6 +106,14 @@ from io import BytesIO
 from datetime import datetime
 import os
 
+# Helper function to get file paths for the user (you'll need to define this properly in your app)
+def get_user_file_paths(username):
+    base_path = f"./data/{username}/"
+    return {
+        'PENJUALAN_FILE': os.path.join(base_path, 'penjualan.csv'),
+        'STOK_BARANG_FILE': os.path.join(base_path, 'stok_barang.csv')
+    }
+
 def manage_penjualan(username):
     st.title("Manajemen Penjualan")
 
@@ -113,6 +121,11 @@ def manage_penjualan(username):
     file_path = get_user_file_paths(username)['PENJUALAN_FILE']
     if os.path.exists(file_path):
         st.session_state.penjualan = pd.read_csv(file_path)
+        # Check the column names
+        st.write("Columns in penjualan file:", st.session_state.penjualan.columns.tolist())
+        if 'ID Penjualan' not in st.session_state.penjualan.columns:
+            st.error("'ID Penjualan' column not found!")
+            return
     else:
         st.session_state.penjualan = pd.DataFrame(columns=[
             'ID Penjualan', 'Nama Pelanggan', 'Nomor Telepon', 'Alamat', 
@@ -120,18 +133,28 @@ def manage_penjualan(username):
             'Kode Warna/Base', 'Jumlah', 'Harga Jual', 
             'Total Harga', 'Waktu'
         ])
-    
+
     # Customer search functionality
     st.subheader("Cari Pelanggan")
     search_customer = st.text_input("Nama Pelanggan")
     if search_customer:
         filtered_penjualan = st.session_state.penjualan[st.session_state.penjualan['Nama Pelanggan'].str.contains(search_customer, case=False)]
         st.dataframe(filtered_penjualan)
-    
+
     # Display the sales data
     st.dataframe(st.session_state.penjualan)
 
     st.subheader("Tambah Penjualan")
+
+    # Load stock data
+    stok_barang_path = get_user_file_paths(username)['STOK_BARANG_FILE']
+    if os.path.exists(stok_barang_path):
+        st.session_state.stok_barang = pd.read_csv(stok_barang_path)
+    else:
+        st.session_state.stok_barang = pd.DataFrame(columns=[
+            'ID Barang', 'Nama Barang', 'Merk', 'Ukuran/Kemasan', 
+            'Kode Warna/Base', 'Jumlah', 'Harga Jual'
+        ])
 
     # Search functionality for stock items
     st.subheader("Cari Stok Barang")
@@ -195,51 +218,54 @@ def manage_penjualan(username):
             st.success("Penjualan berhasil diperbarui.")
 
             # Update stock quantity
-            stok_barang_path = get_user_file_paths(username)['STOK_BARANG_FILE']
-            stok_barang = pd.read_csv(stok_barang_path)
             stok_barang.loc[selected_item.name, 'Jumlah'] -= jumlah
             stok_barang.to_csv(stok_barang_path, index=False)
             st.success("Stok berhasil diperbarui.")
 
-    # Receipt Options
-    st.subheader("Review Struk")
-    receipt_title = st.text_input("Judul Struk", "Struk Penjualan")
-    thank_you_message = st.text_input("Ucapan Terima Kasih", "Terima kasih atas pembelian Anda!")
-    
-    # Receipt Download
+        # Receipt Options
+        st.subheader("Review Struk")
+        receipt_title = st.text_input("Judul Struk", "Struk Penjualan")
+        thank_you_message = st.text_input("Ucapan Terima Kasih", "Terima kasih atas pembelian Anda!")
+        
+    # Receipt Download Section
     st.subheader("Download Struk Penjualan")
     sale_id_to_download = st.number_input("ID Penjualan", min_value=1, max_value=len(st.session_state.penjualan), step=1)
-    
-    if st.button("Generate Struk"):
+
+    if st.button("Download Struk"):
         if not st.session_state.penjualan.empty:
             try:
-                selected_sale = st.session_state.penjualan[st.session_state.penjualan['ID Penjualan'] == sale_id_to_download].iloc[0]
-                receipt_text = f"""
-                {receipt_title}
-                {'-' * 30}
-                Nama Pelanggan      : {selected_sale['Nama Pelanggan']}
-                Nomor Telepon       : {selected_sale['Nomor Telepon']}
-                Alamat              : {selected_sale['Alamat']}
-                Nama Barang         : {selected_sale['Nama Barang']}
-                Merk                : {selected_sale['Merk']}
-                Ukuran/Kemasan      : {selected_sale['Ukuran/Kemasan']}
-                Kode Warna/Base     : {selected_sale['Kode Warna/Base']}
-                Jumlah              : {selected_sale['Jumlah']}
-                Harga Jual          : {selected_sale['Harga Jual']}
-                Total Harga         : {selected_sale['Total Harga']}
-                Waktu               : {selected_sale['Waktu']}
-                {'-' * 30}
-                {thank_you_message}
-                """
-                # Save the receipt as a .txt file
-                receipt_output = BytesIO()
-                receipt_output.write(receipt_text.encode('utf-8'))
-                receipt_output.seek(0)
+                # Ensure that the ID is valid and found
+                selected_sale = st.session_state.penjualan[st.session_state.penjualan['ID Penjualan'] == sale_id_to_download]
+                if selected_sale.empty:
+                    st.error(f"Penjualan dengan ID {sale_id_to_download} tidak ditemukan.")
+                else:
+                    selected_sale = selected_sale.iloc[0]  # Get the first row as a Series
+                    receipt_text = f"""
+                    {receipt_title}
+                    {'-' * 30}
+                    Nama Pelanggan      : {selected_sale['Nama Pelanggan']}
+                    Nomor Telepon       : {selected_sale['Nomor Telepon']}
+                    Alamat              : {selected_sale['Alamat']}
+                    Nama Barang         : {selected_sale['Nama Barang']}
+                    Merk                : {selected_sale['Merk']}
+                    Ukuran/Kemasan      : {selected_sale['Ukuran/Kemasan']}
+                    Kode Warna/Base     : {selected_sale['Kode Warna/Base']}
+                    Jumlah              : {selected_sale['Jumlah']}
+                    Harga Jual          : {selected_sale['Harga Jual']}
+                    Total Harga         : {selected_sale['Total Harga']}
+                    Waktu               : {selected_sale['Waktu']}
+                    {'-' * 30}
+                    {thank_you_message}
+                    """
+                    # Save the receipt as a .txt file
+                    receipt_output = BytesIO()
+                    receipt_output.write(receipt_text.encode('utf-8'))
+                    receipt_output.seek(0)
     
-                # Create a download button for the receipt
-                st.download_button(label="Download Struk Penjualan", data=receipt_output, file_name=f'struk_penjualan_{sale_id_to_download}.txt', mime='text/plain')
-            except IndexError:
-                st.error("Penjualan dengan ID tersebut tidak ditemukan.")
+                    # Create a download button for the receipt
+                    st.download_button(label="Download Struk Penjualan", data=receipt_output, file_name=f'struk_penjualan_{sale_id_to_download}.txt', mime='text/plain')
+            except KeyError as e:
+                st.error(f"Error accessing column: {str(e)}")
         else:
             st.warning("Tidak ada data penjualan.")
 
