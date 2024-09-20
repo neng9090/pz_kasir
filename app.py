@@ -126,31 +126,30 @@ def manage_penjualan(username):
         # Dropdown to select item by ID
         id_barang = st.selectbox("ID Barang", st.session_state.stok_barang['ID Barang'].unique())
         
-        # Ensure the selected stock exists
-        if id_barang:
-            selected_stock = st.session_state.stok_barang.loc[st.session_state.stok_barang['ID Barang'] == id_barang]
-            if not selected_stock.empty:
-                selected_stock = selected_stock.iloc[0]
-                nama_barang = selected_stock['Nama Barang']
-                merk = selected_stock['Merk']
-                ukuran_kemasan = selected_stock['Ukuran/Kemasan']
-                kode_warna_base = selected_stock['Kode Warna/Base']
-                max_jumlah = selected_stock['Jumlah']
-            else:
-                st.error("Barang tidak ditemukan.")
-                return
-        else:
-            st.warning("Silakan pilih barang.")
-
-        jumlah = st.number_input("Jumlah", min_value=1, max_value=max_jumlah if 'max_jumlah' in locals() else 0)
+        # Get the selected stock
+        selected_stock = st.session_state.stok_barang.loc[st.session_state.stok_barang['ID Barang'] == id_barang]
         
-        # Fetch selling price from stock data
-        harga_jual = selected_stock['Harga Jual'] if 'selected_stock' in locals() else 0
+        if not selected_stock.empty:
+            selected_stock = selected_stock.iloc[0]
+            nama_barang = selected_stock['Nama Barang']
+            merk = selected_stock['Merk']
+            ukuran_kemasan = selected_stock['Ukuran/Kemasan']
+            kode_warna_base = selected_stock['Kode Warna/Base']
+            max_jumlah = selected_stock['Jumlah']
+            harga_jual = selected_stock['Harga Jual']
+        else:
+            st.error("Barang tidak ditemukan.")
+            return
+        
+        jumlah = st.number_input("Jumlah", min_value=1, max_value=max_jumlah)
+
+        # Calculate total price based on quantity
         total_harga = jumlah * harga_jual
         
         submitted = st.form_submit_button("Simpan")
         
         if submitted:
+            # Create a new sale entry
             new_sale = pd.DataFrame({
                 'Nama Pelanggan': [nama_pelanggan],
                 'Nomor Telepon': [nomor_telepon],
@@ -166,6 +165,7 @@ def manage_penjualan(username):
                 'Waktu': [datetime.now()]
             })
             
+            # Update sales data
             st.session_state.penjualan = pd.concat([st.session_state.penjualan, new_sale], ignore_index=True)
             st.session_state.penjualan.to_csv(file_path, index=False)
             st.success("Penjualan berhasil diperbarui.")
@@ -178,6 +178,7 @@ def manage_penjualan(username):
     st.subheader("Tabel Stok Barang")
     if 'stok_barang' in st.session_state:
         st.dataframe(st.session_state.stok_barang.drop(columns=['Harga'], errors='ignore'))
+
 
 
 # Function to manage suppliers
