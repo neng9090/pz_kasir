@@ -138,12 +138,12 @@ def manage_penjualan(username):
             st.error(f"Error loading penjualan file: {str(e)}")
             return
     else:
-        # Initialize empty sales table with 'ID Penjualan' column
+        # Initialize empty sales table with 'ID Penjualan' and 'Tanggal' column
         st.session_state.penjualan = pd.DataFrame(columns=[
             'ID Penjualan', 'Nama Pelanggan', 'Nomor Telepon', 'Alamat', 
             'Nama Barang', 'Merk', 'Ukuran/Kemasan', 
             'Kode Warna/Base', 'Jumlah', 'Harga Jual', 
-            'Total Harga', 'Waktu'
+            'Total Harga', 'Waktu', 'Tanggal'
         ])
         st.warning("Tidak ada data penjualan yang ditemukan, menginisialisasi data penjualan kosong.")
 
@@ -247,7 +247,8 @@ def manage_penjualan(username):
                     'Jumlah': [jumlah],
                     'Harga': [harga],  # Keeping the 'Harga' column for sales data
                     'Total Harga': [total_harga],
-                    'Waktu': [datetime.now().strftime('%Y-%m-%d %H:%M:%S')]
+                    'Waktu': [datetime.now().strftime('%Y-%m-%d %H:%M:%S')],
+                    'Tanggal': [datetime.now().strftime('%Y-%m-%d')]  # Adding 'Tanggal'
                 })
 
                 # Append new sale and save to CSV
@@ -288,23 +289,7 @@ def manage_penjualan(username):
                     harga = selected_sale.get('Harga', 0)
                     total_harga = selected_sale.get('Total Harga', 0)
                     waktu = selected_sale.get('Waktu', 'Tidak Diketahui')
-    
-                    # Format receipt text for thermal printer
-                    receipt_text = (
-                        f"{'=' * 30}\n"
-                        f"{receipt_header.center(30)}\n"
-                        f"{'=' * 30}\n"
-                        f"Nama Pelanggan : {nama_pelanggan[:20].ljust(20)}\n"
-                        f"Nomor Telepon  : {nomor_telepon[:15].ljust(15)}\n"
-                        f"Alamat         : {alamat[:30].ljust(30)}\n"
-                        f"Nama Barang    : {nama_barang[:20].ljust(20)}\n"
-                        f"Merk           : {merk[:15].ljust(15)}\n"
-                        f"Ukuran         : {ukuran[:15].ljust(15)}\n"
-                        f"Warna          : {warna[:15].ljust(15)}\n"
-                        f"Jumlah         : {str(jumlah).rjust(15)}\n"
-                        f"Harga          : {str(harga).rjust(15)}\n"
-                        f"Total          : {str(total_harga).rjust(15)}\n"
-                        f"Waktu          : {waktu.ljust(30)}\n"
+                    tanggal = selected_sale.get('Tanggal', 'Tidak Diketahui')  # Retrieve 'Tanggal'
                         f"{'=' * 30}\n"
                         f"{thank_you_message.center(30)}\n"
                         f"{'=' * 30}\n"
