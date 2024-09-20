@@ -119,6 +119,12 @@ def manage_stok_barang(username):
             st.session_state.stok_barang.to_csv(file_path, index=False)
             st.success("Stok barang berhasil diperbarui.")
 
+from datetime import datetime
+import pandas as pd
+import streamlit as st
+import os
+from io import BytesIO
+
 def manage_penjualan(username):
     st.title("Manajemen Penjualan")
 
@@ -290,6 +296,24 @@ def manage_penjualan(username):
                     total_harga = selected_sale.get('Total Harga', 0)
                     waktu = selected_sale.get('Waktu', 'Tidak Diketahui')
                     tanggal = selected_sale.get('Tanggal', 'Tidak Diketahui')  # Retrieve 'Tanggal'
+    
+                    # Format receipt text for thermal printer
+                    receipt_text = (
+                        f"{'=' * 30}\n"
+                        f"{receipt_header.center(30)}\n"
+                        f"{'=' * 30}\n"
+                        f"Nama Pelanggan : {nama_pelanggan[:20].ljust(20)}\n"
+                        f"Nomor Telepon  : {nomor_telepon[:15].ljust(15)}\n"
+                        f"Alamat         : {alamat[:30].ljust(30)}\n"
+                        f"Nama Barang    : {nama_barang[:20].ljust(20)}\n"
+                        f"Merk           : {merk[:15].ljust(15)}\n"
+                        f"Ukuran         : {ukuran[:15].ljust(15)}\n"
+                        f"Warna          : {warna[:15].ljust(15)}\n"
+                        f"Jumlah         : {str(jumlah).rjust(15)}\n"
+                        f"Harga          : {str(harga).rjust(15)}\n"
+                        f"Total          : {str(total_harga).rjust(15)}\n"
+                        f"Waktu          : {waktu.ljust(30)}\n"
+                        f"Tanggal        : {tanggal.ljust(30)}\n"  # Include 'Tanggal' in receipt
                         f"{'=' * 30}\n"
                         f"{thank_you_message.center(30)}\n"
                         f"{'=' * 30}\n"
@@ -306,6 +330,7 @@ def manage_penjualan(username):
                 st.error(f"Error saat mengakses kolom data: {str(e)}")
         else:
             st.warning("Data penjualan kosong.")
+
 
 
         
