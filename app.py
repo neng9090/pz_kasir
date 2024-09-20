@@ -1032,20 +1032,6 @@ def main():
             elif choice == "Laporan Keuangan":
                 view_financial_reports()  # Add your financial report viewing function
 
-if __name__ == "__main__":
-    main()
-        if choice == "Manajemen Stok Barang":
-            manage_stok_barang(st.session_state.logged_in_user)
-        elif choice == "Manajemen Penjualan":
-            manage_penjualan(st.session_state.logged_in_user)
-        elif choice == "Manajemen Supplier":
-            manage_supplier(st.session_state.logged_in_user)
-        elif choice == "Manajemen Piutang Konsumen":
-            manage_piutang_konsum(st.session_state.logged_in_user)
-        elif choice == "Manajemen Pengeluaran":
-            manage_pengeluaran(st.session_state.logged_in_user)
-        elif choice == "Laporan Keuangan":
-            update_historical_data(st.session_state.logged_in_user)
 
 if __name__ == "__main__":
     main()
