@@ -246,61 +246,63 @@ def manage_penjualan(username):
     thank_you_message = st.text_area("Pesan Terima Kasih", "Terima Kasih atas Pembelian Anda!")
     sale_id_to_download = st.number_input("Masukkan ID Penjualan", min_value=1, max_value=len(st.session_state.penjualan), step=1)
 
-    if st.button("Download Struk"):
-        if not st.session_state.penjualan.empty:
-            try:
-                # Find the sale by ID
-                selected_sale = st.session_state.penjualan[st.session_state.penjualan['ID Penjualan'] == sale_id_to_download]
-                if selected_sale.empty:
-                    st.error(f"Penjualan dengan ID {sale_id_to_download} tidak ditemukan.")
-                else:
-                    selected_sale = selected_sale.iloc[0]  # Get the first matching row as a Series
-    
-                    # Safely access the selected sale details
-                    nama_pelanggan = selected_sale.get('Nama Pelanggan', 'Tidak Diketahui')[:20]
-                    nomor_telepon = selected_sale.get('Nomor Telepon', 'Tidak Diketahui')[:15]
-                    alamat = selected_sale.get('Alamat', 'Tidak Diketahui')[:30]
-                    nama_barang = selected_sale.get('Nama Barang', 'Tidak Diketahui')[:20]
-                    merk = selected_sale.get('Merk', 'Tidak Diketahui')[:15]
-                    ukuran = selected_sale.get('Ukuran/Kemasan', 'Tidak Diketahui')[:20]
-                    warna = selected_sale.get('Kode Warna/Base', 'Tidak Diketahui')[:15]
-                    jumlah = selected_sale.get('Jumlah', 0)
-                    harga_jual = selected_sale.get('Harga Jual', 0)
-                    total_harga = selected_sale.get('Total Harga', 0)
-                    waktu = selected_sale.get('Waktu', 'Tidak Diketahui')
-    
-                    # Format receipt text
-                    receipt_text = (
-                        f"{'=' * 29}\n"
-                        f"{receipt_header.center(29)}\n"
-                        f"{'=' * 29}\n"
-                        f"Nama Pelanggan:   {nama_pelanggan}\n"
-                        f"Nomor Telepon:    {nomor_telepon}\n"
-                        f"Alamat:           {alamat}\n"
-                        f"Nama Barang:      {nama_barang}\n"
-                        f"Merk:             {merk}\n"
-                        f"Ukuran/Kemasan:   {ukuran}\n"
-                        f"Kode Warna/Base:  {warna}\n"
-                        f"Jumlah:           {jumlah}\n"
-                        f"Harga Jual:       {harga_jual}\n"
-                        f"Total Harga:      {total_harga}\n"
-                        f"Waktu:            {waktu}\n"
-                        f"{'=' * 29}\n"
-                        f"{thank_you_message.center(29)}\n"
-                        f"{'=' * 29}\n"
-                    )
-    
-                    # Prepare the receipt for download as .txt file
-                    receipt_output = BytesIO()
-                    receipt_output.write(receipt_text.encode('utf-8'))
-                    receipt_output.seek(0)
-    
-                    # Download button for the receipt
-                    st.download_button(label="Download Struk Penjualan", data=receipt_output, file_name=f'struk_penjualan_{sale_id_to_download}.txt', mime='text/plain')
-            except KeyError as e:
-                st.error(f"Error saat mengakses kolom data: {str(e)}")
-        else:
-            st.warning("Data penjualan kosong.")
+if st.button("Download Struk"):
+    if not st.session_state.penjualan.empty:
+        try:
+            # Find the sale by ID
+            selected_sale = st.session_state.penjualan[st.session_state.penjualan['ID Penjualan'] == sale_id_to_download]
+
+            # Check if selected_sale is empty
+            if selected_sale.empty:
+                st.error(f"Penjualan dengan ID {sale_id_to_download} tidak ditemukan.")
+            else:
+                selected_sale = selected_sale.iloc[0]  # Get the first matching row as a Series
+                
+                # Safely access the selected sale details
+                nama_pelanggan = selected_sale['Nama Pelanggan'] if 'Nama Pelanggan' in selected_sale else 'Tidak Diketahui'
+                nomor_telepon = selected_sale['Nomor Telepon'] if 'Nomor Telepon' in selected_sale else 'Tidak Diketahui'
+                alamat = selected_sale['Alamat'] if 'Alamat' in selected_sale else 'Tidak Diketahui'
+                nama_barang = selected_sale['Nama Barang'] if 'Nama Barang' in selected_sale else 'Tidak Diketahui'
+                merk = selected_sale['Merk'] if 'Merk' in selected_sale else 'Tidak Diketahui'
+                ukuran = selected_sale['Ukuran/Kemasan'] if 'Ukuran/Kemasan' in selected_sale else 'Tidak Diketahui'
+                warna = selected_sale['Kode Warna/Base'] if 'Kode Warna/Base' in selected_sale else 'Tidak Diketahui'
+                jumlah = selected_sale['Jumlah'] if 'Jumlah' in selected_sale else 0
+                harga_jual = selected_sale['Harga Jual'] if 'Harga Jual' in selected_sale else 0
+                total_harga = selected_sale['Total Harga'] if 'Total Harga' in selected_sale else 0
+                waktu = selected_sale['Waktu'] if 'Waktu' in selected_sale else 'Tidak Diketahui'
+
+                # Format receipt text
+                receipt_text = (
+                    f"{'=' * 29}\n"
+                    f"{receipt_header.center(29)}\n"
+                    f"{'=' * 29}\n"
+                    f"Nama Pelanggan:   {nama_pelanggan}\n"
+                    f"Nomor Telepon:    {nomor_telepon}\n"
+                    f"Alamat:           {alamat}\n"
+                    f"Nama Barang:      {nama_barang}\n"
+                    f"Merk:             {merk}\n"
+                    f"Ukuran/Kemasan:   {ukuran}\n"
+                    f"Kode Warna/Base:  {warna}\n"
+                    f"Jumlah:           {jumlah}\n"
+                    f"Harga Jual:       {harga_jual}\n"
+                    f"Total Harga:      {total_harga}\n"
+                    f"Waktu:            {waktu}\n"
+                    f"{'=' * 29}\n"
+                    f"{thank_you_message.center(29)}\n"
+                    f"{'=' * 29}\n"
+                )
+
+                # Prepare the receipt for download as .txt file
+                receipt_output = BytesIO()
+                receipt_output.write(receipt_text.encode('utf-8'))
+                receipt_output.seek(0)
+
+                # Download button for the receipt
+                st.download_button(label="Download Struk Penjualan", data=receipt_output, file_name=f'struk_penjualan_{sale_id_to_download}.txt', mime='text/plain')
+        except KeyError as e:
+            st.error(f"Error saat mengakses kolom data: {str(e)}")
+    else:
+        st.warning("Data penjualan kosong.")
         
 # Function to manage suppliers
 def manage_supplier(username):
