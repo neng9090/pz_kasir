@@ -18,7 +18,7 @@ def get_user_file_paths(username):
         'PENGELUARAN_FILE': f'{username}_pengeluaran.csv',
         'HISTORIS_KEUANGAN_FILE': f'{username}_historis_analisis_keuangan.csv',
         'HISTORIS_KEUNTUNGAN_FILE': f'{username}_historis_keuntungan_bersih.csv',
-        'OWNER_DATA_FILE': f'{username}_owner_data.csv'  # Owner data file
+        'OWNER_DATA_FILE': f'{username}_owner_data.csv'
     }
 
 # File path for user data
@@ -257,43 +257,30 @@ def manage_owner(username):
     st.title("Manajemen Pemilik")
     
     # Check for access security
-    if st.session_state.user_role != 'admin':
-        st.warning("Hanya pemilik yang dapat mengakses halaman ini.")
+    owner_password = st.sidebar.text_input("Masukkan Password Pemilik", type="password")
+    if owner_password != "admin_password":  # Change "admin_password" to your desired password
+        st.warning("Anda harus memasukkan password yang benar untuk mengakses halaman ini.")
         return
     
-    file_path = get_user_file_paths(username)['OWNER_DATA_FILE']
-    if os.path.exists(file_path):
-        st.session_state.owner_data = pd.read_csv(file_path)
-    else:
-        st.session_state.owner_data = pd.DataFrame(columns=['Username', 'Email', 'Waktu Input'])
+    file_paths = get_user_file_paths(username)
+    data_frames = {}
     
-    if 'owner_data' in st.session_state:
-        st.dataframe(st.session_state.owner_data)
+    # Load data and store in a dictionary
+    for key, path in file_paths.items():
+        if os.path.exists(path):
+            data_frames[key] = pd.read_csv(path)
     
-    st.subheader("Tambah Data Pemilik")
-    
-    with st.form("owner_form"):
-        username = st.text_input("Username")
-        email = st.text_input("Email")
-        
-        submitted = st.form_submit_button("Simpan")
-        
-        if submitted:
-            new_owner = pd.DataFrame({
-                'Username': [username],
-                'Email': [email],
-                'Waktu Input': [datetime.now()]
-            })
-            
-            st.session_state.owner_data = pd.concat([st.session_state.owner_data, new_owner], ignore_index=True)
-            st.session_state.owner_data.to_csv(file_path, index=False)
-            st.success("Data pemilik berhasil diperbarui.")
-    
-    # Export option
-    if st.button("Ekspor Data Pemilik ke Excel"):
-        owner_data_path = f'{username}_owner_data.xlsx'
-        st.session_state.owner_data.to_excel(owner_data_path, index=False)
-        st.success("Data pemilik diekspor ke {}".format(owner_data_path))
+    # Display all data frames
+    for key, df in data_frames.items():
+        st.subheader(key.replace('_', ' ').capitalize())
+        st.dataframe(df)
+
+    # Export option for all data
+    if st.button("Ekspor Semua Data ke Excel"):
+        with pd.ExcelWriter(f'{username}_data.xlsx') as writer:
+            for key, df in data_frames.items():
+                df.to_excel(writer, sheet_name=key.replace('_', ' ').capitalize(), index=False)
+        st.success(f"Data berhasil diekspor ke {username}_data.xlsx")
 
 # Authentication function
 def login(username, password):
