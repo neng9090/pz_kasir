@@ -240,12 +240,12 @@ def manage_penjualan(username):
                 st.session_state.stok_barang.to_csv(stok_barang_path, index=False)
                 st.success("Stok barang berhasil diperbarui.")
 
-    # Sales receipt generation section
-    st.subheader("Download Struk Penjualan")
-    receipt_header = st.text_input("Judul Struk", "STRUK PENJUALAN")
-    thank_you_message = st.text_area("Pesan Terima Kasih", "Terima Kasih atas Pembelian Anda!")
-    sale_id_to_download = st.number_input("Masukkan ID Penjualan", min_value=1, max_value=len(st.session_state.penjualan), step=1)
-
+        # Sales receipt generation section
+        st.subheader("Download Struk Penjualan")
+        receipt_header = st.text_input("Judul Struk", "STRUK PENJUALAN")
+        thank_you_message = st.text_area("Pesan Terima Kasih", "Terima Kasih atas Pembelian Anda!")
+        sale_id_to_download = st.number_input("Masukkan ID Penjualan", min_value=1, max_value=len(st.session_state.penjualan), step=1)
+    
     if st.button("Download Struk"):
         if not st.session_state.penjualan.empty:
             try:
@@ -258,7 +258,7 @@ def manage_penjualan(username):
                     
                     # Safely access selected sale details
                     nama_pelanggan = selected_sale.get('Nama Pelanggan', 'Tidak Diketahui')
-                    nomor_telepon = selected_sale.get('Nomor Telepon', 'Tidak Diketahui')
+                    nomor_telepon = str(selected_sale.get('Nomor Telepon', 'Tidak Diketahui'))
                     alamat = selected_sale.get('Alamat', 'Tidak Diketahui')
                     nama_barang = selected_sale.get('Nama Barang', 'Tidak Diketahui')
                     merk = selected_sale.get('Merk', 'Tidak Diketahui')
@@ -271,23 +271,23 @@ def manage_penjualan(username):
     
                     # Format receipt text for thermal printer
                     receipt_text = (
-                        f"{'=' * 29}\n"
-                        f"{receipt_header.center(29)}\n"
-                        f"{'=' * 29}\n"
-                        f"Nama Pelanggan: {nama_pelanggan[:16]}\n"
-                        f"Telepon:       {nomor_telepon[:15]}\n"
-                        f"Alamat:        {alamat[:25]}\n"
-                        f"Barang:        {nama_barang[:16]}\n"
-                        f"Merk:          {merk[:15]}\n"
-                        f"Ukuran:        {ukuran[:15]}\n"
-                        f"Warna:         {warna[:15]}\n"
-                        f"Jumlah:        {jumlah}\n"
-                        f"Harga:         {harga_jual}\n"
-                        f"Total:         {total_harga}\n"
-                        f"Waktu:         {waktu}\n"
-                        f"{'=' * 29}\n"
-                        f"{thank_you_message.center(29)}\n"
-                        f"{'=' * 29}\n"
+                        f"{'=' * 40}\n"
+                        f"{receipt_header.center(40)}\n"
+                        f"{'=' * 40}\n"
+                        f"Nama Pelanggan: {nama_pelanggan[:20].ljust(20)}\n"
+                        f"Nomor Telepon:  {nomor_telepon[:15].ljust(15)}\n"
+                        f"Alamat:         {alamat[:30].ljust(30)}\n"
+                        f"Nama Barang:    {nama_barang[:20].ljust(20)}\n"
+                        f"Merk:           {merk[:15].ljust(15)}\n"
+                        f"Ukuran:         {ukuran[:15].ljust(15)}\n"
+                        f"Warna:          {warna[:15].ljust(15)}\n"
+                        f"Jumlah:         {str(jumlah).rjust(15)}\n"
+                        f"Harga:          {str(harga_jual).rjust(15)}\n"
+                        f"Total:          {str(total_harga).rjust(15)}\n"
+                        f"Waktu:          {waktu.ljust(30)}\n"
+                        f"{'=' * 40}\n"
+                        f"{thank_you_message.center(40)}\n"
+                        f"{'=' * 40}\n"
                     )
     
                     # Prepare the receipt for download as .txt file
@@ -301,6 +301,7 @@ def manage_penjualan(username):
                 st.error(f"Error saat mengakses kolom data: {str(e)}")
         else:
             st.warning("Data penjualan kosong.")
+
         
 # Function to manage suppliers
 def manage_supplier(username):
