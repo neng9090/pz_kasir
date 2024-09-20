@@ -119,12 +119,14 @@ def manage_stok_barang(username):
             st.session_state.stok_barang.to_csv(file_path, index=False)
             st.success("Stok barang berhasil diperbarui.")
 
-from datetime import datetime
-import pandas as pd
-import streamlit as st
-import os
-from io import BytesIO
+# Function to retrieve user file paths
+def get_user_file_paths(username):
+    return {
+        'PENJUALAN_FILE': f"{username}_penjualan.csv",
+        'STOK_BARANG_FILE': f"{username}_stok_barang.csv"
+    }
 
+# Function to manage sales
 def manage_penjualan(username):
     st.title("Manajemen Penjualan")
 
@@ -139,12 +141,11 @@ def manage_penjualan(username):
                 st.session_state.penjualan['ID Penjualan'] = range(1, len(st.session_state.penjualan) + 1)
                 st.session_state.penjualan.to_csv(file_path, index=False)  # Save changes to file
                 st.success("Kolom 'ID Penjualan' berhasil ditambahkan.")
-        
         except Exception as e:
             st.error(f"Error loading penjualan file: {str(e)}")
             return
     else:
-        # Initialize empty sales table with 'ID Penjualan' and 'Tanggal' column
+        # Initialize empty sales table with 'ID Penjualan' and other columns
         st.session_state.penjualan = pd.DataFrame(columns=[
             'ID Penjualan', 'Nama Pelanggan', 'Nomor Telepon', 'Alamat', 
             'Nama Barang', 'Merk', 'Ukuran/Kemasan', 
@@ -154,10 +155,7 @@ def manage_penjualan(username):
         st.warning("Tidak ada data penjualan yang ditemukan, menginisialisasi data penjualan kosong.")
 
     # Generate a new unique ID for the next sale
-    if not st.session_state.penjualan.empty:
-        new_sale_id = st.session_state.penjualan['ID Penjualan'].max() + 1  # Auto increment ID Penjualan
-    else:
-        new_sale_id = 1  # If no previous data, start from 1
+    new_sale_id = st.session_state.penjualan['ID Penjualan'].max() + 1 if not st.session_state.penjualan.empty else 1
 
     # Customer search functionality
     st.subheader("Cari Pelanggan")
@@ -173,8 +171,6 @@ def manage_penjualan(username):
     st.subheader("Data Penjualan Saat Ini")
     st.dataframe(st.session_state.penjualan.drop(columns=['Harga Jual'], errors='ignore'))
 
-    st.subheader("Tambah Penjualan")
-
     # Load stock data (stok_barang.csv)
     stok_barang_path = get_user_file_paths(username)['STOK_BARANG_FILE']
     if os.path.exists(stok_barang_path):
@@ -186,7 +182,7 @@ def manage_penjualan(username):
     else:
         st.session_state.stok_barang = pd.DataFrame(columns=[
             'ID Barang', 'Nama Barang', 'Merk', 'Ukuran/Kemasan', 
-            'Kode Warna/Base', 'Jumlah', 'Harga'  # Hiding this column
+            'Kode Warna/Base', 'Jumlah', 'Harga'
         ])
         st.warning("Tidak ada data stok barang yang ditemukan, menginisialisasi data stok kosong.")
 
@@ -212,14 +208,9 @@ def manage_penjualan(username):
             selected_item = filtered_stok_barang.iloc[id_barang]
 
             # Dropdown for additional item attributes
-            merk_options = filtered_stok_barang['Merk'].unique()
-            merk_selected = st.selectbox("Pilih Merk", merk_options)
-
-            ukuran_options = filtered_stok_barang['Ukuran/Kemasan'].unique()
-            ukuran_selected = st.selectbox("Pilih Ukuran/Kemasan", ukuran_options)
-
-            warna_options = filtered_stok_barang['Kode Warna/Base'].dropna().unique()
-            warna_selected = st.selectbox("Pilih Kode Warna/Base", [""] + list(warna_options))
+            merk_selected = st.selectbox("Pilih Merk", filtered_stok_barang['Merk'].unique())
+            ukuran_selected = st.selectbox("Pilih Ukuran/Kemasan", filtered_stok_barang['Ukuran/Kemasan'].unique())
+            warna_selected = st.selectbox("Pilih Kode Warna/Base", [""] + list(filtered_stok_barang['Kode Warna/Base'].dropna().unique()))
 
             # Quantity input with validation against available stock
             max_jumlah = int(selected_item['Jumlah'])
@@ -251,10 +242,10 @@ def manage_penjualan(username):
                     'Ukuran/Kemasan': [ukuran_selected],
                     'Kode Warna/Base': [warna_selected],
                     'Jumlah': [jumlah],
-                    'Harga': [harga],  # Keeping the 'Harga' column for sales data
+                    'Harga': [harga],
                     'Total Harga': [total_harga],
                     'Waktu': [datetime.now().strftime('%Y-%m-%d %H:%M:%S')],
-                    'Tanggal': [datetime.now().strftime('%Y-%m-%d')]  # Adding 'Tanggal'
+                    'Tanggal': [datetime.now().strftime('%Y-%m-%d')]
                 })
 
                 # Append new sale and save to CSV
@@ -284,52 +275,41 @@ def manage_penjualan(username):
                     selected_sale = selected_sale.iloc[0]  # Get the first matching row as a Series
                     
                     # Safely access selected sale details
-                    nama_pelanggan = selected_sale.get('Nama Pelanggan', 'Tidak Diketahui')
-                    nomor_telepon = str(selected_sale.get('Nomor Telepon', 'Tidak Diketahui'))
-                    alamat = selected_sale.get('Alamat', 'Tidak Diketahui')
-                    nama_barang = selected_sale.get('Nama Barang', 'Tidak Diketahui')
-                    merk = selected_sale.get('Merk', 'Tidak Diketahui')
-                    ukuran = selected_sale.get('Ukuran/Kemasan', 'Tidak Diketahui')
-                    warna = selected_sale.get('Kode Warna/Base', 'Tidak Diketahui')
-                    jumlah = selected_sale.get('Jumlah', 0)
-                    harga = selected_sale.get('Harga', 0)
-                    total_harga = selected_sale.get('Total Harga', 0)
-                    waktu = selected_sale.get('Waktu', 'Tidak Diketahui')
-                    tanggal = selected_sale.get('Tanggal', 'Tidak Diketahui')  # Retrieve 'Tanggal'
-    
-                    # Format receipt text for thermal printer
                     receipt_text = (
                         f"{'=' * 30}\n"
                         f"{receipt_header.center(30)}\n"
                         f"{'=' * 30}\n"
-                        f"Nama Pelanggan : {nama_pelanggan[:20].ljust(20)}\n"
-                        f"Nomor Telepon  : {nomor_telepon[:15].ljust(15)}\n"
-                        f"Alamat         : {alamat[:30].ljust(30)}\n"
-                        f"Nama Barang    : {nama_barang[:20].ljust(20)}\n"
-                        f"Merk           : {merk[:15].ljust(15)}\n"
-                        f"Ukuran         : {ukuran[:15].ljust(15)}\n"
-                        f"Warna          : {warna[:15].ljust(15)}\n"
-                        f"Jumlah         : {str(jumlah).rjust(15)}\n"
-                        f"Harga          : {str(harga).rjust(15)}\n"
-                        f"Total          : {str(total_harga).rjust(15)}\n"
-                        f"Waktu          : {waktu.ljust(30)}\n"
-                        f"Tanggal        : {tanggal.ljust(30)}\n"  # Include 'Tanggal' in receipt
-                        f"{'=' * 30}\n"
-                        f"{thank_you_message.center(30)}\n"
+                        f"Nama Pelanggan : {selected_sale.get('Nama Pelanggan', 'Tidak Diketahui')[:20].ljust(20)}\n"
+                        f"Nomor Telepon  : {str(selected_sale.get('Nomor Telepon', 'Tidak Diketahui'))[:15].ljust(15)}\n"
+                        f"Alamat         : {selected_sale.get('Alamat', 'Tidak Diketahui')[:30].ljust(30)}\n"
+                        f"Nama Barang    : {selected_sale.get('Nama Barang', 'Tidak Diketahui')[:20].ljust(20)}\n"
+                        f"Merk           : {selected_sale.get('Merk', 'Tidak Diketahui')[:15].ljust(15)}\n"
+                        f"Ukuran         : {selected_sale.get('Ukuran/Kemasan', 'Tidak Diketahui')[:15].ljust(15)}\n"
+                        f"Warna          : {selected_sale.get('Kode Warna/Base', 'Tidak Diketahui')[:15].ljust(15)}\n"
+                        f"Jumlah         : {str(selected_sale.get('Jumlah', 0)).rjust(15)}\n"
+                        f"Harga          : {str(selected_sale.get('Harga', 0)).rjust(15)}\n"
+                        f"Total          : {str(selected_sale.get('Total Harga', 0)).rjust(15)}\n"
+                        f"Waktu          : {selected_sale.get('Waktu', 'Tidak Diketahui')}\n"
+                        f"Tanggal        : {selected_sale.get('Tanggal', 'Tidak Diketahui')}\n"
+                        f"{thank_you_message}\n"
                         f"{'=' * 30}\n"
                     )
-    
-                    # Prepare the receipt for download as .txt file
-                    receipt_output = BytesIO()
-                    receipt_output.write(receipt_text.encode('utf-8'))
-                    receipt_output.seek(0)
-    
-                    # Download button for the receipt
-                    st.download_button(label="Download Struk Penjualan", data=receipt_output, file_name=f'struk_penjualan_{sale_id_to_download}.txt', mime='text/plain')
-            except KeyError as e:
-                st.error(f"Error saat mengakses kolom data: {str(e)}")
+        
+                    # Save to file and offer download
+                    buffer = BytesIO()
+                    buffer.write(receipt_text.encode())
+                    buffer.seek(0)
+
+                    st.download_button(
+                        label="Download Struk",
+                        data=buffer,
+                        file_name=f"struk_penjualan_{sale_id_to_download}.txt",
+                        mime="text/plain"
+                    )
+            except Exception as e:
+                st.error(f"Error generating receipt: {str(e)}")
         else:
-            st.warning("Data penjualan kosong.")
+            st.error("Tidak ada data penjualan yang tersedia untuk diunduh.")
 
 
 
