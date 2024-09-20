@@ -124,6 +124,12 @@ def manage_penjualan(username):
         ])
         st.warning("No sales data found, initializing empty sales data.")
 
+    # Generate a new unique ID for the next sale
+    if not st.session_state.penjualan.empty:
+        new_sale_id = st.session_state.penjualan['ID Penjualan'].max() + 1  # Auto increment
+    else:
+        new_sale_id = 1  # Start ID if no previous sales exist
+
     # Customer search functionality
     st.subheader("Cari Pelanggan")
     search_customer = st.text_input("Nama Pelanggan")
@@ -203,7 +209,8 @@ def manage_penjualan(username):
             else:
                 # Calculate total price
                 total_harga = jumlah * harga_jual
-                new_sale_id = len(st.session_state.penjualan) + 1  # Generate new sale ID
+
+                # Create new sale record
                 new_sale = pd.DataFrame({
                     'ID Penjualan': [new_sale_id],
                     'Nama Pelanggan': [nama_pelanggan],
