@@ -3,6 +3,10 @@ from streamlit_option_menu import option_menu
 import pandas as pd
 import os
 from datetime import datetime
+import matplotlib.pyplot as plt
+import os
+import time
+from io import StringIO
 
 # Define file paths for user-specific data
 def get_user_file_paths(username):
