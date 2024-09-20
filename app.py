@@ -246,7 +246,7 @@ def manage_penjualan(username):
         thank_you_message = st.text_area("Pesan Terima Kasih", "Terima Kasih atas Pembelian Anda!")
         sale_id_to_download = st.number_input("Masukkan ID Penjualan", min_value=1, max_value=len(st.session_state.penjualan), step=1)
     
-    if st.button("Download Struk"):
+      if st.button("Download Struk"):
         if not st.session_state.penjualan.empty:
             try:
                 selected_sale = st.session_state.penjualan[st.session_state.penjualan['ID Penjualan'] == sale_id_to_download]
@@ -293,10 +293,19 @@ def manage_penjualan(username):
                     pdf.cell(0, 10, thank_you_message, ln=True, align='C')
                     pdf.cell(0, 10, '=' * 30, ln=True)
     
-                    # Save the PDF to a BytesIO object
-                    pdf_output = BytesIO()
-                    pdf.output(dest='F', name=pdf_output)  # Corrected line
-                    pdf_output.seek(0)
+                    # Save the PDF to a temporary file
+                    with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as tmpfile:
+                        pdf.output(tmpfile.name)
+                        tmpfile.seek(0)
+    
+                        # Read the PDF into a BytesIO object
+                        pdf_output = BytesIO()
+                        with open(tmpfile.name, 'rb') as f:
+                            pdf_output.write(f.read())
+                        pdf_output.seek(0)
+    
+                    # Remove the temporary file
+                    os.remove(tmpfile.name)
     
                     # Download button for the PDF receipt
                     st.download_button(label="Download Struk Penjualan (PDF)", data=pdf_output, file_name=f'struk_penjualan_{sale_id_to_download}.pdf', mime='application/pdf')
