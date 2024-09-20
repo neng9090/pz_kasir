@@ -295,7 +295,7 @@ def manage_penjualan(username):
     
                     # Save the PDF to a BytesIO object
                     pdf_output = BytesIO()
-                    pdf.output(pdf_output)
+                    pdf.output(dest='F', name=pdf_output)  # Corrected line
                     pdf_output.seek(0)
     
                     # Download button for the PDF receipt
@@ -304,7 +304,6 @@ def manage_penjualan(username):
                 st.error(f"Error saat mengakses kolom data: {str(e)}")
         else:
             st.warning("Data penjualan kosong.")
-
         
 # Function to manage suppliers
 def manage_supplier(username):
