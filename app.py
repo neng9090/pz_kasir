@@ -127,17 +127,19 @@ def manage_penjualan(username):
         
         # Search for stock items
         search_stock = st.text_input("Cari Stok Barang")
+        
+        # Filter stock items based on search input
         if search_stock:
             filtered_stock = st.session_state.stok_barang[st.session_state.stok_barang['Nama Barang'].str.contains(search_stock, case=False)]
         else:
             filtered_stock = st.session_state.stok_barang
             
-        # Dropdown to select item by ID
+        # Check if there are any items to select
         if not filtered_stock.empty:
             id_barang = st.selectbox("ID Barang", filtered_stock['ID Barang'].unique())
+            selected_stock = filtered_stock[filtered_stock['ID Barang'] == id_barang]
             
-            # Get the selected stock
-            selected_stock = filtered_stock.loc[filtered_stock['ID Barang'] == id_barang]
+            # Get selected stock details
             if not selected_stock.empty:
                 selected_stock = selected_stock.iloc[0]
                 nama_barang = selected_stock['Nama Barang']
@@ -161,6 +163,7 @@ def manage_penjualan(username):
         submitted = st.form_submit_button("Simpan")
         
         if submitted:
+            # Validate stock before making the sale
             if jumlah <= max_jumlah:
                 # Create a new sale entry
                 new_sale = pd.DataFrame({
@@ -189,7 +192,7 @@ def manage_penjualan(username):
             else:
                 st.error("Jumlah melebihi stok yang tersedia.")
 
-    # Display stock table without the 'Harga' column
+    # Display stock table without the 'Harga Jual' column
     st.subheader("Tabel Stok Barang")
     if 'stok_barang' in st.session_state:
         st.dataframe(st.session_state.stok_barang.drop(columns=['Harga Jual'], errors='ignore'))
