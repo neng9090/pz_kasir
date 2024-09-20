@@ -119,13 +119,6 @@ def manage_stok_barang(username):
             st.session_state.stok_barang.to_csv(file_path, index=False)
             st.success("Stok barang berhasil diperbarui.")
 
-# Function to retrieve user file paths
-def get_user_file_paths(username):
-    return {
-        'PENJUALAN_FILE': f"{username}_penjualan.csv",
-        'STOK_BARANG_FILE': f"{username}_stok_barang.csv"
-    }
-
 # Function to manage sales
 def manage_penjualan(username):
     st.title("Manajemen Penjualan")
