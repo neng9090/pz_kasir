@@ -93,11 +93,6 @@ def manage_stok_barang(username):
             st.session_state.stok_barang.to_csv(file_path, index=False)
             st.success("Stok barang berhasil diperbarui.")
 
-import pandas as pd
-import streamlit as st
-from datetime import datetime
-import os
-
 # Function to manage sales
 def manage_penjualan(username):
     st.title("Manajemen Penjualan")
@@ -116,7 +111,7 @@ def manage_penjualan(username):
         st.session_state.stok_barang = pd.read_csv(stock_file_path)
     else:
         st.session_state.stok_barang = pd.DataFrame(columns=['ID Barang', 'Nama Barang', 'Merk', 'Ukuran/Kemasan', 'Jumlah', 'Kode Warna/Base', 'Harga Jual', 'Waktu Input'])
-    
+
     # Display sales data
     st.subheader("Daftar Penjualan")
     if 'penjualan' in st.session_state:
@@ -213,7 +208,6 @@ def manage_penjualan(username):
     st.subheader("Tabel Stok Barang")
     if 'stok_barang' in st.session_state:
         st.dataframe(st.session_state.stok_barang.drop(columns=['Harga Jual'], errors='ignore'))
-
 
 
 
