@@ -103,6 +103,13 @@ def manage_stok_barang(username):
 # Function to manage sales
 def manage_penjualan(username):
     st.title("Manajemen Penjualan")
+
+    # Customer search functionality
+    st.subheader("Cari Pelanggan")
+    search_customer = st.text_input("Nama Pelanggan")
+    if search_customer:
+        filtered_penjualan = st.session_state.penjualan[st.session_state.penjualan['Nama Pelanggan'].str.contains(search_customer, case=False)]
+        st.dataframe(filtered_penjualan)
     
     # Load sales data if available
     file_path = get_user_file_paths(username)['PENJUALAN_FILE']
@@ -130,13 +137,6 @@ def manage_penjualan(username):
         filtered_stok_barang = filtered_stok_barang[filtered_stok_barang['Nama Barang'].str.contains(search_item, case=False)]
     
     st.dataframe(filtered_stok_barang)
-
-    # Customer search functionality
-    st.subheader("Cari Pelanggan")
-    search_customer = st.text_input("Nama Pelanggan")
-    if search_customer:
-        filtered_penjualan = st.session_state.penjualan[st.session_state.penjualan['Nama Pelanggan'].str.contains(search_customer, case=False)]
-        st.dataframe(filtered_penjualan)
 
     with st.form("sales_form"):
         nama_pelanggan = st.text_input("Nama Pelanggan")
@@ -195,54 +195,55 @@ def manage_penjualan(username):
             stok_barang.to_csv(stok_barang_path, index=False)
             st.success("Stok berhasil diperbarui.")
 
-# Receipt Options
-st.subheader("Review Struk")
-receipt_title = st.text_input("Judul Struk", "Struk Penjualan")
-thank_you_message = st.text_input("Ucapan Terima Kasih", "Terima kasih atas pembelian Anda!")
-
-if st.button("Review Struk"):
-    if 'penjualan' in st.session_state and not st.session_state.penjualan.empty:
-        latest_sale = st.session_state.penjualan.iloc[-1]
-        receipt = f"""
-        {receipt_title}
-        {'-' * 30}
-        Nama Pelanggan      : {latest_sale['Nama Pelanggan']}
-        Nomor Telepon       : {latest_sale['Nomor Telepon']}
-        Alamat              : {latest_sale['Alamat']}
-        Nama Barang         : {latest_sale['Nama Barang']}
-        Merk                : {latest_sale['Merk']}
-        Ukuran/Kemasan      : {latest_sale['Ukuran/Kemasan']}
-        Kode Warna/Base     : {latest_sale['Kode Warna/Base']}
-        Jumlah              : {latest_sale['Jumlah']}
-        Harga Jual          : {latest_sale['Harga Jual']}
-        Total Harga         : {latest_sale['Total Harga']}
-        Waktu               : {latest_sale['Waktu']}
-        {'-' * 30}
-        {thank_you_message}
-        """
-        st.text(receipt)
-
-        # Generate the PDF
-        pdf = FPDF()
-        pdf.add_page()
-        pdf.set_font("Arial", 'B', 16)
-        pdf.cell(0, 10, receipt_title, 0, 1, 'C')
-        pdf.ln(10)
-
-        pdf.set_font("Arial", 'I', 12)
-        for line in receipt.strip().split('\n'):
-            pdf.cell(0, 10, line.strip(), 0, 1)
-
-        # Save the PDF to a BytesIO object
-        pdf_output = BytesIO()
-        pdf_output.write(pdf.output(dest='S').encode('latin1'))  # Correctly write to BytesIO
-        pdf_output.seek(0)
-
-        # Create a download button for the receipt
-        st.download_button(label="Download Struk Pembelian", data=pdf_output, file_name='struk_pembelian.pdf', mime='application/pdf')
-
-    else:
-        st.warning("Tidak ada penjualan untuk direview.")
+    # Receipt Options
+    st.subheader("Review Struk")
+    receipt_title = st.text_input("Judul Struk", "Struk Penjualan")
+    thank_you_message = st.text_input("Ucapan Terima Kasih", "Terima kasih atas pembelian Anda!")
+    
+    if st.button("Review Struk"):
+        if 'penjualan' in st.session_state and not st.session_state.penjualan.empty:
+            latest_sale = st.session_state.penjualan.iloc[-1]
+            receipt = f"""
+            {receipt_title}
+            {'-' * 30}
+            Nama Pelanggan      : {latest_sale['Nama Pelanggan']}
+            Nomor Telepon       : {latest_sale['Nomor Telepon']}
+            Alamat              : {latest_sale['Alamat']}
+            Nama Barang         : {latest_sale['Nama Barang']}
+            Merk                : {latest_sale['Merk']}
+            Ukuran/Kemasan      : {latest_sale['Ukuran/Kemasan']}
+            Kode Warna/Base     : {latest_sale['Kode Warna/Base']}
+            Jumlah              : {latest_sale['Jumlah']}
+            Harga Jual          : {latest_sale['Harga Jual']}
+            Total Harga         : {latest_sale['Total Harga']}
+            Waktu               : {latest_sale['Waktu']}
+            {'-' * 30}
+            {thank_you_message}
+            """
+    
+            st.text(receipt)
+    
+            # Generate the PDF for thermal printing
+            pdf = FPDF(orientation='P', unit='mm', format='A5')  # A5 is roughly 148mm x 210mm
+            pdf.add_page()
+            pdf.set_font("Arial", 'B', 12)
+            pdf.cell(0, 10, receipt_title, 0, 1, 'C')
+            pdf.ln(5)
+    
+            pdf.set_font("Arial", 'I', 10)
+            for line in receipt.strip().split('\n'):
+                pdf.cell(0, 8, line.strip(), 0, 1)
+    
+            # Save the PDF to a BytesIO object
+            pdf_output = BytesIO()
+            pdf_output.write(pdf.output(dest='S').encode('latin1'))  # Correctly write to BytesIO
+            pdf_output.seek(0)
+    
+            # Create a download button for the receipt
+            st.download_button(label="Download Struk Pembelian", data=pdf_output, file_name='struk_pembelian.pdf', mime='application/pdf')
+    
+        else:
+            st.warning("Tidak ada penjualan untuk direview.")
         
 # Function to manage suppliers
 def manage_supplier(username):
