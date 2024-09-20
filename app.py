@@ -982,8 +982,14 @@ def update_historical_data(username):
             )
 
 def main():
-    initialize_session_state()
-    load_user_data()
+    # Initialize session state
+    if 'logged_in_user' not in st.session_state:
+        st.session_state.logged_in_user = None
+    if 'user_data' not in st.session_state:
+        st.session_state.user_data = pd.DataFrame(columns=['Username', 'Password', 'Role'])  # Adjust based on your user data structure
+
+    # Load user data (this can be from a file or database)
+    load_user_data()  # Ensure this function populates st.session_state.user_data
 
     # Login form
     if st.session_state.logged_in_user is None:
@@ -998,7 +1004,6 @@ def main():
                     st.session_state.logged_in_user = username
                     st.session_state.user_role = user_data['Role'].values[0]
                     st.sidebar.success("Login successful!")
-                    # Remove the experimental_rerun() call
                 else:
                     st.sidebar.error("Incorrect password.")
             else:
@@ -1013,6 +1018,22 @@ def main():
                 default_index=0
             )
 
+            # Handle navigation based on user choice
+            if choice == "Manajemen Stok Barang":
+                manage_stock()  # Call your stock management function here
+            elif choice == "Manajemen Penjualan":
+                halaman_penjualan(st.session_state.logged_in_user)  # Call your sales management function here
+            elif choice == "Manajemen Supplier":
+                manage_suppliers()  # Add your supplier management function
+            elif choice == "Manajemen Piutang Konsumen":
+                manage_receivables()  # Add your receivables management function
+            elif choice == "Manajemen Pengeluaran":
+                manage_expenses()  # Add your expenses management function
+            elif choice == "Laporan Keuangan":
+                view_financial_reports()  # Add your financial report viewing function
+
+if __name__ == "__main__":
+    main()
         if choice == "Manajemen Stok Barang":
             manage_stok_barang(st.session_state.logged_in_user)
         elif choice == "Manajemen Penjualan":
