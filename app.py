@@ -246,7 +246,7 @@ def manage_penjualan(username):
         thank_you_message = st.text_area("Pesan Terima Kasih", "Terima Kasih atas Pembelian Anda!")
         sale_id_to_download = st.number_input("Masukkan ID Penjualan", min_value=1, max_value=len(st.session_state.penjualan), step=1)
     
-     if st.button("Download Struk"):
+    if st.button("Download Struk"):
         if not st.session_state.penjualan.empty:
             try:
                 selected_sale = st.session_state.penjualan[st.session_state.penjualan['ID Penjualan'] == sale_id_to_download]
@@ -255,7 +255,7 @@ def manage_penjualan(username):
                     st.error(f"Penjualan dengan ID {sale_id_to_download} tidak ditemukan.")
                 else:
                     selected_sale = selected_sale.iloc[0]  # Get the first matching row as a Series
-    
+                    
                     # Safely access selected sale details
                     nama_pelanggan = selected_sale.get('Nama Pelanggan', 'Tidak Diketahui')
                     nomor_telepon = str(selected_sale.get('Nomor Telepon', 'Tidak Diketahui'))
@@ -267,48 +267,36 @@ def manage_penjualan(username):
                     jumlah = selected_sale.get('Jumlah', 0)
                     harga_jual = selected_sale.get('Harga Jual', 0)
                     total_harga = selected_sale.get('Total Harga', 0)
-                    waktu = selected_sale.get('Waktu', 'Tidak Diketahui').split()[0]  # Only get the date part
+                    waktu = selected_sale.get('Waktu', 'Tidak Diketahui')
     
-                    # Create a PDF
-                    pdf = FPDF(orientation='P', unit='mm', format='A5')  # A5 is close to 58mm width
-                    pdf.add_page()
-                    pdf.set_font("Arial", size=10)
+                    # Format receipt text for thermal printer
+                    receipt_text = (
+                        f"{'=' * 30}\n"
+                        f"{receipt_header.center(30)}\n"
+                        f"{'=' * 30}\n"
+                        f"Nama Pelanggan : {nama_pelanggan[:20].ljust(20)}\n"
+                        f"Nomor Telepon  : {nomor_telepon[:15].ljust(15)}\n"
+                        f"Alamat         : {alamat[:30].ljust(30)}\n"
+                        f"Nama Barang    : {nama_barang[:20].ljust(20)}\n"
+                        f"Merk           : {merk[:15].ljust(15)}\n"
+                        f"Ukuran         : {ukuran[:15].ljust(15)}\n"
+                        f"Warna          : {warna[:15].ljust(15)}\n"
+                        f"Jumlah         : {str(jumlah).rjust(15)}\n"
+                        f"Harga          : {str(harga_jual).rjust(15)}\n"
+                        f"Total          : {str(total_harga).rjust(15)}\n"
+                        f"Waktu          : {waktu.ljust(30)}\n"
+                        f"{'=' * 30}\n"
+                        f"{thank_you_message.center(30)}\n"
+                        f"{'=' * 30}\n"
+                    )
     
-                    # Add content to PDF
-                    pdf.cell(0, 10, '=' * 30, ln=True, align='C')
-                    pdf.cell(0, 10, receipt_header, ln=True, align='C')
-                    pdf.cell(0, 10, '=' * 30, ln=True, align='C')
-                    pdf.cell(0, 10, f"Nama Pelanggan : {nama_pelanggan[:20]}", ln=True)
-                    pdf.cell(0, 10, f"Nomor Telepon  : {nomor_telepon[:15]}", ln=True)
-                    pdf.cell(0, 10, f"Alamat         : {alamat[:30]}", ln=True)
-                    pdf.cell(0, 10, f"Nama Barang    : {nama_barang[:20]}", ln=True)
-                    pdf.cell(0, 10, f"Merk           : {merk[:15]}", ln=True)
-                    pdf.cell(0, 10, f"Ukuran         : {ukuran[:15]}", ln=True)
-                    pdf.cell(0, 10, f"Warna          : {warna[:15]}", ln=True)
-                    pdf.cell(0, 10, f"Jumlah         : {jumlah}", ln=True)
-                    pdf.cell(0, 10, f"Harga          : {harga_jual}", ln=True)
-                    pdf.cell(0, 10, f"Total          : {total_harga}", ln=True)
-                    pdf.cell(0, 10, f"Waktu          : {waktu}", ln=True)
-                    pdf.cell(0, 10, '=' * 30, ln=True)
-                    pdf.cell(0, 10, thank_you_message, ln=True, align='C')
-                    pdf.cell(0, 10, '=' * 30, ln=True)
+                    # Prepare the receipt for download as .txt file
+                    receipt_output = BytesIO()
+                    receipt_output.write(receipt_text.encode('utf-8'))
+                    receipt_output.seek(0)
     
-                    # Save the PDF to a temporary file
-                    with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as tmpfile:
-                        pdf.output(tmpfile.name)
-                        tmpfile.seek(0)
-    
-                        # Read the PDF into a BytesIO object
-                        pdf_output = BytesIO()
-                        with open(tmpfile.name, 'rb') as f:
-                            pdf_output.write(f.read())
-                        pdf_output.seek(0)
-    
-                    # Remove the temporary file
-                    os.remove(tmpfile.name)
-    
-                    # Download button for the PDF receipt
-                    st.download_button(label="Download Struk Penjualan (PDF)", data=pdf_output, file_name=f'struk_penjualan_{sale_id_to_download}.pdf', mime='application/pdf')
+                    # Download button for the receipt
+                    st.download_button(label="Download Struk Penjualan", data=receipt_output, file_name=f'struk_penjualan_{sale_id_to_download}.txt', mime='text/plain')
             except KeyError as e:
                 st.error(f"Error saat mengakses kolom data: {str(e)}")
         else:
