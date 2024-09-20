@@ -104,11 +104,21 @@ def manage_penjualan(username):
     st.title("Manajemen Penjualan")
     
     file_path = get_user_file_paths(username)['PENJUALAN_FILE']
+    stock_file_path = get_user_file_paths(username)['STOK_BARANG_FILE']
+    
+    # Load sales data
     if os.path.exists(file_path):
         st.session_state.penjualan = pd.read_csv(file_path)
     else:
-        st.session_state.penjualan = pd.DataFrame(columns=['Nama Pelanggan', 'Nomor Telepon', 'Alamat', 'Nama Barang', 'Jumlah', 'Harga Jual', 'Total Harga', 'Waktu'])
+        st.session_state.penjualan = pd.DataFrame(columns=['Nama Pelanggan', 'Nomor Telepon', 'Alamat', 'ID Barang', 'Nama Barang', 'Merk', 'Ukuran/Kemasan', 'Kode Warna/Base', 'Jumlah', 'Harga Jual', 'Total Harga', 'Waktu'])
 
+    # Load stock data
+    if os.path.exists(stock_file_path):
+        st.session_state.stok_barang = pd.read_csv(stock_file_path)
+    else:
+        st.session_state.stok_barang = pd.DataFrame(columns=['ID Barang', 'Nama Barang', 'Merk', 'Ukuran/Kemasan', 'Jumlah', 'Kode Warna/Base', 'Harga Jual', 'Waktu Input'])
+    
+    # Display sales data
     if 'penjualan' in st.session_state:
         st.dataframe(st.session_state.penjualan)
     
@@ -118,19 +128,34 @@ def manage_penjualan(username):
         nama_pelanggan = st.text_input("Nama Pelanggan")
         nomor_telepon = st.text_input("Nomor Telepon")
         alamat = st.text_input("Alamat")
-        nama_barang = st.text_input("Nama Barang")
-        jumlah = st.number_input("Jumlah", min_value=1)
-        harga_jual = st.number_input("Harga Jual", min_value=0.0)
+        
+        # Dropdown to select item by ID
+        id_barang = st.selectbox("ID Barang", st.session_state.stok_barang['ID Barang'].unique())
+        selected_stock = st.session_state.stok_barang.loc[st.session_state.stok_barang['ID Barang'] == id_barang].iloc[0]
+        
+        nama_barang = selected_stock['Nama Barang']
+        merk = selected_stock['Merk']
+        ukuran_kemasan = selected_stock['Ukuran/Kemasan']
+        kode_warna_base = selected_stock['Kode Warna/Base']
+        
+        jumlah = st.number_input("Jumlah", min_value=1, max_value=selected_stock['Jumlah'])
+        
+        # Fetch selling price from stock data
+        harga_jual = selected_stock['Harga Jual']
+        total_harga = jumlah * harga_jual
         
         submitted = st.form_submit_button("Simpan")
         
         if submitted:
-            total_harga = jumlah * harga_jual
             new_sale = pd.DataFrame({
                 'Nama Pelanggan': [nama_pelanggan],
                 'Nomor Telepon': [nomor_telepon],
                 'Alamat': [alamat],
+                'ID Barang': [id_barang],
                 'Nama Barang': [nama_barang],
+                'Merk': [merk],
+                'Ukuran/Kemasan': [ukuran_kemasan],
+                'Kode Warna/Base': [kode_warna_base],
                 'Jumlah': [jumlah],
                 'Harga Jual': [harga_jual],
                 'Total Harga': [total_harga],
@@ -140,6 +165,15 @@ def manage_penjualan(username):
             st.session_state.penjualan = pd.concat([st.session_state.penjualan, new_sale], ignore_index=True)
             st.session_state.penjualan.to_csv(file_path, index=False)
             st.success("Penjualan berhasil diperbarui.")
+            
+            # Update stock quantity
+            st.session_state.stok_barang.loc[st.session_state.stok_barang['ID Barang'] == id_barang, 'Jumlah'] -= jumlah
+            st.session_state.stok_barang.to_csv(stock_file_path, index=False)
+
+    # Display stock table without the 'Harga' column
+    st.subheader("Tabel Stok Barang")
+    if 'stok_barang' in st.session_state:
+        st.dataframe(st.session_state.stok_barang.drop(columns=['Harga'], errors='ignore'))
 
 # Function to manage suppliers
 def manage_supplier(username):
