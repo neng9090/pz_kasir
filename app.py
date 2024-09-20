@@ -339,9 +339,20 @@ def get_user_file_paths(username):
         'STOK_FILE': f"{username}_stok.csv"
     }
 
-# Function to save data (placeholder, implement your own logic)
-def save_data():
-    pass
+# Function to save data
+def save_data(username):
+    file_paths = get_user_file_paths(username)
+    st.session_state.penjualan.to_csv(file_paths['PENJUALAN_FILE'], index=False)
+    st.session_state.stok_barang.to_csv(file_paths['STOK_FILE'], index=False)
+    st.success("Data berhasil disimpan!")
+
+# Function to load data
+def load_data(username):
+    file_paths = get_user_file_paths(username)
+    if os.path.exists(file_paths['PENJUALAN_FILE']):
+        st.session_state.penjualan = pd.read_csv(file_paths['PENJUALAN_FILE'])
+    if os.path.exists(file_paths['STOK_FILE']):
+        st.session_state.stok_barang = pd.read_csv(file_paths['STOK_FILE'])
 
 # Function for the sales page
 def halaman_penjualan(username):
@@ -472,7 +483,7 @@ def halaman_penjualan(username):
 
                         st.success(f"Penjualan untuk {nama_pelanggan} berhasil disimpan!")
                         
-                        save_data()  # Save data after successful transaction
+                        save_data(username)  # Save data after successful transaction
                     else:
                         st.error("Stok tidak cukup untuk memenuhi pesanan.")
                 else:
@@ -493,17 +504,17 @@ def halaman_penjualan(username):
                 selisih = jumlah - jumlah_lama
                 stok_tersedia = st.session_state.stok_barang.loc[st.session_state.stok_barang["ID"] == stock_id, "Stok"].values[0]
 
-                if selisih > 0:  # Quantity increased
-                    if stok_tersedia >= selisih:
+                if selisih > 0:  # If adding to stock
+                    if selisih <= stok_tersedia:
                         st.session_state.stok_barang.loc[st.session_state.stok_barang["ID"] == stock_id, "Stok"] -= selisih
+                        st.success(f"Penjualan dengan ID {sale_id} berhasil diperbarui!")
                     else:
-                        st.error("Stok tidak cukup untuk menambah jumlah barang.")
-                elif selisih < 0:  # Quantity decreased
+                        st.error("Stok tidak cukup untuk memenuhi tambahan jumlah.")
+                elif selisih < 0:  # If reducing from stock
                     st.session_state.stok_barang.loc[st.session_state.stok_barang["ID"] == stock_id, "Stok"] += abs(selisih)
+                    st.success(f"Penjualan dengan ID {sale_id} berhasil diperbarui!")
 
-                st.success(f"Penjualan dengan ID {sale_id} berhasil diperbarui!")
-                
-                save_data()  # Save data after successful update
+                save_data(username)  # Save data after successful edit
                 
     # Customer search section
     st.subheader("Pencarian Pelanggan")
