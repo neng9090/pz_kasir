@@ -585,21 +585,42 @@ def manage_pengeluaran(username):
             st.session_state.pengeluaran.to_csv(file_path, index=False)
             st.success("Pengeluaran berhasil diperbarui.")
 
-# Function to update historical financial data
+def get_user_file_paths(username):
+    # Fungsi ini mengembalikan path file untuk data pengguna
+    return {
+        'HISTORIS_KEUANGAN_FILE': f"data/{username}_historis_keuangan.csv",
+        'STOK_BARANG_FILE': f"data/{username}_stok_barang.csv"
+    }
+
+def save_data(df, file_path):
+    # Simpan DataFrame ke file CSV
+    df.to_csv(file_path, index=False)
+
+def save_all_to_excel(username):
+    with pd.ExcelWriter(f"data/{username}_data_export.xlsx", engine='openpyxl') as writer:
+        # Save each DataFrame to a different sheet
+        if 'historical_data' in st.session_state:
+            st.session_state.historical_data.to_excel(writer, sheet_name='Historis Keuangan', index=False)
+        if 'stok_barang' in st.session_state:
+            st.session_state.stok_barang.to_excel(writer, sheet_name='Stok Barang', index=False)
+
 def update_historical_data(username):
     st.title("Laporan Keuangan")
-    
-    # Load historical data if available
+
+    # Ambil path file untuk data keuangan historis
     file_path = get_user_file_paths(username)['HISTORIS_KEUANGAN_FILE']
+    
+    # Load data historis jika file ada
     if os.path.exists(file_path):
         st.session_state.historical_data = pd.read_csv(file_path)
     else:
         st.session_state.historical_data = pd.DataFrame(columns=['Tanggal', 'Total Pemasukan', 'Total Pengeluaran'])
 
+    # Tampilkan data historis
     if 'historical_data' in st.session_state:
         st.dataframe(st.session_state.historical_data)
         
-        # Calculate total income and total expenses
+        # Hitung total pemasukan dan pengeluaran
         total_income = st.session_state.historical_data['Total Pemasukan'].sum()
         total_expenses = st.session_state.historical_data['Total Pengeluaran'].sum()
         
@@ -607,13 +628,13 @@ def update_historical_data(username):
         st.write(f"Total Pemasukan: {total_income}")
         st.write(f"Total Pengeluaran: {total_expenses}")
         st.write(f"Sisa: {total_income - total_expenses}")
-    
+
     st.subheader("Tambah Data Keuangan")
     
     with st.form("financial_form"):
         tanggal = st.date_input("Tanggal", value=datetime.now())
-        total_pemasukan = st.number_input("Total Pemasukan", min_value=0.0)
-        total_pengeluaran = st.number_input("Total Pengeluaran", min_value=0.0)
+        total_pemasukan = st.number_input("Total Pemasukan", min_value=0.0, format="%.2f")
+        total_pengeluaran = st.number_input("Total Pengeluaran", min_value=0.0, format="%.2f")
         
         submitted = st.form_submit_button("Simpan")
         
@@ -624,13 +645,138 @@ def update_historical_data(username):
                 'Total Pengeluaran': [total_pengeluaran]
             })
             
-            if 'historical_data' in st.session_state:
-                st.session_state.historical_data = pd.concat([st.session_state.historical_data, new_financial_data], ignore_index=True)
-            else:
-                st.session_state.historical_data = new_financial_data
-            
-            st.session_state.historical_data.to_csv(file_path, index=False)
+            st.session_state.historical_data = pd.concat([st.session_state.historical_data, new_financial_data], ignore_index=True)
+            save_data(st.session_state.historical_data, file_path)
             st.success("Data keuangan berhasil diperbarui.")
+
+    # Form login
+    if 'authenticated' not in st.session_state:
+        st.session_state.authenticated = False
+
+    if not st.session_state.authenticated:
+        with st.form("login_form"):
+            password = st.text_input("Masukkan Password", type="password")
+            submit = st.form_submit_button("Login")
+            
+            if submit and password == "Jayaselalu123":  # Ganti dengan password yang diinginkan
+                st.session_state.authenticated = True
+                st.success("Login berhasil!")
+            elif submit:
+                st.error("Password salah!")
+        return
+
+    # Jika sudah login, lanjutkan dengan pengelolaan stok barang
+    st.header("Pengelolaan Stok Barang")
+
+    # Load data stok barang
+    stok_file_path = get_user_file_paths(username)['STOK_BARANG_FILE']
+    if os.path.exists(stok_file_path):
+        st.session_state.stok_barang = pd.read_csv(stok_file_path)
+    else:
+        st.session_state.stok_barang = pd.DataFrame(columns=["ID", "Nama Barang", "Merk", "Ukuran/Kemasan", "Harga", "Stok", "Persentase Keuntungan", "Kode Warna"])
+
+    # Pilihan untuk menambah barang baru
+    barang_ids = st.session_state.stok_barang["ID"].tolist()
+    barang_ids.insert(0, "Tambah Baru")  # Opsi untuk menambah barang baru
+    selected_row = st.selectbox("Pilih ID Barang untuk Diedit atau Tambah Baru", barang_ids)
+    
+    if selected_row == "Tambah Baru":
+        barang_dipilih = None
+        default_values = {
+            "Nama Barang": "",
+            "Merk": "",
+            "Ukuran/Kemasan": "",
+            "Harga": 0,
+            "Stok": 0,
+            "Persentase Keuntungan": 0,
+            "Kode Warna": ""
+        }
+    else:
+        barang_dipilih = st.session_state.stok_barang[st.session_state.stok_barang["ID"] == selected_row].iloc[0]
+        
+        default_values = {
+            "Nama Barang": barang_dipilih["Nama Barang"],
+            "Merk": barang_dipilih["Merk"],
+            "Ukuran/Kemasan": barang_dipilih["Ukuran/Kemasan"],
+            "Harga": barang_dipilih["Harga"],
+            "Stok": barang_dipilih["Stok"],
+            "Persentase Keuntungan": barang_dipilih["Persentase Keuntungan"],
+            "Kode Warna": barang_dipilih["Kode Warna"]
+        }
+    
+    # Form untuk menambah atau mengedit barang
+    with st.form("edit_barang"):
+        nama_barang = st.text_input("Nama Barang", value=default_values["Nama Barang"])
+        merk = st.text_input("Merk", value=default_values["Merk"])
+        ukuran = st.text_input("Ukuran/Kemasan", value=default_values["Ukuran/Kemasan"])
+        
+        harga = st.number_input("Harga", min_value=0.0, value=float(default_values["Harga"]), format="%.2f")
+        stok = st.number_input("Stok Barang", min_value=0, value=int(default_values["Stok"]))
+        persentase_keuntungan = st.number_input("Persentase Keuntungan (%)", min_value=0, max_value=100, value=int(default_values["Persentase Keuntungan"]))
+        kode_warna = st.text_input("Kode Warna/Base", value=default_values["Kode Warna"], placeholder="Opsional")
+        
+        # Hitung harga jual berdasarkan persentase keuntungan
+        selling_price = harga * (1 + (persentase_keuntungan / 100))
+        
+        submit = st.form_submit_button("Simpan Barang")
+    
+        if submit:
+            if barang_dipilih is None:
+                # Tambah barang baru
+                new_id = st.session_state.stok_barang["ID"].max() + 1 if not st.session_state.stok_barang.empty else 1
+                new_data = pd.DataFrame({
+                    "ID": [new_id],
+                    "Nama Barang": [nama_barang],
+                    "Merk": [merk],
+                    "Ukuran/Kemasan": [ukuran],
+                    "Harga": [harga],
+                    "Stok": [stok],
+                    "Persentase Keuntungan": [persentase_keuntungan],
+                    "Kode Warna": [kode_warna],
+                    "Harga Jual": [selling_price],
+                    "Waktu Input": [datetime.now()]
+                })
+                st.session_state.stok_barang = pd.concat([st.session_state.stok_barang, new_data], ignore_index=True)
+                st.success("Barang baru berhasil ditambahkan!")
+            else:
+                # Update barang yang sudah ada
+                st.session_state.stok_barang.loc[st.session_state.stok_barang["ID"] == selected_row, 
+                    ["Nama Barang", "Merk", "Ukuran/Kemasan", "Harga", "Stok", "Persentase Keuntungan", "Kode Warna", "Harga Jual"]] = \
+                    [nama_barang, merk, ukuran, harga, stok, persentase_keuntungan, kode_warna, selling_price]
+                st.success(f"Barang ID {selected_row} berhasil diupdate!")
+            
+            save_data(st.session_state.stok_barang, stok_file_path)  # Simpan data setelah penambahan atau pengeditan
+
+    # Tampilkan daftar stok barang
+    st.subheader("Daftar Stok Barang")
+    df_stok_barang = st.session_state.stok_barang.copy()
+    
+    # Cari barang berdasarkan nama atau merk
+    search_text = st.text_input("Cari Nama Barang atau Merk", key='search_text')
+    if search_text:
+        df_stok_barang = df_stok_barang[
+            (df_stok_barang["Nama Barang"].str.contains(search_text, case=False, na=False)) |
+            (df_stok_barang["Merk"].str.contains(search_text, case=False, na=False))
+        ]
+    
+    st.dataframe(df_stok_barang)
+    
+    # Tombol untuk menghapus barang
+    if selected_row != "Tambah Baru" and st.button("Hapus Barang"):
+        st.session_state.stok_barang = st.session_state.stok_barang[st.session_state.stok_barang["ID"] != selected_row]
+        st.success(f"Barang ID {selected_row} berhasil dihapus!")
+        save_data(st.session_state.stok_barang, stok_file_path)  # Simpan data setelah penghapusan barang
+
+    # Button to export all data to Excel
+    if st.button("Ekspor Semua Data ke Excel"):
+        save_all_to_excel(username)
+        with open(f"data/{username}_data_export.xlsx", "rb") as file:
+            st.download_button(
+                label="Download Excel",
+                data=file,
+                file_name=f"{username}_data_export.xlsx",
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            )
 
 def main():
     initialize_session_state()
