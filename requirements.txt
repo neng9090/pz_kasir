@@ -4,3 +4,4 @@ pandas
 matplotlib
 streamlit_option_menu
 fpdf
+sqlite3
